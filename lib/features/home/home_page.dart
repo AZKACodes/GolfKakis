@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'view/home_view.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Home',
-        style: Theme.of(context).textTheme.headlineMedium,
-      ),
-    );
+    return const HomeView();
   }
 }
