@@ -1,52 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'widgets/tee_time_calendar_strip.dart';
-import 'widgets/tee_time_slot_grid.dart';
+import '../../../foundation/navigation/booking_nav_graph.dart';
 
-class BookingOverviewView extends StatefulWidget {
-  const BookingOverviewView({super.key});
-
-  @override
-  State<BookingOverviewView> createState() => _BookingOverviewViewState();
-}
-
-class _BookingOverviewViewState extends State<BookingOverviewView> {
-  static const String _defaultClub = 'Kinrara Golf Club';
-
-  final List<String> _clubs = const [
-    _defaultClub,
-    'Saujana Golf & Country Club',
-    'Kota Permai Golf & Country Club',
-    'Mines Resort & Golf Club',
-  ];
-
-  final List<String> _times = const [
-    '06:30 AM',
-    '06:50 AM',
-    '07:10 AM',
-    '07:30 AM',
-    '07:50 AM',
-    '08:10 AM',
-    '08:30 AM',
-    '08:50 AM',
-    '09:10 AM',
-    '09:30 AM',
-    '09:50 AM',
-    '10:10 AM',
-  ];
-
-  final Set<int> _unavailableSlots = const {1, 4, 7, 10};
-
-  late DateTime _selectedDate;
-  late String _selectedClub;
-  int? _selectedSlot;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDate = DateUtils.dateOnly(DateTime.now());
-    _selectedClub = _defaultClub;
-  }
+class BookingOverviewDashboardView extends StatelessWidget {
+  const BookingOverviewDashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,98 +17,69 @@ class _BookingOverviewViewState extends State<BookingOverviewView> {
           Text(
             'Booking Overview',
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Pick a date, choose your club, then lock in a tee time.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black54,
-            ),
+            'Browse your next round opportunities before entering submission.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
+          _NextBookingCard(
+            onOpenSubmission: () => Navigator.of(context).pushNamed(
+              BookingNavGraph.submission,
+            ),
+          ),
+          const SizedBox(height: 18),
           Text(
-            'Golf Club',
-            style: theme.textTheme.titleMedium?.copyWith(
+            'Popular Clubs Today',
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedClub,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            ),
-            items: _clubs
-                .map(
-                  (club) => DropdownMenuItem(
-                    value: club,
-                    child: Text(club),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() {
-                _selectedClub = value;
-              });
-            },
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Calendar',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TeeTimeCalendarStrip(
-            selectedDate: _selectedDate,
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-                _selectedSlot = null;
-              });
-            },
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Text(
-                'Select Time Slot',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              _LegendDot(color: Colors.grey.shade300, label: 'Booked'),
-              const SizedBox(width: 10),
-              _LegendDot(color: Colors.white, label: 'Open'),
-              const SizedBox(width: 10),
-              _LegendDot(color: theme.colorScheme.primary, label: 'Selected'),
-            ],
           ),
           const SizedBox(height: 10),
-          TeeTimeSlotGrid(
-            slots: _times,
-            selectedIndex: _selectedSlot,
-            unavailableIndices: _unavailableSlots,
-            onSelected: (index) {
-              setState(() {
-                _selectedSlot = index;
-              });
-            },
+          const _ClubAvailabilityCard(
+            clubName: 'Kinrara Golf Club',
+            distanceLabel: '9 km away',
+            openSlotsLabel: '14 morning slots',
+            greenFeeLabel: 'From USD 39',
+            peakLabel: 'Peak 7:20 AM',
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
+          const _ClubAvailabilityCard(
+            clubName: 'Saujana Golf & Country Club',
+            distanceLabel: '15 km away',
+            openSlotsLabel: '11 morning slots',
+            greenFeeLabel: 'From USD 52',
+            peakLabel: 'Peak 8:00 AM',
+          ),
+          const SizedBox(height: 10),
+          const _ClubAvailabilityCard(
+            clubName: 'Mines Resort & Golf Club',
+            distanceLabel: '21 km away',
+            openSlotsLabel: '9 morning slots',
+            greenFeeLabel: 'From USD 47',
+            peakLabel: 'Peak 7:40 AM',
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Your Booking Health',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const _BookingHealthCard(),
+          const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              onPressed: _selectedSlot == null ? null : () {},
-              child: const Text('Continue Booking'),
+            child: FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed(
+                BookingNavGraph.submission,
+              ),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('Start New Booking'),
             ),
           ),
         ],
@@ -160,32 +88,198 @@ class _BookingOverviewViewState extends State<BookingOverviewView> {
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({
-    required this.color,
-    required this.label,
+class _NextBookingCard extends StatelessWidget {
+  const _NextBookingCard({required this.onOpenSubmission});
+
+  final VoidCallback onOpenSubmission;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0A1F1A), Color(0xFF1E5B4A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 14,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Quick Start',
+            style: TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ready to lock your next tee time?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Open submission to choose club, date, and exact slot.',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: onOpenSubmission,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF0A1F1A),
+            ),
+            child: const Text('Open Submission'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClubAvailabilityCard extends StatelessWidget {
+  const _ClubAvailabilityCard({
+    required this.clubName,
+    required this.distanceLabel,
+    required this.openSlotsLabel,
+    required this.greenFeeLabel,
+    required this.peakLabel,
   });
 
-  final Color color;
+  final String clubName;
+  final String distanceLabel;
+  final String openSlotsLabel;
+  final String greenFeeLabel;
+  final String peakLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            clubName,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InfoChip(text: distanceLabel),
+              _InfoChip(text: openSlotsLabel),
+              _InfoChip(text: greenFeeLabel),
+              _InfoChip(text: peakLabel),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingHealthCard extends StatelessWidget {
+  const _BookingHealthCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: const Column(
+        children: [
+          _HealthRow(label: 'Upcoming Confirmed', value: '2'),
+          SizedBox(height: 10),
+          _HealthRow(label: 'Pending Payment', value: '1'),
+          SizedBox(height: 10),
+          _HealthRow(label: 'Avg Booking Lead Time', value: '3.4 days'),
+        ],
+      ),
+    );
+  }
+}
+
+class _HealthRow extends StatelessWidget {
+  const _HealthRow({required this.label, required this.value});
+
   final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: Colors.black26),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF12332A),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6F2),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1A3A32),
+        ),
+      ),
     );
   }
 }
