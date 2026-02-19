@@ -51,12 +51,22 @@ class _BookingSubmissionViewState extends State<BookingSubmissionView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canPop = Navigator.of(context).canPop();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (canPop)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Overview'),
+              ),
+            ),
           Text(
             'Booking Submission',
             style: theme.textTheme.headlineSmall?.copyWith(
