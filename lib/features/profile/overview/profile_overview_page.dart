@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class ActivityPage extends StatelessWidget {
-  const ActivityPage({super.key});
+class ProfileOverviewPage extends StatelessWidget {
+  const ProfileOverviewPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Activity',
+        'Profile',
         style: Theme.of(context).textTheme.headlineMedium,
       ),
     );

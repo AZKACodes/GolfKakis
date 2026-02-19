@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../features/activity/activity_page.dart';
-import '../../features/booking/booking_page.dart';
-import '../../features/home/home_page.dart';
-import '../../features/profile/profile_page.dart';
+import '../navigation/activity_nav_graph.dart';
+import '../navigation/booking_nav_graph.dart';
+import '../navigation/home_nav_graph.dart';
+import '../navigation/profile_nav_graph.dart';
 import 'nav_item.dart';
 
 class RootScreen extends StatefulWidget {
@@ -24,10 +24,10 @@ class _RootScreenState extends State<RootScreen> {
   ];
 
   static const List<Widget> _pages = [
-    HomePage(),
-    BookingPage(),
-    ActivityPage(),
-    ProfilePage(),
+    HomeNavGraph(),
+    BookingNavGraph(),
+    ActivityNavGraph(),
+    ProfileNavGraph(),
   ];
 
   @override
@@ -36,7 +36,12 @@ class _RootScreenState extends State<RootScreen> {
       appBar: AppBar(
         title: Text(_items[_currentIndex].label),
       ),
-      body: SafeArea(child: _pages[_currentIndex]),
+      body: SafeArea(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
