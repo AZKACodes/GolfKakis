@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../domain/get_home_message_use_case.dart';
@@ -8,32 +10,48 @@ class HomeViewModel extends ChangeNotifier implements HomeViewContract {
 
   final GetHomeMessageUseCase _getHomeMessage;
 
-  String? _message;
-  bool _isLoading = false;
-  String? _error;
+  HomeViewState _viewState = HomeViewState.initial;
+  final StreamController<HomeNavEffect> _navEffectsController =
+      StreamController<HomeNavEffect>.broadcast();
 
   @override
-  String? get message => _message;
+  HomeViewState get viewState => _viewState;
 
   @override
-  bool get isLoading => _isLoading;
+  Stream<HomeNavEffect> get navEffects => _navEffectsController.stream;
 
   @override
-  String? get error => _error;
+  void onUserIntent(HomeUserIntent intent) {
+    switch (intent) {
+      case LoadHomeDataIntent():
+        _loadData();
+    }
+  }
 
-  @override
-  Future<void> loadData() async {
-    _isLoading = true;
-    _error = null;
+  Future<void> _loadData() async {
+    _viewState = _viewState.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
     try {
-      _message = await _getHomeMessage();
-    } catch (e) {
-      _error = 'Failed to load home data';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      final message = await _getHomeMessage();
+      _viewState = _viewState.copyWith(
+        message: message,
+        isLoading: false,
+        clearError: true,
+      );
+    } catch (_) {
+      _viewState = _viewState.copyWith(
+        isLoading: false,
+        error: 'Failed to load home data',
+      );
     }
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _navEffectsController.close();
+    super.dispose();
   }
 }

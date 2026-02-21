@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../foundation/enums/activity/event_type.dart';
+
 class ActivityOverviewPage extends StatelessWidget {
   const ActivityOverviewPage({super.key});
 
@@ -21,9 +23,7 @@ class ActivityOverviewPage extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Track upcoming rounds, recent results, and booking events.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black54,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
           const _SectionTitle(title: 'Upcoming'),
@@ -68,31 +68,31 @@ class ActivityOverviewPage extends StatelessWidget {
                 title: 'Booking confirmed',
                 detail: 'Kinrara Golf Club - Fri, Feb 21 at 07:30 AM',
                 timeAgo: '2h ago',
-                type: _EventType.positive,
+                type: EventType.positive,
               ),
               _TimelineEvent(
                 title: 'Tee time updated',
                 detail: 'Changed from 07:10 AM to 07:30 AM',
                 timeAgo: '2h ago',
-                type: _EventType.info,
+                type: EventType.info,
               ),
               _TimelineEvent(
                 title: 'Payment received',
                 detail: 'Deposit paid - USD 24.00',
                 timeAgo: '2h ago',
-                type: _EventType.neutral,
+                type: EventType.neutral,
               ),
               _TimelineEvent(
                 title: 'Round completed',
                 detail: 'Saujana G&CC - Score 75 (+3)',
                 timeAgo: '1d ago',
-                type: _EventType.positive,
+                type: EventType.positive,
               ),
               _TimelineEvent(
                 title: 'Cancellation refunded',
                 detail: 'Mines Resort - USD 18.00 refunded',
                 timeAgo: '4d ago',
-                type: _EventType.warning,
+                type: EventType.warning,
               ),
             ],
           ),
@@ -111,9 +111,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
     );
   }
 }
@@ -145,14 +145,17 @@ class _UpcomingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.event_available_outlined, color: Color(0xFF0A1F1A)),
+              const Icon(
+                Icons.event_available_outlined,
+                color: Color(0xFF0A1F1A),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   course,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               _Tag(text: countdownLabel, color: const Color(0xFF1E5B4A)),
@@ -176,9 +179,9 @@ class _UpcomingCard extends StatelessWidget {
                 child: Text(
                   checkInStatus,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               OutlinedButton(onPressed: () {}, child: const Text('Modify')),
@@ -223,16 +226,16 @@ class _RoundCard extends StatelessWidget {
                 child: Text(
                   course,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               Text(
                 dateLabel,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -249,7 +252,10 @@ class _RoundCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Tag(text: 'Fairways $fairwaysLabel', color: const Color(0xFF2A6654)),
+              _Tag(
+                text: 'Fairways $fairwaysLabel',
+                color: const Color(0xFF2A6654),
+              ),
               _Tag(text: 'GIR $girLabel', color: const Color(0xFF2A6654)),
               _Tag(text: 'Putts $puttsLabel', color: const Color(0xFF2A6654)),
             ],
@@ -279,10 +285,7 @@ class _TimelineCard extends StatelessWidget {
       child: Column(
         children: [
           for (int i = 0; i < events.length; i++)
-            _TimelineRow(
-              event: events[i],
-              isLast: i == events.length - 1,
-            ),
+            _TimelineRow(event: events[i], isLast: i == events.length - 1),
         ],
       ),
     );
@@ -298,10 +301,10 @@ class _TimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (event.type) {
-      _EventType.positive => const Color(0xFF1E8E5B),
-      _EventType.warning => const Color(0xFFB26B1E),
-      _EventType.info => const Color(0xFF2C6EA3),
-      _EventType.neutral => const Color(0xFF486068),
+      EventType.positive => const Color(0xFF1E8E5B),
+      EventType.warning => const Color(0xFFB26B1E),
+      EventType.info => const Color(0xFF2C6EA3),
+      EventType.neutral => const Color(0xFF486068),
     };
 
     return IntrinsicHeight(
@@ -342,26 +345,24 @@ class _TimelineRow extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.title,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                       Text(
                         event.timeAgo,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.black54,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.black54),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     event.detail,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
                   ),
                 ],
               ),
@@ -394,16 +395,16 @@ class _MetricTile extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -476,12 +477,5 @@ class _TimelineEvent {
   final String title;
   final String detail;
   final String timeAgo;
-  final _EventType type;
-}
-
-enum _EventType {
-  positive,
-  warning,
-  info,
-  neutral,
+  final EventType type;
 }

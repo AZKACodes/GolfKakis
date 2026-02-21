@@ -4,7 +4,14 @@ import 'widgets/tee_time_calendar_strip.dart';
 import 'widgets/tee_time_slot_grid.dart';
 
 class BookingSubmissionView extends StatefulWidget {
-  const BookingSubmissionView({super.key});
+  const BookingSubmissionView({
+    required this.canPop,
+    this.onBackToOverview,
+    super.key,
+  });
+
+  final bool canPop;
+  final VoidCallback? onBackToOverview;
 
   @override
   State<BookingSubmissionView> createState() => _BookingSubmissionViewState();
@@ -51,18 +58,17 @@ class _BookingSubmissionViewState extends State<BookingSubmissionView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final canPop = Navigator.of(context).canPop();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (canPop)
+          if (widget.canPop)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => Navigator.of(context).maybePop(),
+                onPressed: widget.onBackToOverview,
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Overview'),
               ),
@@ -76,9 +82,7 @@ class _BookingSubmissionViewState extends State<BookingSubmissionView> {
           const SizedBox(height: 6),
           Text(
             'Pick a date, choose your club, then lock in a tee time.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black54,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
           Text(
@@ -95,12 +99,7 @@ class _BookingSubmissionViewState extends State<BookingSubmissionView> {
               contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             items: _clubs
-                .map(
-                  (club) => DropdownMenuItem(
-                    value: club,
-                    child: Text(club),
-                  ),
-                )
+                .map((club) => DropdownMenuItem(value: club, child: Text(club)))
                 .toList(),
             onChanged: (value) {
               if (value == null) {
@@ -171,10 +170,7 @@ class _BookingSubmissionViewState extends State<BookingSubmissionView> {
 }
 
 class _LegendDot extends StatelessWidget {
-  const _LegendDot({
-    required this.color,
-    required this.label,
-  });
+  const _LegendDot({required this.color, required this.label});
 
   final Color color;
   final String label;
