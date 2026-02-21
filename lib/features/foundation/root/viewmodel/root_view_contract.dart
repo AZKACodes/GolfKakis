@@ -26,7 +26,11 @@ class RootTabSelectedIntent extends RootUserIntent {
   final int index;
 }
 
-sealed class RootNavEffect {
+sealed class NavEffect {
+  const NavEffect();
+}
+
+sealed class RootNavEffect extends NavEffect {
   const RootNavEffect();
 }
 

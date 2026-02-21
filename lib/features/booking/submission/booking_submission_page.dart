@@ -40,10 +40,13 @@ class _BookingSubmissionPageState extends State<BookingSubmissionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BookingSubmissionView(
-      canPop: Navigator.of(context).canPop(),
-      onBackToOverview: () =>
-          _viewModel.onUserIntent(const BookingSubmissionBackTappedIntent()),
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: BookingSubmissionView(
+        canPop: Navigator.of(context).canPop(),
+        onBackToOverview: () =>
+            _viewModel.onUserIntent(const BookingSubmissionBackTappedIntent()),
+      ),
     );
   }
 }

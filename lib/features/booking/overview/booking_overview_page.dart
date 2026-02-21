@@ -41,9 +41,12 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BookingOverviewDashboardView(
-      onBookingSubmissionClick: () =>
-          _viewModel.onUserIntent(const OnBookingSubmissionClick()),
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: BookingOverviewDashboardView(
+        onBookingSubmissionClick: () =>
+            _viewModel.onUserIntent(const OnBookingSubmissionClick()),
+      ),
     );
   }
 }

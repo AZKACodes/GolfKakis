@@ -18,7 +18,11 @@ class BookingSubmissionBackTappedIntent extends BookingSubmissionUserIntent {
   const BookingSubmissionBackTappedIntent();
 }
 
-sealed class BookingSubmissionNavEffect {
+sealed class NavEffect {
+  const NavEffect();
+}
+
+sealed class BookingSubmissionNavEffect extends NavEffect {
   const BookingSubmissionNavEffect();
 }
 
