@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../data/home_repository.dart';
 import 'widgets/deal_card.dart';
 import 'widgets/quick_action_tile.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  late final Future<String> _helloMessageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _helloMessageFuture = HomeRepositoryImpl().fetchWelcomeMessage();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,16 +260,16 @@ class _RebookCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.black54),
           ),
           const Spacer(),
           Row(
@@ -268,10 +282,7 @@ class _RebookCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              FilledButton(
-                onPressed: () {},
-                child: const Text('Rebook'),
-              ),
+              FilledButton(onPressed: () {}, child: const Text('Rebook')),
             ],
           ),
         ],
@@ -337,17 +348,9 @@ class _ActionRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.black54),
-              ),
+              Text(subtitle, style: const TextStyle(color: Colors.black54)),
             ],
           ),
         ),
