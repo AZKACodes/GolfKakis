@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/booking/submission/slot/booking_submission_slot_page.dart';
 
-import '../../foundation/navigation/booking_nav_graph.dart';
 import 'view/booking_overview_view.dart';
 import 'viewmodel/booking_overview_view_contract.dart';
 import 'viewmodel/booking_overview_view_model.dart';
@@ -27,7 +27,11 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
         if (!mounted) {
           return;
         }
-        Navigator.of(context).pushNamed(BookingNavGraph.submission);
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const BookingSubmissionSlotPage(),
+          ),
+        );
       }
     });
   }

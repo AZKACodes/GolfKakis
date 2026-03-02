@@ -1,19 +1,21 @@
 import '../../../foundation/network/network.dart';
+import '../../api/home_api_service.dart';
 
 abstract class HomeRepository {
   Future<String> fetchWelcomeMessage();
 }
 
 class HomeRepositoryImpl implements HomeRepository {
-  HomeRepositoryImpl({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  HomeRepositoryImpl({ApiClient? apiClient, HomeApiService? apiService})
+    : _apiService =
+          apiService ?? HomeApiService(apiClient: apiClient ?? ApiClient());
 
-  final ApiClient _apiClient;
+  final HomeApiService _apiService;
 
   @override
   Future<String> fetchWelcomeMessage() async {
     try {
-      final response = await _apiClient.getJson('/hello');
+      final response = await _apiService.getHello();
 
       if (response is Map<String, dynamic>) {
         final message = response['message'];

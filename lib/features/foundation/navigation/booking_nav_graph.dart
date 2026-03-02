@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../booking/overview/booking_overview_page.dart';
-import '../../booking/submission/booking_submission_page.dart';
+import '../../booking/submission/slot/booking_submission_slot_page.dart';
 
 class BookingNavGraph extends StatelessWidget {
   const BookingNavGraph({super.key});
@@ -14,7 +14,7 @@ class BookingNavGraph extends StatelessWidget {
       case submission:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const BookingSubmissionPage(),
+          builder: (_) => const BookingSubmissionSlotPage(),
         );
       case root:
       default:
@@ -27,8 +27,6 @@ class BookingNavGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateRoute: _onGenerateRoute,
-    );
+    return Navigator(onGenerateRoute: _onGenerateRoute);
   }
 }
