@@ -12,12 +12,18 @@ class TeeTimeCalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseDate = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(DateTime.now());
+    final DateTime preferredBaseDate = DateUtils.dateOnly(
+      selectedDate.subtract(const Duration(days: 3)),
+    );
+    final DateTime baseDate = preferredBaseDate.isBefore(today)
+        ? today
+        : preferredBaseDate;
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
 
     return SizedBox(
-      height: 86,
+      height: 100,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 14,
@@ -42,7 +48,17 @@ class TeeTimeCalendarStrip extends StatelessWidget {
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.outlineVariant,
+                  width: isSelected ? 2 : 1,
                 ),
+                boxShadow: isSelected
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x22000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -60,6 +76,14 @@ class TeeTimeCalendarStrip extends StatelessWidget {
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    localizations.formatMonthYear(date).split(' ').first,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isSelected ? Colors.white70 : Colors.black54,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
