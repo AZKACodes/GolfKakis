@@ -308,7 +308,7 @@ class _ActionQueueCard extends StatelessWidget {
         children: [
           _ActionRow(
             title: 'Pending deposit',
-            subtitle: 'Mines Resort - USD 18 due today',
+            subtitle: 'Mines Resort - MYR 18 due today',
             action: 'Pay',
           ),
           Divider(height: 18),
