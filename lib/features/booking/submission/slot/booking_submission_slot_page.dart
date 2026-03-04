@@ -27,6 +27,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
+    
     _viewModel.performAction(const OnInit());
   }
 

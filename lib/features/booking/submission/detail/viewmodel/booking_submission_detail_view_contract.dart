@@ -1,4 +1,6 @@
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionDetailViewContract {
   BookingSubmissionDetailViewState get viewState;
@@ -6,24 +8,34 @@ abstract class BookingSubmissionDetailViewContract {
   void onUserIntent(BookingSubmissionDetailUserIntent intent);
 }
 
-sealed class BookingSubmissionDetailViewState {
-  const BookingSubmissionDetailViewState();
+// =========================
+// ViewState
+// =========================
 
-  static const initial = BookingSubmissionDetailDataLoaded();
+sealed class BookingSubmissionDetailViewState extends ViewState {
+  BookingSubmissionDetailViewState() : super();
+
+  static final initial = BookingSubmissionDetailDataLoaded.initial();
 }
 
-class BookingSubmissionDetailDataLoaded
-    extends BookingSubmissionDetailViewState {
-  const BookingSubmissionDetailDataLoaded({
+class BookingSubmissionDetailDataLoaded extends BookingSubmissionDetailViewState {
+  BookingSubmissionDetailDataLoaded({
     this.golfClubSlug = emptyString,
     this.teeTimeSlot = emptyString,
     this.guestId,
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 4,
+    this.maxPlayerCount = 4,
     this.caddieCount = 0,
     this.golfCartCount = 0,
-  });
+    this.playerDetails = const <BookingSubmissionPlayerModel>[],
+    this.canContinue = false,
+  }) : super();
+
+  factory BookingSubmissionDetailDataLoaded.initial() {
+    return BookingSubmissionDetailDataLoaded();
+  }
 
   final String golfClubSlug;
   final String teeTimeSlot;
@@ -31,8 +43,11 @@ class BookingSubmissionDetailDataLoaded
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final int maxPlayerCount;
   final int caddieCount;
   final int golfCartCount;
+  final List<BookingSubmissionPlayerModel> playerDetails;
+  final bool canContinue;
 
   BookingSubmissionDetailDataLoaded copyWith({
     String? golfClubSlug,
@@ -41,8 +56,11 @@ class BookingSubmissionDetailDataLoaded
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
+    int? maxPlayerCount,
     int? caddieCount,
     int? golfCartCount,
+    List<BookingSubmissionPlayerModel>? playerDetails,
+    bool? canContinue,
   }) {
     return BookingSubmissionDetailDataLoaded(
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
@@ -51,14 +69,37 @@ class BookingSubmissionDetailDataLoaded
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
+      maxPlayerCount: maxPlayerCount ?? this.maxPlayerCount,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
+      playerDetails: playerDetails ?? this.playerDetails,
+      canContinue: canContinue ?? this.canContinue,
     );
   }
 }
 
-sealed class BookingSubmissionDetailUserIntent {
-  const BookingSubmissionDetailUserIntent();
+// =========================
+// UserIntent
+// =========================
+
+sealed class BookingSubmissionDetailUserIntent extends UserIntent {
+  const BookingSubmissionDetailUserIntent() : super();
+}
+
+class OnInit extends BookingSubmissionDetailUserIntent {
+  const OnInit({
+    required this.golfClubSlug,
+    required this.teeTimeSlot,
+    this.guestId,
+  });
+
+  final String golfClubSlug;
+  final String teeTimeSlot;
+  final String? guestId;
+}
+
+class OnBackClick extends BookingSubmissionDetailUserIntent {
+  const OnBackClick();
 }
 
 class OnHostNameChanged extends BookingSubmissionDetailUserIntent {
@@ -79,6 +120,20 @@ class OnPlayerCountChanged extends BookingSubmissionDetailUserIntent {
   final int value;
 }
 
+class OnPlayerNameChanged extends BookingSubmissionDetailUserIntent {
+  const OnPlayerNameChanged({required this.index, required this.value});
+
+  final int index;
+  final String value;
+}
+
+class OnPlayerPhoneNumberChanged extends BookingSubmissionDetailUserIntent {
+  const OnPlayerPhoneNumberChanged({required this.index, required this.value});
+
+  final int index;
+  final String value;
+}
+
 class OnCaddieCountChanged extends BookingSubmissionDetailUserIntent {
   const OnCaddieCountChanged(this.value);
 
@@ -91,10 +146,43 @@ class OnGolfCartCountChanged extends BookingSubmissionDetailUserIntent {
   final int value;
 }
 
-sealed class NavEffect {
-  const NavEffect();
+class OnContinueClick extends BookingSubmissionDetailUserIntent {
+  const OnContinueClick();
 }
 
+// =========================
+// NavEffect
+// =========================
+
 sealed class BookingSubmissionDetailNavEffect extends NavEffect {
-  const BookingSubmissionDetailNavEffect();
+  const BookingSubmissionDetailNavEffect() : super();
+}
+
+class NavigateBack extends BookingSubmissionDetailNavEffect {
+  const NavigateBack();
+}
+
+class NavigateToBookingSubmissionConfirmation
+    extends BookingSubmissionDetailNavEffect {
+  const NavigateToBookingSubmissionConfirmation({
+    required this.golfClubSlug,
+    required this.teeTimeSlot,
+    this.guestId,
+    required this.hostName,
+    required this.hostPhoneNumber,
+    required this.playerCount,
+    required this.caddieCount,
+    required this.golfCartCount,
+    required this.playerDetails,
+  });
+
+  final String golfClubSlug;
+  final String teeTimeSlot;
+  final String? guestId;
+  final String hostName;
+  final String hostPhoneNumber;
+  final int playerCount;
+  final int caddieCount;
+  final int golfCartCount;
+  final List<BookingSubmissionPlayerModel> playerDetails;
 }

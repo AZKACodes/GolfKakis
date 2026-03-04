@@ -50,6 +50,19 @@ enum TeeTimeSlot {
   final String label;
   final TimePeriod period;
 
+  String get playerRange => isExtendedPlayerSlot ? '1-6' : '1-4';
+
+  bool get isExtendedPlayerSlot {
+    return switch (this) {
+      TeeTimeSlot.two00Pm ||
+      TeeTimeSlot.two15Pm ||
+      TeeTimeSlot.two30Pm ||
+      TeeTimeSlot.two45Pm ||
+      TeeTimeSlot.three00Pm => true,
+      _ => false,
+    };
+  }
+
   static TeeTimeSlot? fromLabel(String label) {
     for (final slot in TeeTimeSlot.values) {
       if (slot.label == label) {

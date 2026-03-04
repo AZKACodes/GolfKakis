@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
+import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionSlotGrid extends StatelessWidget {
   const BookingSubmissionSlotGrid({
@@ -41,17 +42,21 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
-              childAspectRatio: 1.65,
+              childAspectRatio: 1.45,
             ),
             itemBuilder: (context, index) {
+              final slot = slots[index];
               final bool isUnavailable = unavailableIndices.contains(index);
               final bool isSelected = selectedIndex == index;
+              final bool isExtendedPlayerSlot = slot.isExtendedPlayerSlot;
 
               final Color fillColor = isUnavailable
                   ? Colors.grey.shade300
                   : isSelected
                       ? theme.colorScheme.primary
-                      : Colors.white;
+                      : isExtendedPlayerSlot
+                          ? const Color(0xFFF6FBF4)
+                          : Colors.white;
               final Color textColor = isUnavailable
                   ? Colors.black45
                   : isSelected
@@ -70,7 +75,7 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 170),
                   padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                   decoration: BoxDecoration(
                     color: fillColor,
                     borderRadius: BorderRadius.circular(12),
@@ -79,7 +84,9 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                           ? theme.colorScheme.primary
                           : isUnavailable
                               ? Colors.grey.shade300
-                              : theme.colorScheme.outlineVariant,
+                              : isExtendedPlayerSlot
+                                  ? const Color(0xFFB9D6B9)
+                                  : theme.colorScheme.outlineVariant,
                     ),
                     boxShadow: isSelected
                         ? const [
@@ -92,31 +99,65 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                         : null,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        slots[index].label,
+                        slot.label,
+                        textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: textColor,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
-                      const SizedBox(height: 8),
-                      Divider(height: 1, thickness: 1, color: dividerColor),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Players: --',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: textColor,
-                            ),
-                      ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Total Rounds: --',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: textColor,
-                            ),
+                      Divider(height: 1, thickness: 1, color: dividerColor),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: IntrinsicHeight(
+                          child: Row(
+                            children: [
+                              BookingSubmissionMetricColumn(
+                                icon: Icons.group_outlined,
+                                label: 'Players',
+                                value: slot.playerRange,
+                                color: textColor,
+                              ),
+                              const SizedBox(width: 8),
+                              BookingSubmissionMetricColumn(
+                                icon: Icons.golf_course_outlined,
+                                label: 'Rounds',
+                                value: '1',
+                                color: textColor,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
+                      if (isExtendedPlayerSlot)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFFF7C948)
+                                : const Color(0xFFE3F3E6),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'Extended Group Slot',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF0D7A3A),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
