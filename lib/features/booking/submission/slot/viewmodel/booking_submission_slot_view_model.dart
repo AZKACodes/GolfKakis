@@ -1,142 +1,232 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
+import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:xxx_demo_app/features/foundation/model/data_status_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
+import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_slot_view_contract.dart';
 
-class BookingSubmissionSlotViewModel extends ChangeNotifier
+class BookingSubmissionSlotViewModel
+    extends
+        MviViewModel<
+          BookingSubmissionSlotUserIntent,
+          BookingSubmissionSlotViewState,
+          BookingSubmissionSlotNavEffect
+        >
     implements BookingSubmissionSlotViewContract {
   BookingSubmissionSlotViewModel(this._useCase);
 
   final BookingSubmissionSlotUseCase _useCase;
-  final StreamController<BookingSubmissionSlotNavEffect> _navEffectsController =
-      StreamController<BookingSubmissionSlotNavEffect>.broadcast();
 
   StreamSubscription<DataStatusModel<List<String>>>? _golfClubSubscription;
-  StreamSubscription<DataStatusModel<List<BookingSlotModel>>>?
-  _slotSubscription;
-
-  BookingSubmissionSlotViewState _viewState =
-      BookingSubmissionSlotViewState.initial;
+  StreamSubscription<DataStatusModel<List<BookingSlotModel>>>? _slotSubscription;
 
   @override
-  BookingSubmissionSlotViewState get viewState => _viewState;
+  BookingSubmissionSlotViewState createInitialState() {
+    return BookingSubmissionSlotDataLoaded.initial();
+  }
 
   @override
-  Stream<BookingSubmissionSlotNavEffect> get navEffects =>
-      _navEffectsController.stream;
-
-  @override
-  void onUserIntent(BookingSubmissionSlotUserIntent intent) {
+  Future<void> handleIntent(BookingSubmissionSlotUserIntent intent) async {
     switch (intent) {
+      case OnInit():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              selectedDate: DateTime.now(),
+              clearErrorMessage: true,
+            ),
+          );
+        });
+        await onFetchGolfClubList();
       case OnFetchGolfClubList():
-        _fetchGolfClubList();
+        await onFetchGolfClubList();
       case OnFetchAvailableSlots():
-        _fetchAvailableSlots(clubSlug: intent.clubSlug, date: intent.date);
-      case OnSelectGolfClub():
-        _updateState(
-          _currentState.copyWith(
-            selectedClubSlug: intent.clubSlug,
-            clearErrorMessage: true,
-          ),
+        await onFetchAvailableSlots(
+          clubSlug: intent.clubSlug,
+          date: intent.date,
         );
+      case OnSelectGolfClub():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              selectedClubSlug: intent.clubSlug,
+              clearSelectedSlot: true,
+              clearVisibleSelectedIndex: true,
+              clearErrorMessage: true,
+            ),
+          );
+        });
       case OnSelectDate():
-        _updateState(
-          _currentState.copyWith(
-            selectedDate: intent.date,
-            clearErrorMessage: true,
+        await onSelectDate(intent.date);
+      case OnSelectSlot():
+        emitViewState((state) {
+            return _derivePresentationState(
+              getCurrentAsLoaded().copyWith(
+                selectedSlot: intent.slot,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnSelectPeriod():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              selectedPeriod: intent.period,
+              clearSelectedSlot: true,
+              clearVisibleSelectedIndex: true,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnBackClick():
+        sendNavEffect(() => const NavigateBack());
+      case OnContinueClick():
+        final current = getCurrentAsLoaded();
+        final selectedSlot = current.selectedSlot;
+        if (!current.canContinue || selectedSlot == null) {
+          return;
+        }
+
+        sendNavEffect(
+          () => NavigateToBookingSubmissionDetail(
+            golfClubSlug: current.selectedClubSlug,
+            teeTimeSlot: selectedSlot.label,
           ),
         );
     }
   }
 
-  Future<void> _fetchGolfClubList() async {
-    _updateState(
-      _currentState.copyWith(isLoading: true, clearErrorMessage: true),
-    );
+  BookingSubmissionSlotDataLoaded getCurrentAsLoaded() {
+    final state = currentState;
+    if (state is BookingSubmissionSlotDataLoaded) {
+      return state;
+    }
+
+    return BookingSubmissionSlotDataLoaded.initial();
+  }
+
+  Future<void> onFetchGolfClubList() async {
+    emitViewState((state) {
+      return _derivePresentationState(
+        getCurrentAsLoaded().copyWith(
+          isLoading: true,
+          clearErrorMessage: true,
+        ),
+      );
+    });
 
     await _golfClubSubscription?.cancel();
     _golfClubSubscription = _useCase.onFetchGolfClubList().listen((result) {
       switch (result.status) {
         case DataStatus.success:
-          _updateState(
-            _currentState.copyWith(
-              golfClubList: result.data,
-              selectedClubSlug: _resolveSelectedClub(result.data),
-              isLoading: false,
-              clearErrorMessage: true,
-            ),
-          );
+          emitViewState((state) {
+            return _derivePresentationState(
+              getCurrentAsLoaded().copyWith(
+                golfClubList: result.data,
+                selectedClubSlug: _resolveSelectedClub(result.data),
+                isLoading: false,
+                clearErrorMessage: true,
+              ),
+            );
+          });
         case DataStatus.error:
-          _updateState(
-            _currentState.copyWith(
-              golfClubList: const <String>[],
-              selectedClubSlug: emptyString,
-              isLoading: false,
-              errorMessage: result.apiMessage.isEmpty
-                  ? 'Failed to fetch golf club list'
-                  : result.apiMessage,
-            ),
-          );
+          emitViewState((state) {
+            return _derivePresentationState(
+              getCurrentAsLoaded().copyWith(
+                golfClubList: const <String>[],
+                selectedClubSlug: emptyString,
+                isLoading: false,
+                errorMessage: result.apiMessage.isEmpty
+                    ? 'Failed to fetch golf club list'
+                    : result.apiMessage,
+              ),
+            );
+          });
         default:
           break;
       }
     });
   }
 
-  Future<void> _fetchAvailableSlots({
-    required String clubSlug,
-    required String date,
-  }) async {
-    _updateState(
-      _currentState.copyWith(
-        selectedClubSlug: clubSlug,
-        selectedDate: date,
-        isLoading: true,
-        clearErrorMessage: true,
-      ),
+  Future<void> onSelectDate(DateTime date) async {
+    final current = getCurrentAsLoaded();
+    emitViewState((state) {
+      return _derivePresentationState(
+        current.copyWith(
+          selectedDate: date,
+          clearSelectedSlot: true,
+          clearVisibleSelectedIndex: true,
+          clearErrorMessage: true,
+        ),
+      );
+    });
+
+    if (current.selectedClubSlug.isEmpty) {
+      return;
+    }
+
+    await onFetchAvailableSlots(
+      clubSlug: current.selectedClubSlug,
+      date: date,
     );
+  }
+
+  Future<void> onFetchAvailableSlots({
+    required String clubSlug,
+    required DateTime date,
+  }) async {
+    emitViewState((state) {
+      return _derivePresentationState(
+        getCurrentAsLoaded().copyWith(
+          selectedClubSlug: clubSlug,
+          selectedDate: date,
+          clearSelectedSlot: true,
+          clearVisibleSelectedIndex: true,
+          isLoading: true,
+          clearErrorMessage: true,
+        ),
+      );
+    });
 
     await _slotSubscription?.cancel();
     _slotSubscription = _useCase
-        .onFetchAvailableSlots(clubSlug: clubSlug, date: date)
+        .onFetchAvailableSlots(
+          clubSlug: clubSlug,
+          date: DateUtil.formatApiDate(date),
+        )
         .listen((result) {
           switch (result.status) {
             case DataStatus.success:
-              _updateState(
-                _currentState.copyWith(
-                  bookingSlots: result.data,
-                  isLoading: false,
-                  clearErrorMessage: true,
-                ),
-              );
+              emitViewState((state) {
+                return _derivePresentationState(
+                  getCurrentAsLoaded().copyWith(
+                    bookingSlots: result.data,
+                    isLoading: false,
+                    clearErrorMessage: true,
+                  ),
+                );
+              });
             case DataStatus.error:
-              _updateState(
-                _currentState.copyWith(
-                  bookingSlots: const <BookingSlotModel>[],
-                  isLoading: false,
-                  errorMessage: result.apiMessage.isEmpty
-                      ? 'Failed to fetch available slots'
-                      : result.apiMessage,
-                ),
-              );
+              emitViewState((state) {
+                return _derivePresentationState(
+                  getCurrentAsLoaded().copyWith(
+                    bookingSlots: const <BookingSlotModel>[],
+                    isLoading: false,
+                    errorMessage: result.apiMessage.isEmpty
+                        ? 'Failed to fetch available slots'
+                        : result.apiMessage,
+                  ),
+                );
+              });
             default:
               break;
           }
         });
-  }
-
-  BookingSubmissionSlotDataLoaded get _currentState {
-    final state = _viewState;
-    if (state is BookingSubmissionSlotDataLoaded) {
-      return state;
-    }
-
-    return const BookingSubmissionSlotDataLoaded();
   }
 
   String _resolveSelectedClub(List<String> clubs) {
@@ -144,23 +234,56 @@ class BookingSubmissionSlotViewModel extends ChangeNotifier
       return emptyString;
     }
 
-    if (clubs.contains(_currentState.selectedClubSlug)) {
-      return _currentState.selectedClubSlug;
+    if (clubs.contains(getCurrentAsLoaded().selectedClubSlug)) {
+      return getCurrentAsLoaded().selectedClubSlug;
     }
 
     return clubs.first;
   }
 
-  void _updateState(BookingSubmissionSlotViewState state) {
-    _viewState = state;
-    notifyListeners();
+  BookingSubmissionSlotDataLoaded _derivePresentationState(
+    BookingSubmissionSlotDataLoaded state,
+  ) {
+    final today = DateUtil.dateOnly(DateTime.now());
+    final allSlots = TeeTimeSlot.values;
+    final availableSlots = state.bookingSlots
+        .map((slot) => TeeTimeSlot.fromLabel(slot.slotList))
+        .whereType<TeeTimeSlot>()
+        .toSet();
+    final visibleSlots = allSlots
+        .where((slot) => slot.period == state.selectedPeriod)
+        .toList();
+    final visibleSelectedIndex = state.selectedSlot == null
+        ? null
+        : visibleSlots.indexOf(state.selectedSlot!);
+    final visibleUnavailableIndices = visibleSlots
+        .asMap()
+        .entries
+        .where((entry) => !availableSlots.contains(entry.value))
+        .map((entry) => entry.key)
+        .toSet();
+
+    return state.copyWith(
+      selectedDate: DateUtil.dateOnly(state.selectedDate),
+      pickerInitialDate: state.selectedDate.isBefore(today)
+          ? today
+          : DateUtil.dateOnly(state.selectedDate),
+      visibleSlots: visibleSlots,
+      visibleUnavailableIndices: visibleUnavailableIndices,
+      visibleSelectedIndex: visibleSelectedIndex == -1
+          ? null
+          : visibleSelectedIndex,
+      canContinue:
+          state.selectedClubSlug.isNotEmpty &&
+          state.selectedSlot != null &&
+          availableSlots.contains(state.selectedSlot!),
+    );
   }
 
   @override
   void dispose() {
     _golfClubSubscription?.cancel();
     _slotSubscription?.cancel();
-    _navEffectsController.close();
     super.dispose();
   }
 }

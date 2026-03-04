@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class TeeTimeCalendarStrip extends StatelessWidget {
-  const TeeTimeCalendarStrip({
+class BookingSubmissionCalendar extends StatelessWidget {
+  const BookingSubmissionCalendar({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
