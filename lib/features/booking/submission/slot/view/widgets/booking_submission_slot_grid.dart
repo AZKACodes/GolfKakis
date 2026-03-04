@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
 
-class TeeTimeSlotGrid extends StatelessWidget {
-  const TeeTimeSlotGrid({
+class BookingSubmissionSlotGrid extends StatelessWidget {
+  const BookingSubmissionSlotGrid({
     super.key,
     required this.slots,
     required this.selectedIndex,
@@ -9,7 +10,7 @@ class TeeTimeSlotGrid extends StatelessWidget {
     required this.onSelected,
   });
 
-  final List<String> slots;
+  final List<TeeTimeSlot> slots;
   final int? selectedIndex;
   final Set<int> unavailableIndices;
   final ValueChanged<int> onSelected;
@@ -94,7 +95,7 @@ class TeeTimeSlotGrid extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        slots[index],
+                        slots[index].label,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: textColor,
                               fontWeight: FontWeight.w700,
