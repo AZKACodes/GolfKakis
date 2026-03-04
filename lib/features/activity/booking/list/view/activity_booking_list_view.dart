@@ -1,67 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
+
+import '../viewmodel/activity_booking_list_view_contract.dart';
 
 class ActivityBookingListView extends StatelessWidget {
-  const ActivityBookingListView({super.key});
+  const ActivityBookingListView({
+    required this.state,
+    required this.onViewBookingDetailClick,
+    super.key,
+  });
 
-  static const List<_BookingItem> _upcomingBookings = [
-    _BookingItem(
-      courseName: 'Kinrara Golf Club',
-      dateLabel: 'Fri, Mar 6',
-      timeLabel: '07:30 AM',
-      playersLabel: '2 Players',
-      feeLabel: 'MYR 39',
-      statusLabel: 'Confirmed',
-      highlightColor: Color(0xFF1E7D66),
-    ),
-    _BookingItem(
-      courseName: 'Saujana Golf & Country Club',
-      dateLabel: 'Sun, Mar 8',
-      timeLabel: '08:10 AM',
-      playersLabel: '4 Players',
-      feeLabel: 'MYR 52',
-      statusLabel: 'Pending Payment',
-      highlightColor: Color(0xFF9A6A00),
-    ),
-    _BookingItem(
-      courseName: 'Mines Resort & Golf Club',
-      dateLabel: 'Wed, Mar 11',
-      timeLabel: '07:50 AM',
-      playersLabel: '3 Players',
-      feeLabel: 'MYR 47',
-      statusLabel: 'Confirmed',
-      highlightColor: Color(0xFF1E7D66),
-    ),
-  ];
-
-  static const List<_BookingItem> _pastBookings = [
-    _BookingItem(
-      courseName: 'Kota Permai Golf & Country Club',
-      dateLabel: 'Sat, Mar 1',
-      timeLabel: '07:20 AM',
-      playersLabel: '4 Players',
-      feeLabel: 'MYR 50',
-      statusLabel: 'Completed',
-      highlightColor: Color(0xFF345C8A),
-    ),
-    _BookingItem(
-      courseName: 'Tropicana Golf & Country Resort',
-      dateLabel: 'Tue, Feb 25',
-      timeLabel: '08:00 AM',
-      playersLabel: '3 Players',
-      feeLabel: 'MYR 44',
-      statusLabel: 'Completed',
-      highlightColor: Color(0xFF345C8A),
-    ),
-    _BookingItem(
-      courseName: 'Seri Selangor Golf Club',
-      dateLabel: 'Fri, Feb 21',
-      timeLabel: '07:40 AM',
-      playersLabel: '2 Players',
-      feeLabel: 'MYR 34',
-      statusLabel: 'Cancelled',
-      highlightColor: Color(0xFF8A3D3D),
-    ),
-  ];
+  final ActivityBookingListViewState state;
+  final ValueChanged<BookingModel> onViewBookingDetailClick;
 
   @override
   Widget build(BuildContext context) {
@@ -122,11 +72,17 @@ class ActivityBookingListView extends StatelessWidget {
               ],
             ),
           ),
-          const Expanded(
+          Expanded(
             child: TabBarView(
               children: [
-                _BookingList(bookings: _upcomingBookings),
-                _BookingList(bookings: _pastBookings),
+                _BookingList(
+                  bookings: state.upcomingBookings,
+                  onViewBookingDetailClick: onViewBookingDetailClick,
+                ),
+                _BookingList(
+                  bookings: state.pastBookings,
+                  onViewBookingDetailClick: onViewBookingDetailClick,
+                ),
               ],
             ),
           ),
@@ -137,9 +93,13 @@ class ActivityBookingListView extends StatelessWidget {
 }
 
 class _BookingList extends StatelessWidget {
-  const _BookingList({required this.bookings});
+  const _BookingList({
+    required this.bookings,
+    required this.onViewBookingDetailClick,
+  });
 
-  final List<_BookingItem> bookings;
+  final List<BookingModel> bookings;
+  final ValueChanged<BookingModel> onViewBookingDetailClick;
 
   @override
   Widget build(BuildContext context) {
@@ -147,15 +107,22 @@ class _BookingList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemCount: bookings.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, index) => _BookingCard(item: bookings[index]),
+      itemBuilder: (_, index) => _BookingCard(
+        item: bookings[index],
+        onViewBookingDetailClick: onViewBookingDetailClick,
+      ),
     );
   }
 }
 
 class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.item});
+  const _BookingCard({
+    required this.item,
+    required this.onViewBookingDetailClick,
+  });
 
-  final _BookingItem item;
+  final BookingModel item;
+  final ValueChanged<BookingModel> onViewBookingDetailClick;
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +150,7 @@ class _BookingCard extends StatelessWidget {
               ),
               _StatusChip(
                 label: item.statusLabel,
-                backgroundColor: item.highlightColor,
+                backgroundColor: item.statusColor,
               ),
             ],
           ),
@@ -200,6 +167,15 @@ class _BookingCard extends StatelessWidget {
                 text: item.feeLabel,
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => onViewBookingDetailClick(item),
+              icon: const Icon(Icons.visibility_outlined),
+              label: const Text('View Details'),
+            ),
           ),
         ],
       ),
@@ -261,24 +237,4 @@ class _MetaChip extends StatelessWidget {
       ),
     );
   }
-}
-
-class _BookingItem {
-  const _BookingItem({
-    required this.courseName,
-    required this.dateLabel,
-    required this.timeLabel,
-    required this.playersLabel,
-    required this.feeLabel,
-    required this.statusLabel,
-    required this.highlightColor,
-  });
-
-  final String courseName;
-  final String dateLabel;
-  final String timeLabel;
-  final String playersLabel;
-  final String feeLabel;
-  final String statusLabel;
-  final Color highlightColor;
 }

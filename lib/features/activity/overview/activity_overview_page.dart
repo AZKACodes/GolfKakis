@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/activity/booking/detail/activity_booking_detail_page.dart';
 import 'package:xxx_demo_app/features/activity/booking/list/activity_booking_list_page.dart';
 
 import 'view/activity_overview_view.dart';
@@ -33,6 +34,17 @@ class _ActivityOverviewPageState extends State<ActivityOverviewPage> {
           ),
         );
       }
+
+      if (effect is NavigateToActivityBookingDetail) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ActivityBookingDetailPage(booking: effect.booking),
+          ),
+        );
+      }
     });
   }
 
@@ -50,6 +62,12 @@ class _ActivityOverviewPageState extends State<ActivityOverviewPage> {
       child: ActivityOverviewDashboardView(
         onBookingListClick: () =>
             _viewModel.onUserIntent(const OnBookingListClick()),
+        onUpcomingBookingDetailClick: () =>
+            _viewModel.onUserIntent(const OnUpcomingBookingDetailClick()),
+        onRecentRoundOneDetailClick: () =>
+            _viewModel.onUserIntent(const OnRecentRoundOneDetailClick()),
+        onRecentRoundTwoDetailClick: () =>
+            _viewModel.onUserIntent(const OnRecentRoundTwoDetailClick()),
       ),
     );
   }
