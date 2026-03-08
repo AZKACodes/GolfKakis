@@ -11,7 +11,8 @@ class BookingSubmissionSlotPage extends StatefulWidget {
   const BookingSubmissionSlotPage({super.key});
 
   @override
-  State<BookingSubmissionSlotPage> createState() => _BookingSubmissionSlotPageState();
+  State<BookingSubmissionSlotPage> createState() =>
+      _BookingSubmissionSlotPageState();
 }
 
 class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
@@ -27,7 +28,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
-    
+
     _viewModel.performAction(const OnInit());
   }
 
@@ -46,8 +47,11 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionDetailPage(
+              golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               teeTimeSlot: effect.teeTimeSlot,
+              pricePerPerson: effect.pricePerPerson,
+              currency: effect.currency,
               guestId: effect.guestId,
             ),
           ),

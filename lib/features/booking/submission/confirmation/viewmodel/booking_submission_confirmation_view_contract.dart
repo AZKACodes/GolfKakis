@@ -1,5 +1,6 @@
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionConfirmationViewContract {
@@ -17,8 +18,11 @@ sealed class BookingSubmissionConfirmationViewState extends ViewState {
 class BookingSubmissionConfirmationDataLoaded
     extends BookingSubmissionConfirmationViewState {
   BookingSubmissionConfirmationDataLoaded({
+    this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     this.teeTimeSlot = emptyString,
+    this.pricePerPerson = 0,
+    this.currency = DefaultConstantUtil.defaultCurrency,
     this.guestId,
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
@@ -32,8 +36,11 @@ class BookingSubmissionConfirmationDataLoaded
     return BookingSubmissionConfirmationDataLoaded();
   }
 
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
   final String hostName;
   final String hostPhoneNumber;
@@ -42,9 +49,17 @@ class BookingSubmissionConfirmationDataLoaded
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
 
+  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+
+  String get totalCostLabel =>
+      _formatCurrency(pricePerPerson * playerCount, currency);
+
   BookingSubmissionConfirmationDataLoaded copyWith({
+    String? golfClubName,
     String? golfClubSlug,
     String? teeTimeSlot,
+    double? pricePerPerson,
+    String? currency,
     String? guestId,
     String? hostName,
     String? hostPhoneNumber,
@@ -54,8 +69,11 @@ class BookingSubmissionConfirmationDataLoaded
     List<BookingSubmissionPlayerModel>? playerDetails,
   }) {
     return BookingSubmissionConfirmationDataLoaded(
+      golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      currency: currency ?? this.currency,
       guestId: guestId ?? this.guestId,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
@@ -73,8 +91,11 @@ sealed class BookingSubmissionConfirmationUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionConfirmationUserIntent {
   const OnInit({
+    required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
     required this.hostName,
     required this.hostPhoneNumber,
@@ -84,8 +105,11 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.playerDetails,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
   final String hostName;
   final String hostPhoneNumber;
@@ -116,8 +140,11 @@ class NavigateToBookingSubmissionSuccess
   const NavigateToBookingSubmissionSuccess({
     required this.bookingId,
     required this.bookingDate,
+    required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
@@ -125,13 +152,20 @@ class NavigateToBookingSubmissionSuccess
     required this.golfCartCount,
   });
 
+  final String golfClubName;
   final String bookingId;
   final String bookingDate;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
   final int caddieCount;
   final int golfCartCount;
+}
+
+String _formatCurrency(double value, String currency) {
+  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
 }

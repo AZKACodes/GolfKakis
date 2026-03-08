@@ -9,8 +9,11 @@ class BookingSubmissionSuccessPage extends StatefulWidget {
   const BookingSubmissionSuccessPage({
     required this.bookingId,
     required this.bookingDate,
+    required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
@@ -21,8 +24,11 @@ class BookingSubmissionSuccessPage extends StatefulWidget {
 
   final String bookingId;
   final String bookingDate;
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -48,8 +54,11 @@ class _BookingSubmissionSuccessPageState
       OnInit(
         bookingId: widget.bookingId,
         bookingDate: widget.bookingDate,
+        golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         teeTimeSlot: widget.teeTimeSlot,
+        pricePerPerson: widget.pricePerPerson,
+        currency: widget.currency,
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
         playerCount: widget.playerCount,

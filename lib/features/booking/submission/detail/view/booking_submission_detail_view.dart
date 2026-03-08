@@ -42,10 +42,10 @@ class BookingSubmissionDetailView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                child: const Text('Continue'),
+                child: Text('Continue • ${state.totalCostLabel}'),
               ),
             ),
           ),

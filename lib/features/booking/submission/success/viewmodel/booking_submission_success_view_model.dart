@@ -25,8 +25,11 @@ class BookingSubmissionSuccessViewModel
           return getCurrentAsLoaded().copyWith(
             bookingId: intent.bookingId,
             bookingDate: intent.bookingDate,
+            golfClubName: intent.golfClubName,
             golfClubSlug: intent.golfClubSlug,
             teeTimeSlot: intent.teeTimeSlot,
+            pricePerPerson: intent.pricePerPerson,
+            currency: intent.currency,
             hostName: intent.hostName,
             hostPhoneNumber: intent.hostPhoneNumber,
             playerCount: intent.playerCount,

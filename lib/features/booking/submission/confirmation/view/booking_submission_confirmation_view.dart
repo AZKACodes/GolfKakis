@@ -37,11 +37,13 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
                         ),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(false),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
                             child: const Text('Review Again'),
                           ),
                           FilledButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(true),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
                             child: const Text('Proceed'),
                           ),
                         ],
@@ -63,7 +65,7 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Confirm Booking'),
+                child: Text('Confirm Booking • ${state.totalCostLabel}'),
               ),
             ),
           ),

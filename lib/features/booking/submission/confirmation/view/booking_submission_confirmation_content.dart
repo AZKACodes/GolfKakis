@@ -3,10 +3,7 @@ import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/
 import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
-  const BookingSubmissionConfirmationContent({
-    required this.state,
-    super.key,
-  });
+  const BookingSubmissionConfirmationContent({required this.state, super.key});
 
   final BookingSubmissionConfirmationDataLoaded state;
 
@@ -51,11 +48,15 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                     children: [
                       _InfoChip(
                         icon: Icons.pin_drop_outlined,
-                        label: state.golfClubSlug,
+                        label: state.golfClubName,
                       ),
                       _InfoChip(
                         icon: Icons.schedule_outlined,
                         label: state.teeTimeSlot,
+                      ),
+                      _InfoChip(
+                        icon: Icons.payments_outlined,
+                        label: '${state.pricePerPersonLabel} / pax',
                       ),
                       _InfoChip(
                         icon: Icons.perm_identity_outlined,
@@ -111,6 +112,11 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+                _InfoRow(label: 'Price/Pax', value: state.pricePerPersonLabel),
+                _InfoRow(label: 'Total Cost', value: state.totalCostLabel),
               ],
             ),
             const SizedBox(height: 16),

@@ -9,8 +9,11 @@ import 'package:xxx_demo_app/features/foundation/model/booking/booking_submissio
 
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
+    required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
     required this.hostName,
     required this.hostPhoneNumber,
@@ -21,8 +24,11 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     super.key,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
   final String hostName;
   final String hostPhoneNumber;
@@ -49,8 +55,11 @@ class _BookingSubmissionConfirmationPageState
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
       OnInit(
+        golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         teeTimeSlot: widget.teeTimeSlot,
+        pricePerPerson: widget.pricePerPerson,
+        currency: widget.currency,
         guestId: widget.guestId,
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
@@ -79,8 +88,11 @@ class _BookingSubmissionConfirmationPageState
             builder: (_) => BookingSubmissionSuccessPage(
               bookingId: effect.bookingId,
               bookingDate: effect.bookingDate,
+              golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               teeTimeSlot: effect.teeTimeSlot,
+              pricePerPerson: effect.pricePerPerson,
+              currency: effect.currency,
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,
               playerCount: effect.playerCount,
