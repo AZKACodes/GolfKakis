@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../device/device_id_service.dart';
 import '../enums/session/session_status.dart';
+import '../enums/session/user_role.dart';
 import 'session_state.dart';
 
 class SessionManager extends ChangeNotifier {
@@ -27,10 +28,11 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void login({required String username}) {
+  void login({required String username, required UserRole role}) {
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
       authenticatedUsername: username,
+      authenticatedUserRole: role,
     );
     notifyListeners();
   }
@@ -39,6 +41,7 @@ class SessionManager extends ChangeNotifier {
     _state = _state.copyWith(
       status: SessionStatus.loggedOut,
       clearAuthenticatedUsername: true,
+      clearAuthenticatedUserRole: true,
     );
     notifyListeners();
   }
