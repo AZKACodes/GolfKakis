@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:xxx_demo_app/features/activity/booking/detail/activity_booking_detail_page.dart';
+import 'package:xxx_demo_app/features/activity/booking/list/data/activity_booking_list_repository_impl.dart';
 
 import 'view/activity_booking_list_view.dart';
 import 'viewmodel/activity_booking_list_view_contract.dart';
@@ -15,14 +16,21 @@ class ActivityBookingListPage extends StatefulWidget {
       _ActivityBookingListPageState();
 }
 
-class _ActivityBookingListPageState extends State<ActivityBookingListPage> {
+class _ActivityBookingListPageState extends State<ActivityBookingListPage>
+    with SingleTickerProviderStateMixin {
   late final ActivityBookingListViewModel _viewModel;
+  late final TabController _tabController;
   StreamSubscription<ActivityBookingListNavEffect>? _navEffectSubscription;
+  int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ActivityBookingListViewModel();
+    _viewModel = ActivityBookingListViewModel(
+      repository: ActivityBookingListRepositoryImpl(),
+    );
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(_handleTabChanged);
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is NavigateToActivityBookingDetail) {
         if (!mounted) {
@@ -35,11 +43,30 @@ class _ActivityBookingListPageState extends State<ActivityBookingListPage> {
         );
       }
     });
+    _viewModel.onUserIntent(const OnInit());
+  }
+
+  void _handleTabChanged() {
+    if (_tabController.index == _currentTabIndex) {
+      return;
+    }
+
+    _currentTabIndex = _tabController.index;
+    _viewModel.onUserIntent(
+      OnTabChanged(
+        _currentTabIndex == 0
+            ? ActivityBookingListTab.upcoming
+            : ActivityBookingListTab.past,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _navEffectSubscription?.cancel();
+    _tabController
+      ..removeListener(_handleTabChanged)
+      ..dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -49,10 +76,16 @@ class _ActivityBookingListPageState extends State<ActivityBookingListPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('My Bookings')),
       body: SafeArea(
-        child: ActivityBookingListView(
-          state: _viewModel.viewState,
-          onViewBookingDetailClick: (booking) =>
-              _viewModel.onUserIntent(OnViewBookingDetailClick(booking)),
+        child: AnimatedBuilder(
+          animation: _viewModel,
+          builder: (context, child) => ActivityBookingListView(
+            controller: _tabController,
+            state: _viewModel.viewState,
+            onRetryClick: (tab) => _viewModel.onUserIntent(OnRetryClick(tab)),
+            onRefresh: _viewModel.onRefresh,
+            onViewBookingDetailClick: (booking) =>
+                _viewModel.onUserIntent(OnViewBookingDetailClick(booking)),
+          ),
         ),
       ),
     );

@@ -11,16 +11,21 @@ class BookingApiService {
     return _apiClient.getJson('/booking/golf-clubs');
   }
 
+  Future<dynamic> onFetchBookingUpcomingList() {
+    return _apiClient.getJson('/booking/list/upcoming');
+  }
+
+  Future<dynamic> onFetchBookingPastList() {
+    return _apiClient.getJson('/booking/list/past');
+  }
+
   Future<dynamic> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
   }) {
     return _apiClient.postJson(
       '/booking/available-slots',
-      body: <String, dynamic>{
-        'clubSlug': clubSlug,
-        'date': date
-      },
+      body: <String, dynamic>{'clubSlug': clubSlug, 'date': date},
     );
   }
 
@@ -30,9 +35,7 @@ class BookingApiService {
     return _apiClient.postJson('/booking/submit', body: request.toJson());
   }
 
-  Future<dynamic> onFetchBookingDetails({
-    required String bookingSlug
-    }) {
+  Future<dynamic> onFetchBookingDetails({required String bookingSlug}) {
     return _apiClient.getJson('/booking/$bookingSlug');
   }
 }
