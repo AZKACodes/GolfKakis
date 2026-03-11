@@ -26,7 +26,7 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: ElevatedButton(
-                onPressed: () async {
+                onPressed: state.isSubmitting ? null : () async {
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) {
@@ -65,7 +65,13 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Text('Confirm Booking • ${state.totalCostLabel}'),
+                child: state.isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text('Confirm Booking • ${state.totalCostLabel}'),
               ),
             ),
           ),

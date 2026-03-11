@@ -1,5 +1,6 @@
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
 import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -20,6 +21,7 @@ class BookingSubmissionConfirmationDataLoaded
   BookingSubmissionConfirmationDataLoaded({
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
+    DateTime? selectedDate,
     this.teeTimeSlot = emptyString,
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
@@ -30,7 +32,10 @@ class BookingSubmissionConfirmationDataLoaded
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
-  }) : super();
+    this.isSubmitting = false,
+    this.errorMessage = emptyString,
+  }) : selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
+       super();
 
   factory BookingSubmissionConfirmationDataLoaded.initial() {
     return BookingSubmissionConfirmationDataLoaded();
@@ -38,6 +43,7 @@ class BookingSubmissionConfirmationDataLoaded
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -48,6 +54,8 @@ class BookingSubmissionConfirmationDataLoaded
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final bool isSubmitting;
+  final String errorMessage;
 
   String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
 
@@ -57,6 +65,7 @@ class BookingSubmissionConfirmationDataLoaded
   BookingSubmissionConfirmationDataLoaded copyWith({
     String? golfClubName,
     String? golfClubSlug,
+    DateTime? selectedDate,
     String? teeTimeSlot,
     double? pricePerPerson,
     String? currency,
@@ -67,10 +76,14 @@ class BookingSubmissionConfirmationDataLoaded
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
+    bool? isSubmitting,
+    String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return BookingSubmissionConfirmationDataLoaded(
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
+      selectedDate: selectedDate ?? this.selectedDate,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
@@ -81,6 +94,10 @@ class BookingSubmissionConfirmationDataLoaded
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      errorMessage: clearErrorMessage
+          ? emptyString
+          : (errorMessage ?? this.errorMessage),
     );
   }
 }
@@ -93,6 +110,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   const OnInit({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -107,6 +125,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -139,6 +158,7 @@ class NavigateToBookingSubmissionSuccess
     extends BookingSubmissionConfirmationNavEffect {
   const NavigateToBookingSubmissionSuccess({
     required this.bookingId,
+    required this.bookingSlug,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -154,6 +174,7 @@ class NavigateToBookingSubmissionSuccess
 
   final String golfClubName;
   final String bookingId;
+  final String bookingSlug;
   final String bookingDate;
   final String golfClubSlug;
   final String teeTimeSlot;

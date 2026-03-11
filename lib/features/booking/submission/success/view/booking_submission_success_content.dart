@@ -45,6 +45,10 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+            if (state.isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 16),
+            ],
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),

@@ -1,3 +1,9 @@
+import 'dart:async';
+
+import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:xxx_demo_app/features/foundation/model/data_status_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_confirmation_view_contract.dart';
@@ -10,7 +16,10 @@ class BookingSubmissionConfirmationViewModel
           BookingSubmissionConfirmationNavEffect
         >
     implements BookingSubmissionConfirmationViewContract {
-  BookingSubmissionConfirmationViewModel();
+  BookingSubmissionConfirmationViewModel(this._useCase);
+
+  final BookingSubmissionSlotUseCase _useCase;
+  StreamSubscription<DataStatusModel<dynamic>>? _submissionSubscription;
 
   @override
   BookingSubmissionConfirmationViewState createInitialState() {
@@ -27,6 +36,7 @@ class BookingSubmissionConfirmationViewModel
           return getCurrentAsLoaded().copyWith(
             golfClubName: intent.golfClubName,
             golfClubSlug: intent.golfClubSlug,
+            selectedDate: intent.selectedDate,
             teeTimeSlot: intent.teeTimeSlot,
             pricePerPerson: intent.pricePerPerson,
             currency: intent.currency,
@@ -37,28 +47,17 @@ class BookingSubmissionConfirmationViewModel
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
             playerDetails: intent.playerDetails,
+            clearErrorMessage: true,
           );
         });
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnConfirmClick():
         final current = getCurrentAsLoaded();
-        sendNavEffect(
-          () => NavigateToBookingSubmissionSuccess(
-            bookingId: _buildBookingId(current),
-            bookingDate: _buildBookingDate(),
-            golfClubName: current.golfClubName,
-            golfClubSlug: current.golfClubSlug,
-            teeTimeSlot: current.teeTimeSlot,
-            pricePerPerson: current.pricePerPerson,
-            currency: current.currency,
-            hostName: current.hostName,
-            hostPhoneNumber: current.hostPhoneNumber,
-            playerCount: current.playerCount,
-            caddieCount: current.caddieCount,
-            golfCartCount: current.golfCartCount,
-          ),
-        );
+        if (current.isSubmitting) {
+          return;
+        }
+        await _createBookingSubmission(current);
     }
   }
 
@@ -71,6 +70,78 @@ class BookingSubmissionConfirmationViewModel
     return BookingSubmissionConfirmationDataLoaded.initial();
   }
 
+  Future<void> _createBookingSubmission(
+    BookingSubmissionConfirmationDataLoaded current,
+  ) async {
+    emitViewState((state) {
+      return getCurrentAsLoaded().copyWith(
+        isSubmitting: true,
+        clearErrorMessage: true,
+      );
+    });
+
+    await _submissionSubscription?.cancel();
+    _submissionSubscription = _useCase
+        .onCreateBookingSubmission(request: _buildRequest(current))
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final latest = getCurrentAsLoaded();
+              emitViewState((state) {
+                return latest.copyWith(isSubmitting: false, clearErrorMessage: true);
+              });
+              sendNavEffect(
+                () => NavigateToBookingSubmissionSuccess(
+                  bookingId: _resolveBookingId(result.data, latest),
+                  bookingSlug: _resolveBookingSlug(result.data),
+                  bookingDate: DateUtil.formatApiDate(latest.selectedDate),
+                  golfClubName: latest.golfClubName,
+                  golfClubSlug: latest.golfClubSlug,
+                  teeTimeSlot: latest.teeTimeSlot,
+                  pricePerPerson: latest.pricePerPerson,
+                  currency: latest.currency,
+                  hostName: latest.hostName,
+                  hostPhoneNumber: latest.hostPhoneNumber,
+                  playerCount: latest.playerCount,
+                  caddieCount: latest.caddieCount,
+                  golfCartCount: latest.golfCartCount,
+                ),
+              );
+            case DataStatus.error:
+              emitViewState((state) {
+                return getCurrentAsLoaded().copyWith(
+                  isSubmitting: false,
+                  errorMessage: result.apiMessage.isEmpty
+                      ? 'Failed to submit booking. Please try again.'
+                      : result.apiMessage,
+                );
+              });
+            default:
+              break;
+          }
+        });
+  }
+
+  BookingSubmissionRequestModel _buildRequest(
+    BookingSubmissionConfirmationDataLoaded current,
+  ) {
+    return BookingSubmissionRequestModel(
+      golfClubName: current.golfClubName,
+      golfClubSlug: current.golfClubSlug,
+      bookingDate: DateUtil.formatApiDate(current.selectedDate),
+      teeTimeSlot: current.teeTimeSlot,
+      pricePerPerson: current.pricePerPerson,
+      currency: current.currency,
+      guestId: current.guestId,
+      hostName: current.hostName,
+      hostPhoneNumber: current.hostPhoneNumber,
+      playerCount: current.playerCount,
+      caddieCount: current.caddieCount,
+      golfCartCount: current.golfCartCount,
+      playerDetails: current.playerDetails,
+    );
+  }
+
   String _buildBookingId(BookingSubmissionConfirmationDataLoaded current) {
     final normalizedClub = current.golfClubSlug
         .replaceAll('-', '')
@@ -81,11 +152,48 @@ class BookingSubmissionConfirmationViewModel
     return '${normalizedClub.substring(0, normalizedClub.length.clamp(0, 4))}-$suffix';
   }
 
-  String _buildBookingDate() {
-    final now = DateTime.now();
-    final year = now.year.toString().padLeft(4, '0');
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
+  String _resolveBookingId(
+    dynamic response,
+    BookingSubmissionConfirmationDataLoaded current,
+  ) {
+    if (response is Map<String, dynamic>) {
+      final dynamic bookingId =
+          response['bookingId'] ??
+          response['booking_id'] ??
+          response['id'] ??
+          response['reference'] ??
+          response['bookingReference'];
+      if (bookingId is String && bookingId.trim().isNotEmpty) {
+        return bookingId;
+      }
+      if (bookingId != null) {
+        return bookingId.toString();
+      }
+    }
+
+    return _buildBookingId(current);
+  }
+
+  String _resolveBookingSlug(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      final dynamic bookingSlug =
+          response['bookingSlug'] ??
+          response['booking_slug'] ??
+          response['slug'];
+      if (bookingSlug is String && bookingSlug.trim().isNotEmpty) {
+        return bookingSlug;
+      }
+      if (bookingSlug != null) {
+        return bookingSlug.toString();
+      }
+    }
+
+    return '';
+  }
+
+  @override
+  void dispose() {
+    _submissionSubscription?.cancel();
+    super.dispose();
   }
 }

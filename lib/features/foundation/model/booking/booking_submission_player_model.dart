@@ -18,4 +18,8 @@ class BookingSubmissionPlayerModel {
       phoneNumber: phoneNumber ?? this.phoneNumber,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{'name': name, 'phoneNumber': phoneNumber};
+  }
 }

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
+import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:xxx_demo_app/features/booking/submission/confirmation/view/booking_submission_confirmation_view.dart';
 import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
 import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
@@ -11,6 +13,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -26,6 +29,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -51,12 +55,15 @@ class _BookingSubmissionConfirmationPageState
   @override
   void initState() {
     super.initState();
-    _viewModel = BookingSubmissionConfirmationViewModel();
+    _viewModel = BookingSubmissionConfirmationViewModel(
+      BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
+    );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
       OnInit(
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
+        selectedDate: widget.selectedDate,
         teeTimeSlot: widget.teeTimeSlot,
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
@@ -87,6 +94,7 @@ class _BookingSubmissionConfirmationPageState
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionSuccessPage(
               bookingId: effect.bookingId,
+              bookingSlug: effect.bookingSlug,
               bookingDate: effect.bookingDate,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,

@@ -1,3 +1,4 @@
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
 
@@ -9,5 +10,9 @@ abstract class BookingSubmissionSlotRepository {
     required String date,
   });
 
-  Future<dynamic> onCreateBookingSubmission();
+  Future<dynamic> onCreateBookingSubmission({
+    required BookingSubmissionRequestModel request,
+  });
+
+  Future<dynamic> onFetchBookingDetails({required String bookingSlug});
 }

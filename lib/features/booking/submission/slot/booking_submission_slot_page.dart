@@ -49,6 +49,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
             builder: (_) => BookingSubmissionDetailPage(
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
+              selectedDate: effect.selectedDate,
               teeTimeSlot: effect.teeTimeSlot,
               pricePerPerson: effect.pricePerPerson,
               currency: effect.currency,

@@ -28,6 +28,7 @@ class BookingSubmissionDetailViewModel
             getCurrentAsLoaded().copyWith(
               golfClubName: intent.golfClubName,
               golfClubSlug: intent.golfClubSlug,
+              selectedDate: intent.selectedDate,
               teeTimeSlot: intent.teeTimeSlot,
               pricePerPerson: intent.pricePerPerson,
               currency: intent.currency,
@@ -113,6 +114,7 @@ class BookingSubmissionDetailViewModel
           () => NavigateToBookingSubmissionConfirmation(
             golfClubName: current.golfClubName,
             golfClubSlug: current.golfClubSlug,
+            selectedDate: current.selectedDate,
             teeTimeSlot: current.teeTimeSlot,
             pricePerPerson: current.pricePerPerson,
             currency: current.currency,

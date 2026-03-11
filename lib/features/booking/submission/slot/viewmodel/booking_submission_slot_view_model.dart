@@ -99,6 +99,7 @@ class BookingSubmissionSlotViewModel
           () => NavigateToBookingSubmissionDetail(
             golfClubName: current.selectedClubName,
             golfClubSlug: current.selectedClubSlug,
+            selectedDate: current.selectedDate,
             teeTimeSlot: selectedSlot.time,
             pricePerPerson: selectedSlot.price,
             currency: selectedSlot.currency,

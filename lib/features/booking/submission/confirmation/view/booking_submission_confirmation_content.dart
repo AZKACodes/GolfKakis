@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
+import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
 import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
@@ -52,7 +53,8 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                       ),
                       _InfoChip(
                         icon: Icons.schedule_outlined,
-                        label: state.teeTimeSlot,
+                        label:
+                            '${DateUtil.formatApiDate(state.selectedDate)} • ${state.teeTimeSlot}',
                       ),
                       _InfoChip(
                         icon: Icons.payments_outlined,
@@ -69,6 +71,16 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                 ],
               ),
             ),
+            if (state.errorMessage.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                state.errorMessage,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             _SectionCard(
               title: 'Host Contact',

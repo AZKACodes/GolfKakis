@@ -196,6 +196,7 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   const NavigateToBookingSubmissionDetail({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -204,6 +205,7 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;

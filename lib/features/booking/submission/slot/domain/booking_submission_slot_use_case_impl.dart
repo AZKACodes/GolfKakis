@@ -1,4 +1,5 @@
 import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
@@ -67,9 +68,42 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
   }
 
   @override
-  Stream<DataStatusModel<dynamic>> onCreateBookingSubmission() async* {
+  Stream<DataStatusModel<dynamic>> onCreateBookingSubmission({
+    required BookingSubmissionRequestModel request,
+  }) async* {
     try {
-      final response = await _repository.onCreateBookingSubmission();
+      final response = await _repository.onCreateBookingSubmission(
+        request: request,
+      );
+
+      yield DataStatusModel<dynamic>(
+        data: response,
+        status: DataStatus.success,
+      );
+    } on ApiException catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: error.message,
+        rawResponseCode: error.statusCode ?? 0,
+      );
+    } catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: error.toString(),
+      );
+    }
+  }
+
+  @override
+  Stream<DataStatusModel<dynamic>> onFetchBookingDetails({
+    required String bookingSlug,
+  }) async* {
+    try {
+      final response = await _repository.onFetchBookingDetails(
+        bookingSlug: bookingSlug,
+      );
 
       yield DataStatusModel<dynamic>(
         data: response,

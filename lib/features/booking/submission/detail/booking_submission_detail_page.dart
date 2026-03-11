@@ -9,6 +9,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -18,6 +19,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -45,6 +47,7 @@ class _BookingSubmissionDetailPageState
       OnInit(
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
+        selectedDate: widget.selectedDate,
         teeTimeSlot: widget.teeTimeSlot,
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
@@ -70,6 +73,7 @@ class _BookingSubmissionDetailPageState
             builder: (_) => BookingSubmissionConfirmationPage(
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
+              selectedDate: effect.selectedDate,
               teeTimeSlot: effect.teeTimeSlot,
               pricePerPerson: effect.pricePerPerson,
               currency: effect.currency,

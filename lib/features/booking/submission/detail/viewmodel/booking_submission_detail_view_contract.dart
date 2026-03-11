@@ -24,6 +24,7 @@ class BookingSubmissionDetailDataLoaded
   BookingSubmissionDetailDataLoaded({
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
+    DateTime? selectedDate,
     this.teeTimeSlot = emptyString,
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
@@ -36,7 +37,8 @@ class BookingSubmissionDetailDataLoaded
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
     this.canContinue = false,
-  }) : super();
+  }) : selectedDate = selectedDate ?? DateTime.now(),
+       super();
 
   factory BookingSubmissionDetailDataLoaded.initial() {
     return BookingSubmissionDetailDataLoaded();
@@ -44,6 +46,7 @@ class BookingSubmissionDetailDataLoaded
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -65,6 +68,7 @@ class BookingSubmissionDetailDataLoaded
   BookingSubmissionDetailDataLoaded copyWith({
     String? golfClubName,
     String? golfClubSlug,
+    DateTime? selectedDate,
     String? teeTimeSlot,
     double? pricePerPerson,
     String? currency,
@@ -81,6 +85,7 @@ class BookingSubmissionDetailDataLoaded
     return BookingSubmissionDetailDataLoaded(
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
+      selectedDate: selectedDate ?? this.selectedDate,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
@@ -109,6 +114,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -117,6 +123,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
@@ -192,6 +199,7 @@ class NavigateToBookingSubmissionConfirmation
   const NavigateToBookingSubmissionConfirmation({
     required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
@@ -206,6 +214,7 @@ class NavigateToBookingSubmissionConfirmation
 
   final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;

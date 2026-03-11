@@ -18,6 +18,7 @@ class BookingSubmissionSuccessDataLoaded
     extends BookingSubmissionSuccessViewState {
   BookingSubmissionSuccessDataLoaded({
     this.bookingId = emptyString,
+    this.bookingSlug = emptyString,
     this.bookingDate = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
@@ -29,6 +30,7 @@ class BookingSubmissionSuccessDataLoaded
     this.playerCount = 0,
     this.caddieCount = 0,
     this.golfCartCount = 0,
+    this.isLoading = false,
   }) : super();
 
   factory BookingSubmissionSuccessDataLoaded.initial() {
@@ -36,6 +38,7 @@ class BookingSubmissionSuccessDataLoaded
   }
 
   final String bookingId;
+  final String bookingSlug;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
@@ -47,6 +50,7 @@ class BookingSubmissionSuccessDataLoaded
   final int playerCount;
   final int caddieCount;
   final int golfCartCount;
+  final bool isLoading;
 
   String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
 
@@ -55,6 +59,7 @@ class BookingSubmissionSuccessDataLoaded
 
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
+    String? bookingSlug,
     String? bookingDate,
     String? golfClubName,
     String? golfClubSlug,
@@ -66,9 +71,11 @@ class BookingSubmissionSuccessDataLoaded
     int? playerCount,
     int? caddieCount,
     int? golfCartCount,
+    bool? isLoading,
   }) {
     return BookingSubmissionSuccessDataLoaded(
       bookingId: bookingId ?? this.bookingId,
+      bookingSlug: bookingSlug ?? this.bookingSlug,
       bookingDate: bookingDate ?? this.bookingDate,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
@@ -80,6 +87,7 @@ class BookingSubmissionSuccessDataLoaded
       playerCount: playerCount ?? this.playerCount,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -91,6 +99,7 @@ sealed class BookingSubmissionSuccessUserIntent extends UserIntent {
 class OnInit extends BookingSubmissionSuccessUserIntent {
   const OnInit({
     required this.bookingId,
+    required this.bookingSlug,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -105,6 +114,7 @@ class OnInit extends BookingSubmissionSuccessUserIntent {
   });
 
   final String bookingId;
+  final String bookingSlug;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
