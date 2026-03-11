@@ -35,7 +35,7 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
 
           BookingSubmissionDetailSelectionSummaryRow(
             label: 'Golf Club',
-            value: state.golfClubSlug,
+            value: state.golfClubName,
           ),
 
           const SizedBox(height: 6),
@@ -48,8 +48,46 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
           const SizedBox(height: 6),
 
           BookingSubmissionDetailSelectionSummaryRow(
+            label: 'Price',
+            value: '${state.pricePerPersonLabel} per person',
+          ),
+
+          const SizedBox(height: 6),
+
+          BookingSubmissionDetailSelectionSummaryRow(
             label: 'Guest ID',
             value: state.guestId?.isNotEmpty == true ? state.guestId! : 'N/A',
+          ),
+
+          const SizedBox(height: 10),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0x260D7A3A)),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Estimated Total',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  state.totalCostLabel,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF0D7A3A),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -83,7 +121,7 @@ class BookingSubmissionDetailSelectionSummaryRow extends StatelessWidget {
             ),
           ),
         ),
-        
+
         Expanded(
           child: Text(
             value,

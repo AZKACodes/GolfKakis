@@ -100,9 +100,8 @@ class _BookingSubmissionDetailContentState
             TextField(
               controller: _hostNameController,
               textCapitalization: TextCapitalization.words,
-              onChanged: (value) => widget.viewModel.onUserIntent(
-                OnHostNameChanged(value),
-              ),
+              onChanged: (value) =>
+                  widget.viewModel.onUserIntent(OnHostNameChanged(value)),
               decoration: const InputDecoration(
                 labelText: 'Host Name',
                 hintText: 'Enter host name',
@@ -132,9 +131,8 @@ class _BookingSubmissionDetailContentState
                   'How many players are joining this booking? Max ${state.maxPlayerCount} for this tee time.',
               value: state.playerCount,
               minValue: 1,
-              onChanged: (value) => widget.viewModel.onUserIntent(
-                OnPlayerCountChanged(value),
-              ),
+              onChanged: (value) =>
+                  widget.viewModel.onUserIntent(OnPlayerCountChanged(value)),
             ),
             const SizedBox(height: 16),
             _PlayerDetailsSection(
@@ -169,6 +167,43 @@ class _BookingSubmissionDetailContentState
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FBF7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x14000000)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Booking Cost',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _CostRow(
+                    label: 'Price per person',
+                    value: state.pricePerPersonLabel,
+                  ),
+                  const SizedBox(height: 8),
+                  _CostRow(label: 'Players', value: '${state.playerCount}'),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Divider(height: 1),
+                  ),
+                  _CostRow(
+                    label: 'Estimated total',
+                    value: state.totalCostLabel,
+                    emphasize: true,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -195,6 +230,43 @@ class _BookingSubmissionDetailContentState
         _playerPhoneControllers[index].text = player.phoneNumber;
       }
     }
+  }
+}
+
+class _CostRow extends StatelessWidget {
+  const _CostRow({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: emphasize ? const Color(0xFF0D7A3A) : Colors.black54,
+            fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: emphasize ? const Color(0xFF0D7A3A) : Colors.black87,
+            fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -236,9 +308,7 @@ class _PlayerDetailsSection extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Fill in the name and phone number for each player.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black54,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 16),
           for (var index = 0; index < playerCount; index++) ...[

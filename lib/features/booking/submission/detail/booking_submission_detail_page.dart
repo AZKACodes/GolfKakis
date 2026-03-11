@@ -7,21 +7,31 @@ import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/bookin
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
+    required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
     super.key,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
 
   @override
-  State<BookingSubmissionDetailPage> createState() => _BookingSubmissionDetailPageState();
+  State<BookingSubmissionDetailPage> createState() =>
+      _BookingSubmissionDetailPageState();
 }
 
-class _BookingSubmissionDetailPageState extends State<BookingSubmissionDetailPage> {
+class _BookingSubmissionDetailPageState
+    extends State<BookingSubmissionDetailPage> {
   late final BookingSubmissionDetailViewModel _viewModel;
   StreamSubscription<BookingSubmissionDetailNavEffect>? _navEffectSubscription;
 
@@ -32,11 +42,15 @@ class _BookingSubmissionDetailPageState extends State<BookingSubmissionDetailPag
     _viewModel = BookingSubmissionDetailViewModel();
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
-    
+
     _viewModel.performAction(
       OnInit(
+        golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
+        selectedDate: widget.selectedDate,
         teeTimeSlot: widget.teeTimeSlot,
+        pricePerPerson: widget.pricePerPerson,
+        currency: widget.currency,
         guestId: widget.guestId,
       ),
     );
@@ -57,8 +71,12 @@ class _BookingSubmissionDetailPageState extends State<BookingSubmissionDetailPag
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionConfirmationPage(
+              golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
+              selectedDate: effect.selectedDate,
               teeTimeSlot: effect.teeTimeSlot,
+              pricePerPerson: effect.pricePerPerson,
+              currency: effect.currency,
               guestId: effect.guestId,
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,

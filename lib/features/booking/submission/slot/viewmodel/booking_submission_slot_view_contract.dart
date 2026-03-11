@@ -1,7 +1,8 @@
 import 'package:xxx_demo_app/features/foundation/enums/booking/time_period.dart';
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
-import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
 import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -23,14 +24,14 @@ sealed class BookingSubmissionSlotViewState extends ViewState {
 
 class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   BookingSubmissionSlotDataLoaded({
-    this.golfClubList = const <String>[],
+    this.golfClubList = const <GolfClubModel>[],
     this.bookingSlots = const <BookingSlotModel>[],
     this.selectedClubSlug = emptyString,
     DateTime? selectedDate,
     this.selectedSlot,
     this.selectedPeriod = TimePeriod.am,
     DateTime? pickerInitialDate,
-    List<TeeTimeSlot>? visibleSlots,
+    List<BookingSlotModel>? visibleSlots,
     Set<int>? visibleUnavailableIndices,
     this.visibleSelectedIndex,
     this.canContinue = false,
@@ -40,41 +41,57 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
        pickerInitialDate = DateUtil.dateOnly(
          pickerInitialDate ?? selectedDate ?? DateTime.now(),
        ),
-       visibleSlots = visibleSlots ?? const <TeeTimeSlot>[],
-       visibleUnavailableIndices =
-           visibleUnavailableIndices ?? const <int>{},
+       visibleSlots = visibleSlots ?? const <BookingSlotModel>[],
+       visibleUnavailableIndices = visibleUnavailableIndices ?? const <int>{},
        super();
 
   factory BookingSubmissionSlotDataLoaded.initial() {
-    return BookingSubmissionSlotDataLoaded(
-      selectedDate: DateTime.now(),
-    );
+    return BookingSubmissionSlotDataLoaded(selectedDate: DateTime.now());
   }
 
-  final List<String> golfClubList;
+  final List<GolfClubModel> golfClubList;
   final List<BookingSlotModel> bookingSlots;
   final String selectedClubSlug;
   final DateTime selectedDate;
   final DateTime pickerInitialDate;
-  final TeeTimeSlot? selectedSlot;
+  final BookingSlotModel? selectedSlot;
   final TimePeriod selectedPeriod;
-  final List<TeeTimeSlot> visibleSlots;
+  final List<BookingSlotModel> visibleSlots;
   final Set<int> visibleUnavailableIndices;
   final int? visibleSelectedIndex;
   final bool canContinue;
   final bool isLoading;
   final String errorMessage;
 
+  GolfClubModel? get selectedGolfClub {
+    for (final club in golfClubList) {
+      if (club.slug == selectedClubSlug) {
+        return club;
+      }
+    }
+
+    return null;
+  }
+
+  String get selectedClubName => selectedGolfClub?.name ?? emptyString;
+
+  String get selectedSlotPriceLabel {
+    final price = selectedSlot?.price ?? 0;
+    final currency =
+        selectedSlot?.currency ?? DefaultConstantUtil.defaultCurrency;
+    return '$currency ${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)} / pax';
+  }
+
   BookingSubmissionSlotDataLoaded copyWith({
-    List<String>? golfClubList,
+    List<GolfClubModel>? golfClubList,
     List<BookingSlotModel>? bookingSlots,
     String? selectedClubSlug,
     DateTime? selectedDate,
     DateTime? pickerInitialDate,
-    TeeTimeSlot? selectedSlot,
+    BookingSlotModel? selectedSlot,
     bool clearSelectedSlot = false,
     TimePeriod? selectedPeriod,
-    List<TeeTimeSlot>? visibleSlots,
+    List<BookingSlotModel>? visibleSlots,
     Set<int>? visibleUnavailableIndices,
     int? visibleSelectedIndex,
     bool clearVisibleSelectedIndex = false,
@@ -89,14 +106,21 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
       selectedClubSlug: selectedClubSlug ?? this.selectedClubSlug,
       selectedDate: selectedDate ?? this.selectedDate,
       pickerInitialDate: pickerInitialDate ?? this.pickerInitialDate,
-      selectedSlot: clearSelectedSlot ? null : (selectedSlot ?? this.selectedSlot),
+      selectedSlot: clearSelectedSlot
+          ? null
+          : (selectedSlot ?? this.selectedSlot),
       selectedPeriod: selectedPeriod ?? this.selectedPeriod,
       visibleSlots: visibleSlots ?? this.visibleSlots,
-      visibleUnavailableIndices: visibleUnavailableIndices ?? this.visibleUnavailableIndices,
-      visibleSelectedIndex: clearVisibleSelectedIndex ? null : (visibleSelectedIndex ?? this.visibleSelectedIndex),
+      visibleUnavailableIndices:
+          visibleUnavailableIndices ?? this.visibleUnavailableIndices,
+      visibleSelectedIndex: clearVisibleSelectedIndex
+          ? null
+          : (visibleSelectedIndex ?? this.visibleSelectedIndex),
       canContinue: canContinue ?? this.canContinue,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: clearErrorMessage ? emptyString : (errorMessage ?? this.errorMessage),
+      errorMessage: clearErrorMessage
+          ? emptyString
+          : (errorMessage ?? this.errorMessage),
     );
   }
 }
@@ -139,7 +163,7 @@ class OnSelectDate extends BookingSubmissionSlotUserIntent {
 class OnSelectSlot extends BookingSubmissionSlotUserIntent {
   const OnSelectSlot(this.slot);
 
-  final TeeTimeSlot slot;
+  final BookingSlotModel slot;
 }
 
 class OnSelectPeriod extends BookingSubmissionSlotUserIntent {
@@ -170,12 +194,20 @@ class NavigateBack extends BookingSubmissionSlotNavEffect {
 
 class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   const NavigateToBookingSubmissionDetail({
+    required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
 }

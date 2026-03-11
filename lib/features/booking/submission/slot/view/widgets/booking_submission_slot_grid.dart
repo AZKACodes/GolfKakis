@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
 
 class BookingSubmissionSlotGrid extends StatelessWidget {
   const BookingSubmissionSlotGrid({
@@ -11,7 +11,7 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
     required this.onSelected,
   });
 
-  final List<TeeTimeSlot> slots;
+  final List<BookingSlotModel> slots;
   final int? selectedIndex;
   final Set<int> unavailableIndices;
   final ValueChanged<int> onSelected;
@@ -31,62 +31,55 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           const double spacing = 10;
-          final bool canFitTwoColumns = constraints.maxWidth >= 260;
-          final int crossAxisCount = canFitTwoColumns ? 2 : 1;
-
-          return GridView.builder(
+          return ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: slots.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing,
-              childAspectRatio: 1.45,
-            ),
+            separatorBuilder: (_, _) => const SizedBox(height: spacing),
             itemBuilder: (context, index) {
               final slot = slots[index];
+              final teeTimeSlot = TeeTimeSlot.fromLabel(slot.time);
               final bool isUnavailable = unavailableIndices.contains(index);
               final bool isSelected = selectedIndex == index;
-              final bool isExtendedPlayerSlot = slot.isExtendedPlayerSlot;
+              final bool isExtendedPlayerSlot =
+                  teeTimeSlot?.isExtendedPlayerSlot ?? false;
 
               final Color fillColor = isUnavailable
                   ? Colors.grey.shade300
                   : isSelected
-                      ? theme.colorScheme.primary
-                      : isExtendedPlayerSlot
-                          ? const Color(0xFFF6FBF4)
-                          : Colors.white;
+                  ? theme.colorScheme.primary
+                  : isExtendedPlayerSlot
+                  ? const Color(0xFFF6FBF4)
+                  : Colors.white;
               final Color textColor = isUnavailable
                   ? Colors.black45
                   : isSelected
-                      ? Colors.white
-                      : Colors.black87;
+                  ? Colors.white
+                  : Colors.black87;
 
               final Color dividerColor = isUnavailable
                   ? Colors.black26
                   : isSelected
-                      ? Colors.white54
-                      : Colors.black12;
+                  ? Colors.white54
+                  : Colors.black12;
 
               return InkWell(
                 onTap: isUnavailable ? null : () => onSelected(index),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(18),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 170),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: fillColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: isSelected
                           ? theme.colorScheme.primary
                           : isUnavailable
-                              ? Colors.grey.shade300
-                              : isExtendedPlayerSlot
-                                  ? const Color(0xFFB9D6B9)
-                                  : theme.colorScheme.outlineVariant,
+                          ? Colors.grey.shade300
+                          : isExtendedPlayerSlot
+                          ? const Color(0xFFB9D6B9)
+                          : theme.colorScheme.outlineVariant,
                     ),
                     boxShadow: isSelected
                         ? const [
@@ -99,62 +92,118 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                         : null,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        slot.label,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: textColor,
-                              fontWeight: FontWeight.w700,
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: Center(
+                              child: Text(
+                                slot.time,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: textColor,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
                             ),
-                      ),
-                      const SizedBox(height: 4),
-                      Divider(height: 1, thickness: 1, color: dividerColor),
-                      const SizedBox(height: 4),
-                      Expanded(
-                        child: IntrinsicHeight(
-                          child: Row(
-                            children: [
-                              BookingSubmissionMetricColumn(
-                                icon: Icons.group_outlined,
-                                label: 'Players',
-                                value: slot.playerRange,
-                                color: textColor,
-                              ),
-                              const SizedBox(width: 8),
-                              BookingSubmissionMetricColumn(
-                                icon: Icons.golf_course_outlined,
-                                label: 'Rounds',
-                                value: '1',
-                                color: textColor,
-                              ),
-                            ],
                           ),
-                        ),
+                          if (isSelected)
+                            const Positioned(
+                              right: 0,
+                              child: Icon(
+                                Icons.check_circle_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Divider(height: 1, thickness: 1, color: dividerColor),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Price / pax',
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: textColor.withValues(
+                                          alpha: 0.78,
+                                        ),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatPrice(slot.price, slot.currency),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: textColor,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 3,
+                            child: _SlotMetaPill(
+                              icon: Icons.group_outlined,
+                              label: 'Players',
+                              value: teeTimeSlot?.playerRange ?? '1-4',
+                              textColor: textColor,
+                              selected: isSelected,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 3,
+                            child: _SlotMetaPill(
+                              icon: Icons.golf_course_outlined,
+                              label: 'Holes',
+                              value: '${slot.noOfHoles}',
+                              textColor: textColor,
+                              selected: isSelected,
+                            ),
+                          ),
+                        ],
                       ),
                       if (isExtendedPlayerSlot)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFF7C948)
-                                : const Color(0xFFE3F3E6),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            'Extended Group Slot',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFF0D7A3A),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 9,
+                                  ? const Color(0xFFF7C948)
+                                  : const Color(0xFFE3F3E6),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'Extended Group Slot',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: isSelected
+                                    ? Colors.white
+                                    : const Color(0xFF0D7A3A),
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
@@ -165,6 +214,78 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+String _formatPrice(double price, String currency) {
+  return '${currency.toUpperCase()} ${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)} / pax';
+}
+
+class _SlotMetaPill extends StatelessWidget {
+  const _SlotMetaPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.textColor,
+    required this.selected,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color textColor;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: selected
+            ? Colors.white.withValues(alpha: 0.12)
+            : const Color(0xFFF7F7F4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: selected
+              ? Colors.white.withValues(alpha: 0.16)
+              : const Color(0x14000000),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: textColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: textColor.withValues(alpha: 0.82),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
