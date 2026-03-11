@@ -21,7 +21,9 @@ class BookingSubmissionSuccessView extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: ElevatedButton(
-                onPressed: () => viewModel.performAction(const OnDoneClick()),
+                onPressed: state.isLoading
+                    ? null
+                    : () => viewModel.performAction(const OnDoneClick()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D7A3A),
                   foregroundColor: Colors.white,

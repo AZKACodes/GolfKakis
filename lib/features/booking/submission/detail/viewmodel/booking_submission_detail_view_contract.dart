@@ -1,5 +1,6 @@
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionDetailViewContract {
@@ -18,10 +19,15 @@ sealed class BookingSubmissionDetailViewState extends ViewState {
   static final initial = BookingSubmissionDetailDataLoaded.initial();
 }
 
-class BookingSubmissionDetailDataLoaded extends BookingSubmissionDetailViewState {
+class BookingSubmissionDetailDataLoaded
+    extends BookingSubmissionDetailViewState {
   BookingSubmissionDetailDataLoaded({
+    this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
+    DateTime? selectedDate,
     this.teeTimeSlot = emptyString,
+    this.pricePerPerson = 0,
+    this.currency = DefaultConstantUtil.defaultCurrency,
     this.guestId,
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
@@ -31,14 +37,19 @@ class BookingSubmissionDetailDataLoaded extends BookingSubmissionDetailViewState
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
     this.canContinue = false,
-  }) : super();
+  }) : selectedDate = selectedDate ?? DateTime.now(),
+       super();
 
   factory BookingSubmissionDetailDataLoaded.initial() {
     return BookingSubmissionDetailDataLoaded();
   }
 
+  final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
   final String hostName;
   final String hostPhoneNumber;
@@ -49,9 +60,18 @@ class BookingSubmissionDetailDataLoaded extends BookingSubmissionDetailViewState
   final List<BookingSubmissionPlayerModel> playerDetails;
   final bool canContinue;
 
+  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+
+  String get totalCostLabel =>
+      _formatCurrency(pricePerPerson * playerCount, currency);
+
   BookingSubmissionDetailDataLoaded copyWith({
+    String? golfClubName,
     String? golfClubSlug,
+    DateTime? selectedDate,
     String? teeTimeSlot,
+    double? pricePerPerson,
+    String? currency,
     String? guestId,
     String? hostName,
     String? hostPhoneNumber,
@@ -63,8 +83,12 @@ class BookingSubmissionDetailDataLoaded extends BookingSubmissionDetailViewState
     bool? canContinue,
   }) {
     return BookingSubmissionDetailDataLoaded(
+      golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
+      selectedDate: selectedDate ?? this.selectedDate,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      currency: currency ?? this.currency,
       guestId: guestId ?? this.guestId,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
@@ -88,13 +112,21 @@ sealed class BookingSubmissionDetailUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
+    required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
 }
 
@@ -165,8 +197,12 @@ class NavigateBack extends BookingSubmissionDetailNavEffect {
 class NavigateToBookingSubmissionConfirmation
     extends BookingSubmissionDetailNavEffect {
   const NavigateToBookingSubmissionConfirmation({
+    required this.golfClubName,
     required this.golfClubSlug,
+    required this.selectedDate,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     this.guestId,
     required this.hostName,
     required this.hostPhoneNumber,
@@ -176,8 +212,12 @@ class NavigateToBookingSubmissionConfirmation
     required this.playerDetails,
   });
 
+  final String golfClubName;
   final String golfClubSlug;
+  final DateTime selectedDate;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String? guestId;
   final String hostName;
   final String hostPhoneNumber;
@@ -185,4 +225,8 @@ class NavigateToBookingSubmissionConfirmation
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+}
+
+String _formatCurrency(double value, String currency) {
+  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
 }

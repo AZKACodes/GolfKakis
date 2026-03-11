@@ -4,6 +4,7 @@ import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_sub
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
 import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
 import 'package:xxx_demo_app/features/foundation/model/data_status_model.dart';
 import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
@@ -22,8 +23,10 @@ class BookingSubmissionSlotViewModel
 
   final BookingSubmissionSlotUseCase _useCase;
 
-  StreamSubscription<DataStatusModel<List<String>>>? _golfClubSubscription;
-  StreamSubscription<DataStatusModel<List<BookingSlotModel>>>? _slotSubscription;
+  StreamSubscription<DataStatusModel<List<GolfClubModel>>>?
+  _golfClubSubscription;
+  StreamSubscription<DataStatusModel<List<BookingSlotModel>>>?
+  _slotSubscription;
 
   @override
   BookingSubmissionSlotViewState createInitialState() {
@@ -65,9 +68,9 @@ class BookingSubmissionSlotViewModel
         await onSelectDate(intent.date);
       case OnSelectSlot():
         emitViewState((state) {
-            return _derivePresentationState(
-              getCurrentAsLoaded().copyWith(
-                selectedSlot: intent.slot,
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              selectedSlot: intent.slot,
               clearErrorMessage: true,
             ),
           );
@@ -94,8 +97,12 @@ class BookingSubmissionSlotViewModel
 
         sendNavEffect(
           () => NavigateToBookingSubmissionDetail(
+            golfClubName: current.selectedClubName,
             golfClubSlug: current.selectedClubSlug,
-            teeTimeSlot: selectedSlot.label,
+            selectedDate: current.selectedDate,
+            teeTimeSlot: selectedSlot.time,
+            pricePerPerson: selectedSlot.price,
+            currency: selectedSlot.currency,
           ),
         );
     }
@@ -113,10 +120,7 @@ class BookingSubmissionSlotViewModel
   Future<void> onFetchGolfClubList() async {
     emitViewState((state) {
       return _derivePresentationState(
-        getCurrentAsLoaded().copyWith(
-          isLoading: true,
-          clearErrorMessage: true,
-        ),
+        getCurrentAsLoaded().copyWith(isLoading: true, clearErrorMessage: true),
       );
     });
 
@@ -138,7 +142,7 @@ class BookingSubmissionSlotViewModel
           emitViewState((state) {
             return _derivePresentationState(
               getCurrentAsLoaded().copyWith(
-                golfClubList: const <String>[],
+                golfClubList: const <GolfClubModel>[],
                 selectedClubSlug: emptyString,
                 isLoading: false,
                 errorMessage: result.apiMessage.isEmpty
@@ -170,10 +174,7 @@ class BookingSubmissionSlotViewModel
       return;
     }
 
-    await onFetchAvailableSlots(
-      clubSlug: current.selectedClubSlug,
-      date: date,
-    );
+    await onFetchAvailableSlots(clubSlug: current.selectedClubSlug, date: date);
   }
 
   Future<void> onFetchAvailableSlots({
@@ -229,39 +230,35 @@ class BookingSubmissionSlotViewModel
         });
   }
 
-  String _resolveSelectedClub(List<String> clubs) {
+  String _resolveSelectedClub(List<GolfClubModel> clubs) {
     if (clubs.isEmpty) {
       return emptyString;
     }
 
-    if (clubs.contains(getCurrentAsLoaded().selectedClubSlug)) {
+    if (clubs.any(
+      (club) => club.slug == getCurrentAsLoaded().selectedClubSlug,
+    )) {
       return getCurrentAsLoaded().selectedClubSlug;
     }
 
-    return clubs.first;
+    return clubs.first.slug;
   }
 
   BookingSubmissionSlotDataLoaded _derivePresentationState(
     BookingSubmissionSlotDataLoaded state,
   ) {
     final today = DateUtil.dateOnly(DateTime.now());
-    final allSlots = TeeTimeSlot.values;
-    final availableSlots = state.bookingSlots
-        .map((slot) => TeeTimeSlot.fromLabel(slot.slotList))
-        .whereType<TeeTimeSlot>()
-        .toSet();
-    final visibleSlots = allSlots
-        .where((slot) => slot.period == state.selectedPeriod)
+    final visibleSlots = state.bookingSlots
+        .where(
+          (slot) =>
+              TeeTimeSlot.fromLabel(slot.time)?.period == state.selectedPeriod,
+        )
         .toList();
     final visibleSelectedIndex = state.selectedSlot == null
         ? null
-        : visibleSlots.indexOf(state.selectedSlot!);
-    final visibleUnavailableIndices = visibleSlots
-        .asMap()
-        .entries
-        .where((entry) => !availableSlots.contains(entry.value))
-        .map((entry) => entry.key)
-        .toSet();
+        : visibleSlots.indexWhere(
+            (slot) => slot.time == state.selectedSlot!.time,
+          );
 
     return state.copyWith(
       selectedDate: DateUtil.dateOnly(state.selectedDate),
@@ -269,14 +266,12 @@ class BookingSubmissionSlotViewModel
           ? today
           : DateUtil.dateOnly(state.selectedDate),
       visibleSlots: visibleSlots,
-      visibleUnavailableIndices: visibleUnavailableIndices,
+      visibleUnavailableIndices: const <int>{},
       visibleSelectedIndex: visibleSelectedIndex == -1
           ? null
           : visibleSelectedIndex,
       canContinue:
-          state.selectedClubSlug.isNotEmpty &&
-          state.selectedSlot != null &&
-          availableSlots.contains(state.selectedSlot!),
+          state.selectedClubSlug.isNotEmpty && state.selectedSlot != null,
     );
   }
 

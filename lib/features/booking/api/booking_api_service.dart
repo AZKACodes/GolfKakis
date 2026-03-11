@@ -1,4 +1,5 @@
 import '../../foundation/network/network.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
 
 class BookingApiService {
   BookingApiService({ApiClient? apiClient})
@@ -7,7 +8,7 @@ class BookingApiService {
   final ApiClient _apiClient;
 
   Future<dynamic> onFetchGolfClubList() {
-    return _apiClient.getJson('/general/golf-clubs');
+    return _apiClient.getJson('/booking/golf-clubs');
   }
 
   Future<dynamic> onFetchAvailableSlots({
@@ -23,7 +24,15 @@ class BookingApiService {
     );
   }
 
-  Future<dynamic> onCreateBookingSubmission() {
-    return _apiClient.getJson('/booking/submit');
+  Future<dynamic> onCreateBookingSubmission({
+    required BookingSubmissionRequestModel request,
+  }) {
+    return _apiClient.postJson('/booking/submit', body: request.toJson());
+  }
+
+  Future<dynamic> onFetchBookingDetails({
+    required String bookingSlug
+    }) {
+    return _apiClient.getJson('/booking/$bookingSlug');
   }
 }

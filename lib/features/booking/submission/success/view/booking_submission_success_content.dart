@@ -3,10 +3,7 @@ import 'package:xxx_demo_app/features/booking/submission/success/viewmodel/booki
 import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionSuccessContent extends StatelessWidget {
-  const BookingSubmissionSuccessContent({
-    required this.state,
-    super.key,
-  });
+  const BookingSubmissionSuccessContent({required this.state, super.key});
 
   final BookingSubmissionSuccessDataLoaded state;
 
@@ -48,6 +45,10 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+            if (state.isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 16),
+            ],
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -97,10 +98,18 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
                   const SizedBox(height: 18),
                   _ReceiptRow(label: 'Booking ID', value: state.bookingId),
                   _ReceiptRow(label: 'Date', value: state.bookingDate),
-                  _ReceiptRow(label: 'Golf Club', value: state.golfClubSlug),
+                  _ReceiptRow(label: 'Golf Club', value: state.golfClubName),
                   _ReceiptRow(label: 'Tee Time', value: state.teeTimeSlot),
+                  _ReceiptRow(
+                    label: 'Price/Pax',
+                    value: state.pricePerPersonLabel,
+                  ),
+                  _ReceiptRow(label: 'Total Cost', value: state.totalCostLabel),
                   _ReceiptRow(label: 'Host Name', value: state.hostName),
-                  _ReceiptRow(label: 'Host Phone', value: state.hostPhoneNumber),
+                  _ReceiptRow(
+                    label: 'Host Phone',
+                    value: state.hostPhoneNumber,
+                  ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Divider(height: 1),

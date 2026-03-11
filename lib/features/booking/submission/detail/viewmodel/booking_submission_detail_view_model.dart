@@ -26,8 +26,12 @@ class BookingSubmissionDetailViewModel
         emitViewState((state) {
           return _deriveState(
             getCurrentAsLoaded().copyWith(
+              golfClubName: intent.golfClubName,
               golfClubSlug: intent.golfClubSlug,
+              selectedDate: intent.selectedDate,
               teeTimeSlot: intent.teeTimeSlot,
+              pricePerPerson: intent.pricePerPerson,
+              currency: intent.currency,
               guestId: intent.guestId,
               maxPlayerCount: maxPlayerCount,
               playerCount: _defaultPlayerCount(maxPlayerCount),
@@ -86,7 +90,9 @@ class BookingSubmissionDetailViewModel
         emitViewState((state) {
           final current = getCurrentAsLoaded();
           return _deriveState(
-            current.copyWith(caddieCount: intent.value.clamp(0, current.playerCount)),
+            current.copyWith(
+              caddieCount: intent.value.clamp(0, current.playerCount),
+            ),
           );
         });
       case OnGolfCartCountChanged():
@@ -106,8 +112,12 @@ class BookingSubmissionDetailViewModel
 
         sendNavEffect(
           () => NavigateToBookingSubmissionConfirmation(
+            golfClubName: current.golfClubName,
             golfClubSlug: current.golfClubSlug,
+            selectedDate: current.selectedDate,
             teeTimeSlot: current.teeTimeSlot,
+            pricePerPerson: current.pricePerPerson,
+            currency: current.currency,
             guestId: current.guestId,
             hostName: current.hostName,
             hostPhoneNumber: current.hostPhoneNumber,
@@ -123,12 +133,18 @@ class BookingSubmissionDetailViewModel
   BookingSubmissionDetailDataLoaded _deriveState(
     BookingSubmissionDetailDataLoaded state,
   ) {
-    final normalizedPlayerCount = state.playerCount.clamp(1, state.maxPlayerCount);
+    final normalizedPlayerCount = state.playerCount.clamp(
+      1,
+      state.maxPlayerCount,
+    );
     final normalizedPlayerDetails = _resizePlayerDetails(
       players: state.playerDetails,
       playerCount: normalizedPlayerCount,
     );
-    final normalizedCaddieCount = state.caddieCount.clamp(0, normalizedPlayerCount);
+    final normalizedCaddieCount = state.caddieCount.clamp(
+      0,
+      normalizedPlayerCount,
+    );
     final normalizedGolfCartCount = state.golfCartCount.clamp(
       0,
       normalizedPlayerCount,

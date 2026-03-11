@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
-import 'package:xxx_demo_app/features/foundation/enums/activity/event_type.dart';
-
 class ActivityOverviewDashboardView extends StatelessWidget {
   const ActivityOverviewDashboardView({
     required this.onBookingListClick,
+    required this.onUpcomingBookingDetailClick,
+    required this.onRecentRoundOneDetailClick,
+    required this.onRecentRoundTwoDetailClick,
     super.key,
   });
 
   final VoidCallback onBookingListClick;
+  final VoidCallback onUpcomingBookingDetailClick;
+  final VoidCallback onRecentRoundOneDetailClick;
+  final VoidCallback onRecentRoundTwoDetailClick;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,7 @@ class ActivityOverviewDashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Track upcoming rounds, recent results, and booking events.',
+            'Track upcoming rounds and recent booking activity.',
             style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
@@ -35,73 +39,39 @@ class ActivityOverviewDashboardView extends StatelessWidget {
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Upcoming'),
           const SizedBox(height: 10),
-          const _UpcomingCard(
+          _UpcomingCard(
             course: 'Kinrara Golf Club',
-            dateLabel: 'Fri, Feb 21',
+            dateLabel: 'Fri, Mar 6',
             timeLabel: '07:30 AM',
             playersLabel: '2 Players',
             countdownLabel: 'Starts in 1d 9h',
             weatherLabel: '28 C, light wind',
             checkInStatus: 'Check-in opens in 3h',
+            onOpenDetails: onUpcomingBookingDetailClick,
           ),
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Recent Rounds'),
           const SizedBox(height: 10),
-          const _RoundCard(
+          _RoundCard(
             course: 'Saujana G&CC',
-            dateLabel: 'Tue, Feb 18',
+            dateLabel: 'Tue, Feb 25',
             scoreLabel: '75 (+3)',
             durationLabel: '4h 12m',
             fairwaysLabel: '71%',
             girLabel: '61%',
             puttsLabel: '31',
+            onOpenDetails: onRecentRoundOneDetailClick,
           ),
           const SizedBox(height: 10),
-          const _RoundCard(
+          _RoundCard(
             course: 'Kota Permai',
-            dateLabel: 'Sat, Feb 15',
+            dateLabel: 'Sat, Mar 1',
             scoreLabel: '72 (E)',
             durationLabel: '3h 58m',
             fairwaysLabel: '78%',
             girLabel: '67%',
             puttsLabel: '29',
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle(title: 'Booking Timeline'),
-          const SizedBox(height: 10),
-          const _TimelineCard(
-            events: [
-              _TimelineEvent(
-                title: 'Booking confirmed',
-                detail: 'Kinrara Golf Club - Fri, Feb 21 at 07:30 AM',
-                timeAgo: '2h ago',
-                type: EventType.positive,
-              ),
-              _TimelineEvent(
-                title: 'Tee time updated',
-                detail: 'Changed from 07:10 AM to 07:30 AM',
-                timeAgo: '2h ago',
-                type: EventType.info,
-              ),
-              _TimelineEvent(
-                title: 'Payment received',
-                detail: 'Deposit paid - MYR 24.00',
-                timeAgo: '2h ago',
-                type: EventType.neutral,
-              ),
-              _TimelineEvent(
-                title: 'Round completed',
-                detail: 'Saujana G&CC - Score 75 (+3)',
-                timeAgo: '1d ago',
-                type: EventType.positive,
-              ),
-              _TimelineEvent(
-                title: 'Cancellation refunded',
-                detail: 'Mines Resort - MYR 18.00 refunded',
-                timeAgo: '4d ago',
-                type: EventType.warning,
-              ),
-            ],
+            onOpenDetails: onRecentRoundTwoDetailClick,
           ),
         ],
       ),
@@ -177,6 +147,7 @@ class _UpcomingCard extends StatelessWidget {
     required this.countdownLabel,
     required this.weatherLabel,
     required this.checkInStatus,
+    required this.onOpenDetails,
   });
 
   final String course;
@@ -186,6 +157,7 @@ class _UpcomingCard extends StatelessWidget {
   final String countdownLabel;
   final String weatherLabel;
   final String checkInStatus;
+  final VoidCallback onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -234,9 +206,9 @@ class _UpcomingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              OutlinedButton(onPressed: () {}, child: const Text('Modify')),
+              OutlinedButton(onPressed: onOpenDetails, child: const Text('Modify')),
               const SizedBox(width: 8),
-              FilledButton(onPressed: () {}, child: const Text('Check In')),
+              FilledButton(onPressed: onOpenDetails, child: const Text('Details')),
             ],
           ),
         ],
@@ -254,6 +226,7 @@ class _RoundCard extends StatelessWidget {
     required this.fairwaysLabel,
     required this.girLabel,
     required this.puttsLabel,
+    required this.onOpenDetails,
   });
 
   final String course;
@@ -263,6 +236,7 @@ class _RoundCard extends StatelessWidget {
   final String fairwaysLabel;
   final String girLabel;
   final String puttsLabel;
+  final VoidCallback onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -313,110 +287,10 @@ class _RoundCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              TextButton(onPressed: () {}, child: const Text('View Details')),
+              TextButton(onPressed: onOpenDetails, child: const Text('View Details')),
               const SizedBox(width: 6),
-              TextButton(onPressed: () {}, child: const Text('Book Again')),
+              TextButton(onPressed: onOpenDetails, child: const Text('Book Again')),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimelineCard extends StatelessWidget {
-  const _TimelineCard({required this.events});
-
-  final List<_TimelineEvent> events;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      child: Column(
-        children: [
-          for (int i = 0; i < events.length; i++)
-            _TimelineRow(event: events[i], isLast: i == events.length - 1),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.event, required this.isLast});
-
-  final _TimelineEvent event;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (event.type) {
-      EventType.positive => const Color(0xFF1E8E5B),
-      EventType.warning => const Color(0xFFB26B1E),
-      EventType.info => const Color(0xFF2C6EA3),
-      EventType.neutral => const Color(0xFF486068),
-    };
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 26,
-            child: Column(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.black12,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.title,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      Text(
-                        event.timeAgo,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    event.detail,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -514,18 +388,4 @@ class _Panel extends StatelessWidget {
       child: child,
     );
   }
-}
-
-class _TimelineEvent {
-  const _TimelineEvent({
-    required this.title,
-    required this.detail,
-    required this.timeAgo,
-    required this.type,
-  });
-
-  final String title;
-  final String detail;
-  final String timeAgo;
-  final EventType type;
 }

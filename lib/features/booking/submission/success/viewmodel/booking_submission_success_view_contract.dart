@@ -1,4 +1,5 @@
 import 'package:xxx_demo_app/features/foundation/default_values.dart';
+import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
 import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionSuccessViewContract {
@@ -17,14 +18,19 @@ class BookingSubmissionSuccessDataLoaded
     extends BookingSubmissionSuccessViewState {
   BookingSubmissionSuccessDataLoaded({
     this.bookingId = emptyString,
+    this.bookingSlug = emptyString,
     this.bookingDate = emptyString,
+    this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     this.teeTimeSlot = emptyString,
+    this.pricePerPerson = 0,
+    this.currency = DefaultConstantUtil.defaultCurrency,
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
     this.caddieCount = 0,
     this.golfCartCount = 0,
+    this.isLoading = false,
   }) : super();
 
   factory BookingSubmissionSuccessDataLoaded.initial() {
@@ -32,36 +38,56 @@ class BookingSubmissionSuccessDataLoaded
   }
 
   final String bookingId;
+  final String bookingSlug;
   final String bookingDate;
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
   final int caddieCount;
   final int golfCartCount;
+  final bool isLoading;
+
+  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+
+  String get totalCostLabel =>
+      _formatCurrency(pricePerPerson * playerCount, currency);
 
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
+    String? bookingSlug,
     String? bookingDate,
+    String? golfClubName,
     String? golfClubSlug,
     String? teeTimeSlot,
+    double? pricePerPerson,
+    String? currency,
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
     int? caddieCount,
     int? golfCartCount,
+    bool? isLoading,
   }) {
     return BookingSubmissionSuccessDataLoaded(
       bookingId: bookingId ?? this.bookingId,
+      bookingSlug: bookingSlug ?? this.bookingSlug,
       bookingDate: bookingDate ?? this.bookingDate,
+      golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      currency: currency ?? this.currency,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -73,9 +99,13 @@ sealed class BookingSubmissionSuccessUserIntent extends UserIntent {
 class OnInit extends BookingSubmissionSuccessUserIntent {
   const OnInit({
     required this.bookingId,
+    required this.bookingSlug,
     required this.bookingDate,
+    required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
+    required this.pricePerPerson,
+    required this.currency,
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
@@ -84,9 +114,13 @@ class OnInit extends BookingSubmissionSuccessUserIntent {
   });
 
   final String bookingId;
+  final String bookingSlug;
   final String bookingDate;
+  final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
+  final double pricePerPerson;
+  final String currency;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -104,4 +138,8 @@ sealed class BookingSubmissionSuccessNavEffect extends NavEffect {
 
 class NavigateToSubmissionStart extends BookingSubmissionSuccessNavEffect {
   const NavigateToSubmissionStart();
+}
+
+String _formatCurrency(double value, String currency) {
+  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
 }
