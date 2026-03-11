@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/activity/booking/edit/data/activity_booking_edit_repository_impl.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
 
 import 'view/activity_booking_edit_view.dart';
@@ -13,7 +14,8 @@ class ActivityBookingEditPage extends StatefulWidget {
   final BookingModel booking;
 
   @override
-  State<ActivityBookingEditPage> createState() => _ActivityBookingEditPageState();
+  State<ActivityBookingEditPage> createState() =>
+      _ActivityBookingEditPageState();
 }
 
 class _ActivityBookingEditPageState extends State<ActivityBookingEditPage> {
@@ -23,7 +25,10 @@ class _ActivityBookingEditPageState extends State<ActivityBookingEditPage> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ActivityBookingEditViewModel(booking: widget.booking);
+    _viewModel = ActivityBookingEditViewModel(
+      repository: ActivityBookingEditRepositoryImpl(),
+      initialState: ActivityBookingEditViewState.initial(widget.booking),
+    );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is NavigateBack) {
         if (!mounted) {
@@ -32,6 +37,7 @@ class _ActivityBookingEditPageState extends State<ActivityBookingEditPage> {
         Navigator.of(context).pop(effect.updatedBooking);
       }
     });
+    _viewModel.onUserIntent(const OnInit());
   }
 
   @override
@@ -63,8 +69,7 @@ class _ActivityBookingEditPageState extends State<ActivityBookingEditPage> {
               onPlayerPhoneChanged: (index, value) => _viewModel.onUserIntent(
                 OnPlayerPhoneChanged(index: index, value: value),
               ),
-              onSaveClick: () =>
-                  _viewModel.onUserIntent(const OnSaveClick()),
+              onSaveClick: () => _viewModel.onUserIntent(const OnSaveClick()),
             ),
           ),
         );

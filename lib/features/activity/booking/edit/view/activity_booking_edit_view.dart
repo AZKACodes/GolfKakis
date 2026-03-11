@@ -18,12 +18,15 @@ class ActivityBookingEditView extends StatefulWidget {
   final VoidCallback onSaveClick;
 
   @override
-  State<ActivityBookingEditView> createState() => _ActivityBookingEditViewState();
+  State<ActivityBookingEditView> createState() =>
+      _ActivityBookingEditViewState();
 }
 
 class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
-  final List<TextEditingController> _nameControllers = <TextEditingController>[];
-  final List<TextEditingController> _phoneControllers = <TextEditingController>[];
+  final List<TextEditingController> _nameControllers =
+      <TextEditingController>[];
+  final List<TextEditingController> _phoneControllers =
+      <TextEditingController>[];
 
   @override
   void initState() {
@@ -58,6 +61,21 @@ class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.state.isUsingFallback) ...[
+            const _InfoBanner(
+              message:
+                  'Changes were handled using fallback mode until the update endpoint is ready.',
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (widget.state.errorMessage != null) ...[
+            _ErrorBanner(message: widget.state.errorMessage!),
+            const SizedBox(height: 12),
+          ],
+          if (widget.state.isSaving) ...[
+            const LinearProgressIndicator(),
+            const SizedBox(height: 12),
+          ],
           _SectionCard(
             title: 'Booking Summary',
             children: [
@@ -123,9 +141,11 @@ class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: widget.onSaveClick,
+              onPressed: widget.state.canSave && !widget.state.isSaving
+                  ? widget.onSaveClick
+                  : null,
               icon: const Icon(Icons.save_outlined),
-              label: const Text('Save Changes'),
+              label: Text(widget.state.isSaving ? 'Saving...' : 'Save Changes'),
             ),
           ),
         ],
@@ -154,6 +174,58 @@ class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
         _phoneControllers[i].text = players[i].phoneNumber;
       }
     }
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF3D6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE9C46A)),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF7A5B00),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDECEC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE7A1A1)),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF8A3D3D),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 

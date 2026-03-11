@@ -38,4 +38,15 @@ class BookingApiService {
   Future<dynamic> onFetchBookingDetails({required String bookingSlug}) {
     return _apiClient.getJson('/booking/$bookingSlug');
   }
+
+  Future<dynamic> onUpdateBookingDetails({
+    required String bookingId,
+    required Map<String, dynamic> request,
+  }) {
+    return _apiClient.putJson('/booking/$bookingId', body: request);
+  }
+
+  Future<dynamic> onDeleteBookingDetails({required String bookingId}) {
+    return _apiClient.deleteJson('/booking/$bookingId');
+  }
 }

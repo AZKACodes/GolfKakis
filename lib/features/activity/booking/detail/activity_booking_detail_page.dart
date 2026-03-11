@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:xxx_demo_app/features/activity/booking/detail/data/activity_booking_detail_repository_impl.dart';
 import 'package:xxx_demo_app/features/activity/booking/edit/activity_booking_edit_page.dart';
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
 
@@ -25,13 +26,16 @@ class _ActivityBookingDetailPageState extends State<ActivityBookingDetailPage> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ActivityBookingDetailViewModel(booking: widget.booking);
+    _viewModel = ActivityBookingDetailViewModel(
+      initialBooking: widget.booking,
+      repository: ActivityBookingDetailRepositoryImpl(),
+    );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) async {
       if (effect is NavigateBack) {
         if (!mounted) {
           return;
         }
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(effect.updatedBooking);
       }
 
       if (effect is NavigateToActivityBookingEdit) {
@@ -48,6 +52,7 @@ class _ActivityBookingDetailPageState extends State<ActivityBookingDetailPage> {
         }
       }
     });
+    _viewModel.onUserIntent(const OnInit());
   }
 
   @override
@@ -73,6 +78,7 @@ class _ActivityBookingDetailPageState extends State<ActivityBookingDetailPage> {
           body: SafeArea(
             child: ActivityBookingDetailView(
               state: _viewModel.viewState,
+              onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
               onDeleteClick: () =>
                   _viewModel.onUserIntent(const OnDeleteClick()),
               onEditDetailsClick: () =>
