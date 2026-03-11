@@ -6,12 +6,14 @@ import '../viewmodel/activity_booking_detail_view_contract.dart';
 class ActivityBookingDetailView extends StatelessWidget {
   const ActivityBookingDetailView({
     required this.state,
+    required this.onRefresh,
     required this.onDeleteClick,
     required this.onEditDetailsClick,
     super.key,
   });
 
   final ActivityBookingDetailViewState state;
+  final Future<void> Function() onRefresh;
   final VoidCallback onDeleteClick;
   final VoidCallback onEditDetailsClick;
 
@@ -20,142 +22,116 @@ class ActivityBookingDetailView extends StatelessWidget {
     final booking = state.booking;
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _DetailCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        booking.courseName,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (state.isUsingFallback) ...[
+              const _InfoBanner(
+                message:
+                    'Showing fallback booking detail until the detail endpoint is ready.',
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (state.errorMessage != null) ...[
+              _ErrorBanner(message: state.errorMessage!),
+              const SizedBox(height: 12),
+            ],
+            if (state.isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 12),
+            ],
+            _DetailCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          booking.courseName,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                    ),
-                    _StatusChip(
-                      label: booking.statusLabel,
-                      color: booking.statusColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _MetaChip(
-                      icon: Icons.confirmation_number_outlined,
-                      text: booking.bookingId,
-                    ),
-                    _MetaChip(
-                      icon: Icons.calendar_today_outlined,
-                      text: booking.dateLabel,
-                    ),
-                    _MetaChip(
-                      icon: Icons.schedule_outlined,
-                      text: booking.teeTimeSlot,
-                    ),
-                    _MetaChip(
-                      icon: Icons.account_balance_wallet_outlined,
-                      text: booking.feeLabel,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Host Information',
-            children: [
-              _InfoRow(label: 'Host Name', value: booking.hostName),
-              _InfoRow(label: 'Phone Number', value: booking.hostPhoneNumber),
-              _InfoRow(label: 'Guest ID', value: booking.guestId ?? '-'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Round Configuration',
-            children: [
-              Row(
-                children: [
-                  BookingSubmissionMetricColumn(
-                    icon: Icons.group_outlined,
-                    label: 'Players',
-                    value: '${booking.playerCount}',
-                    color: Colors.black87,
+                      _StatusChip(
+                        label: booking.statusLabel,
+                        color: booking.statusColor,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  const BookingSubmissionMetricColumn(
-                    icon: Icons.golf_course_outlined,
-                    label: 'Rounds',
-                    value: '1',
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 12),
-                  BookingSubmissionMetricColumn(
-                    icon: Icons.support_agent_outlined,
-                    label: 'Caddies',
-                    value: '${booking.caddieCount}',
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 12),
-                  BookingSubmissionMetricColumn(
-                    icon: Icons.directions_car_outlined,
-                    label: 'Carts',
-                    value: '${booking.golfCartCount}',
-                    color: Colors.black87,
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _MetaChip(
+                        icon: Icons.confirmation_number_outlined,
+                        text: booking.bookingId,
+                      ),
+                      _MetaChip(
+                        icon: Icons.calendar_today_outlined,
+                        text: booking.dateLabel,
+                      ),
+                      _MetaChip(
+                        icon: Icons.schedule_outlined,
+                        text: booking.teeTimeSlot,
+                      ),
+                      _MetaChip(
+                        icon: Icons.account_balance_wallet_outlined,
+                        text: booking.feeLabel,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Player Details',
-            children: [
-              for (var i = 0; i < booking.playerDetails.length; i++) ...[
-                _InfoRow(
-                  label: 'Player ${i + 1}',
-                  value: booking.playerDetails[i].name,
-                ),
-                _InfoRow(
-                  label: 'Phone',
-                  value: booking.playerDetails[i].phoneNumber,
-                ),
-                if (i != booking.playerDetails.length - 1)
-                  const Divider(height: 20),
-              ],
-            ],
-          ),
-          if (!booking.isCompleted) ...[
+            ),
             const SizedBox(height: 16),
             _SectionCard(
-              title: 'Actions',
+              title: 'Host Information',
+              children: [
+                _InfoRow(label: 'Host Name', value: booking.hostName),
+                _InfoRow(label: 'Phone Number', value: booking.hostPhoneNumber),
+                _InfoRow(label: 'Guest ID', value: booking.guestId ?? '-'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _SectionCard(
+              title: 'Round Configuration',
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onDeleteClick,
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
-                      ),
+                    BookingSubmissionMetricColumn(
+                      icon: Icons.group_outlined,
+                      label: 'Players',
+                      value: '${booking.playerCount}',
+                      color: Colors.black87,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: onEditDetailsClick,
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Edit Details'),
-                      ),
+                    const SizedBox(width: 12),
+                    const BookingSubmissionMetricColumn(
+                      icon: Icons.golf_course_outlined,
+                      label: 'Rounds',
+                      value: '1',
+                      color: Colors.black87,
+                    ),
+                    const SizedBox(width: 12),
+                    BookingSubmissionMetricColumn(
+                      icon: Icons.support_agent_outlined,
+                      label: 'Caddies',
+                      value: '${booking.caddieCount}',
+                      color: Colors.black87,
+                    ),
+                    const SizedBox(width: 12),
+                    BookingSubmissionMetricColumn(
+                      icon: Icons.directions_car_outlined,
+                      label: 'Carts',
+                      value: '${booking.golfCartCount}',
+                      color: Colors.black87,
                     ),
                   ],
                 ),
@@ -163,44 +139,145 @@ class ActivityBookingDetailView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _SectionCard(
-              title: 'Check In',
+              title: 'Player Details',
+              children: [
+                for (var i = 0; i < booking.playerDetails.length; i++) ...[
+                  _InfoRow(
+                    label: 'Player ${i + 1}',
+                    value: booking.playerDetails[i].name,
+                  ),
+                  _InfoRow(
+                    label: 'Phone',
+                    value: booking.playerDetails[i].phoneNumber,
+                  ),
+                  if (i != booking.playerDetails.length - 1)
+                    const Divider(height: 20),
+                ],
+              ],
+            ),
+            if (!booking.isCompleted) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Actions',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: state.isDeleting ? null : onDeleteClick,
+                          icon: const Icon(Icons.delete_outline),
+                          label: Text(
+                            state.isDeleting ? 'Deleting...' : 'Delete',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: state.isDeleting
+                              ? null
+                              : onEditDetailsClick,
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Edit Details'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Check In',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: null,
+                          icon: const Icon(Icons.play_circle_outline),
+                          label: const Text('Check In'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const _ComingSoonBanner(message: 'Check In Coming Soon'),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            _SectionCard(
+              title: 'Scoreboard',
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: null,
-                        icon: const Icon(Icons.play_circle_outline),
-                        label: const Text('Check In'),
+                        icon: const Icon(Icons.emoji_events_outlined),
+                        label: const Text('Scoreboard'),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                const _ComingSoonBanner(message: 'Check In Coming Soon'),
+                const _ComingSoonBanner(message: 'Scoreboard Coming Soon'),
               ],
             ),
           ],
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Scoreboard',
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: null,
-                      icon: const Icon(Icons.emoji_events_outlined),
-                      label: const Text('Scoreboard'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const _ComingSoonBanner(message: 'Scoreboard Coming Soon'),
-            ],
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF3D6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE9C46A)),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF7A5B00),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDECEC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE7A1A1)),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF8A3D3D),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -374,9 +451,9 @@ class _MetaChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.black87,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Colors.black87),
           ),
         ],
       ),

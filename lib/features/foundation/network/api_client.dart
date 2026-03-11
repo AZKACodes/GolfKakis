@@ -43,6 +43,36 @@ class ApiClient {
     return _decodeJsonResponse(response);
   }
 
+  Future<dynamic> putJson(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    final response = await _client.put(
+      uri,
+      headers: _mergeHeaders(headers),
+      body: jsonEncode(body),
+    );
+    return _decodeJsonResponse(response);
+  }
+
+  Future<dynamic> deleteJson(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    final response = await _client.delete(
+      uri,
+      headers: _mergeHeaders(headers),
+      body: body == null ? null : jsonEncode(body),
+    );
+    return _decodeJsonResponse(response);
+  }
+
   Uri _buildUri(String path, Map<String, dynamic>? queryParameters) {
     final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
     final resolved = Uri.parse(_baseUrl).resolve(normalizedPath);

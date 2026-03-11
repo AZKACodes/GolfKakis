@@ -1,59 +1,98 @@
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
+import 'package:xxx_demo_app/features/activity/booking/edit/data/activity_booking_edit_repository.dart';
+import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'activity_booking_edit_view_contract.dart';
 
-class ActivityBookingEditViewModel extends ChangeNotifier
+class ActivityBookingEditViewModel
+    extends
+        MviViewModel<
+          ActivityBookingEditUserIntent,
+          ActivityBookingEditViewState,
+          ActivityBookingEditNavEffect
+        >
     implements ActivityBookingEditViewContract {
-  ActivityBookingEditViewModel({required BookingModel booking})
-    : _viewState = ActivityBookingEditViewState(booking: booking);
+  ActivityBookingEditViewModel({
+    required ActivityBookingEditRepository repository,
+    required ActivityBookingEditViewState initialState,
+  }) : _repository = repository,
+       _initialState = initialState;
 
-  final StreamController<ActivityBookingEditNavEffect> _navEffectsController =
-      StreamController<ActivityBookingEditNavEffect>.broadcast();
-
-  ActivityBookingEditViewState _viewState;
-
-  @override
-  ActivityBookingEditViewState get viewState => _viewState;
+  final ActivityBookingEditRepository _repository;
+  final ActivityBookingEditViewState _initialState;
 
   @override
-  Stream<ActivityBookingEditNavEffect> get navEffects =>
-      _navEffectsController.stream;
+  ActivityBookingEditViewState createInitialState() => _initialState;
 
   @override
-  void onUserIntent(ActivityBookingEditUserIntent intent) {
+  Future<void> handleIntent(ActivityBookingEditUserIntent intent) async {
     switch (intent) {
+      case OnInit():
+        emitViewState((state) => state.copyWith(clearErrorMessage: true));
       case OnBackClick():
-        _navEffectsController.add(const NavigateBack());
+        sendNavEffect(() => const NavigateBack());
       case OnPlayerNameChanged():
         _updatePlayer(index: intent.index, name: intent.value);
       case OnPlayerPhoneChanged():
         _updatePlayer(index: intent.index, phone: intent.value);
       case OnSaveClick():
-        _navEffectsController.add(
-          NavigateBack(updatedBooking: _viewState.booking),
-        );
+        await _saveBooking();
     }
   }
 
   void _updatePlayer({required int index, String? name, String? phone}) {
-    final players = [..._viewState.booking.playerDetails];
+    final players = List<BookingSubmissionPlayerModel>.from(
+      currentState.booking.playerDetails,
+    );
+    if (index < 0 || index >= players.length) {
+      return;
+    }
+
     final current = players[index];
     players[index] = current.copyWith(
       name: name ?? current.name,
       phoneNumber: phone ?? current.phoneNumber,
     );
-    _viewState = ActivityBookingEditViewState(
-      booking: _viewState.booking.copyWith(playerDetails: players),
+
+    emitViewState(
+      (state) => state.copyWith(
+        booking: state.booking.copyWith(playerDetails: players),
+        isUsingFallback: false,
+        clearErrorMessage: true,
+      ),
     );
-    notifyListeners();
   }
 
-  @override
-  void dispose() {
-    _navEffectsController.close();
-    super.dispose();
+  Future<void> _saveBooking() async {
+    if (!currentState.canSave || currentState.isSaving) {
+      return;
+    }
+
+    emitViewState(
+      (state) => state.copyWith(isSaving: true, clearErrorMessage: true),
+    );
+
+    try {
+      final result = await _repository.onSaveBooking(
+        booking: currentState.booking,
+      );
+      emitViewState(
+        (state) => state.copyWith(
+          booking: result.booking,
+          isSaving: false,
+          isUsingFallback: result.isFallback,
+          clearErrorMessage: true,
+        ),
+      );
+      sendNavEffect(() => NavigateBack(updatedBooking: result.booking));
+    } catch (_) {
+      emitViewState(
+        (state) => state.copyWith(
+          isSaving: false,
+          isUsingFallback: false,
+          errorMessage: 'Unable to save booking changes right now.',
+        ),
+      );
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
+import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ActivityBookingDetailViewContract {
   ActivityBookingDetailViewState get viewState;
@@ -6,14 +7,60 @@ abstract class ActivityBookingDetailViewContract {
   void onUserIntent(ActivityBookingDetailUserIntent intent);
 }
 
-class ActivityBookingDetailViewState {
-  const ActivityBookingDetailViewState({required this.booking});
+class ActivityBookingDetailViewState extends ViewState {
+  const ActivityBookingDetailViewState({
+    required this.booking,
+    required this.isLoading,
+    required this.isDeleting,
+    required this.isUsingFallback,
+    this.errorMessage,
+  }) : super();
+
+  factory ActivityBookingDetailViewState.initial(BookingModel booking) {
+    return ActivityBookingDetailViewState(
+      booking: booking,
+      isLoading: false,
+      isDeleting: false,
+      isUsingFallback: false,
+    );
+  }
 
   final BookingModel booking;
+  final bool isLoading;
+  final bool isDeleting;
+  final bool isUsingFallback;
+  final String? errorMessage;
+
+  ActivityBookingDetailViewState copyWith({
+    BookingModel? booking,
+    bool? isLoading,
+    bool? isDeleting,
+    bool? isUsingFallback,
+    String? errorMessage,
+    bool clearErrorMessage = false,
+  }) {
+    return ActivityBookingDetailViewState(
+      booking: booking ?? this.booking,
+      isLoading: isLoading ?? this.isLoading,
+      isDeleting: isDeleting ?? this.isDeleting,
+      isUsingFallback: isUsingFallback ?? this.isUsingFallback,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
+    );
+  }
 }
 
-sealed class ActivityBookingDetailUserIntent {
-  const ActivityBookingDetailUserIntent();
+sealed class ActivityBookingDetailUserIntent extends UserIntent {
+  const ActivityBookingDetailUserIntent() : super();
+}
+
+class OnInit extends ActivityBookingDetailUserIntent {
+  const OnInit();
+}
+
+class OnRefresh extends ActivityBookingDetailUserIntent {
+  const OnRefresh();
 }
 
 class OnBackClick extends ActivityBookingDetailUserIntent {
@@ -34,16 +81,14 @@ class OnBookingUpdated extends ActivityBookingDetailUserIntent {
   final BookingModel booking;
 }
 
-sealed class NavEffect {
-  const NavEffect();
-}
-
 sealed class ActivityBookingDetailNavEffect extends NavEffect {
-  const ActivityBookingDetailNavEffect();
+  const ActivityBookingDetailNavEffect() : super();
 }
 
 class NavigateBack extends ActivityBookingDetailNavEffect {
-  const NavigateBack();
+  const NavigateBack({this.updatedBooking});
+
+  final BookingModel? updatedBooking;
 }
 
 class NavigateToActivityBookingEdit extends ActivityBookingDetailNavEffect {
