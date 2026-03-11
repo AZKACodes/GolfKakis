@@ -64,21 +64,23 @@ class _RootScreenState extends State<RootScreen> {
         final currentIndex = _viewModel.viewState.currentIndex;
         final sessionLabel = session.status == SessionStatus.loggedIn
             ? 'Logged in as ${session.effectiveUsername}'
-            : 'Guest: ${session.effectiveUsername}';
+            : null;
 
         return Scaffold(
           appBar: AppBar(
             title: Text(_items[currentIndex].label),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(26),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  sessionLabel,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ),
-            ),
+            bottom: sessionLabel == null
+                ? null
+                : PreferredSize(
+                    preferredSize: const Size.fromHeight(26),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        sessionLabel,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                  ),
           ),
           body: SafeArea(
             child: IndexedStack(index: currentIndex, children: _pages),

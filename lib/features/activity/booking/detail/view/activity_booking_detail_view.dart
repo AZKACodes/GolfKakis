@@ -97,7 +97,6 @@ class ActivityBookingDetailView extends StatelessWidget {
               children: [
                 _InfoRow(label: 'Host Name', value: booking.hostName),
                 _InfoRow(label: 'Phone Number', value: booking.hostPhoneNumber),
-                _InfoRow(label: 'Guest ID', value: booking.guestId ?? '-'),
               ],
             ),
             const SizedBox(height: 16),

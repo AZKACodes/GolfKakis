@@ -20,8 +20,6 @@ class ProfileNavGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateRoute: _onGenerateRoute,
-    );
+    return Navigator(onGenerateRoute: _onGenerateRoute);
   }
 }
