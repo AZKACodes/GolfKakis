@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:xxx_demo_app/features/booking/submission/detail/booking_submission_detail_page.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/view/booking_submission_slot_view.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/detail/booking_submission_detail_page.dart';
+import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/booking_submission_slot_view.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
 
 class BookingSubmissionSlotPage extends StatefulWidget {
-  const BookingSubmissionSlotPage({super.key});
+  const BookingSubmissionSlotPage({this.initialClubSlug, super.key});
+
+  final String? initialClubSlug;
 
   @override
   State<BookingSubmissionSlotPage> createState() =>
@@ -25,6 +27,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
 
     _viewModel = BookingSubmissionSlotViewModel(
       BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
+      initialClubSlug: widget.initialClubSlug,
     );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);

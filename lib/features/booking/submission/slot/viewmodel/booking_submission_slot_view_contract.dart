@@ -1,10 +1,10 @@
-import 'package:xxx_demo_app/features/foundation/enums/booking/time_period.dart';
-import 'package:xxx_demo_app/features/foundation/default_values.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
-import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
-import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
+import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
+import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionSlotViewContract {
   BookingSubmissionSlotViewState get viewState;
@@ -45,8 +45,13 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
        visibleUnavailableIndices = visibleUnavailableIndices ?? const <int>{},
        super();
 
-  factory BookingSubmissionSlotDataLoaded.initial() {
-    return BookingSubmissionSlotDataLoaded(selectedDate: DateTime.now());
+  factory BookingSubmissionSlotDataLoaded.initial({
+    String selectedClubSlug = emptyString,
+  }) {
+    return BookingSubmissionSlotDataLoaded(
+      selectedDate: DateTime.now(),
+      selectedClubSlug: selectedClubSlug,
+    );
   }
 
   final List<GolfClubModel> golfClubList;

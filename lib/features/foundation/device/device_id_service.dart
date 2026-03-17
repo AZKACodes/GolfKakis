@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
 class DeviceIdService {
-  static const _channel = MethodChannel('xxx_demo_app/device_id');
+  static const _channel = MethodChannel('golf_kakis/device_id');
 
   Future<String> getDeviceId() async {
     try {

@@ -1,13 +1,14 @@
-import 'package:xxx_demo_app/features/booking/api/booking_api_service.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
-import 'package:xxx_demo_app/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/network/network.dart';
 
-import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
+import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
 
 class BookingSubmissionSlotRepositoryImpl
     implements BookingSubmissionSlotRepository {
+  static const bool _preferImmediateFallback = true;
   static final Map<String, Map<String, dynamic>> _fallbackBookingStore =
       <String, Map<String, dynamic>>{};
 
@@ -21,6 +22,39 @@ class BookingSubmissionSlotRepositoryImpl
 
   @override
   Future<List<GolfClubModel>> onFetchGolfClubList() async {
+    if (_preferImmediateFallback) {
+      return const <GolfClubModel>[
+        GolfClubModel(
+          id: '1',
+          slug: 'kinrara-golf-club',
+          name: 'Kinrara Golf Club',
+          address: 'Bandar Kinrara, Puchong',
+          noOfHoles: 18,
+        ),
+        GolfClubModel(
+          id: '2',
+          slug: 'saujana-golf-country-club',
+          name: 'Saujana Golf & Country Club',
+          address: 'Shah Alam, Selangor',
+          noOfHoles: 36,
+        ),
+        GolfClubModel(
+          id: '3',
+          slug: 'kota-permai-golf-country-club',
+          name: 'Kota Permai Golf & Country Club',
+          address: 'Kota Kemuning, Shah Alam',
+          noOfHoles: 18,
+        ),
+        GolfClubModel(
+          id: '4',
+          slug: 'mines-resort-golf-club',
+          name: 'The Mines Resort & Golf Club',
+          address: 'Serdang, Selangor',
+          noOfHoles: 18,
+        ),
+      ];
+    }
+
     try {
       final response = await _apiService.onFetchGolfClubList();
       final clubs = _parseGolfClubList(response);
@@ -68,6 +102,10 @@ class BookingSubmissionSlotRepositoryImpl
     required String clubSlug,
     required String date,
   }) async {
+    if (_preferImmediateFallback) {
+      return _buildFallbackSlots(clubSlug: clubSlug, date: date);
+    }
+
     try {
       final response = await _apiService.onFetchAvailableSlots(
         clubSlug: clubSlug,
@@ -89,6 +127,10 @@ class BookingSubmissionSlotRepositoryImpl
   Future<dynamic> onCreateBookingSubmission({
     required BookingSubmissionRequestModel request,
   }) async {
+    if (_preferImmediateFallback) {
+      return _buildFallbackSubmissionResponse(request);
+    }
+
     try {
       final response = await _apiService.onCreateBookingSubmission(
         request: request,
@@ -101,18 +143,21 @@ class BookingSubmissionSlotRepositoryImpl
 
   @override
   Future<dynamic> onFetchBookingDetails({required String bookingSlug}) async {
+    if (_preferImmediateFallback) {
+      return _buildFallbackBookingDetails(bookingSlug);
+    }
+
     try {
       final response = await _apiService.onFetchBookingDetails(
         bookingSlug: bookingSlug,
       );
 
       if (response is Map<String, dynamic>) {
-        final detailMap =
-            response['data'] is Map<String, dynamic>
-                ? response['data'] as Map<String, dynamic>
-                : response['booking'] is Map<String, dynamic>
-                ? response['booking'] as Map<String, dynamic>
-                : response;
+        final detailMap = response['data'] is Map<String, dynamic>
+            ? response['data'] as Map<String, dynamic>
+            : response['booking'] is Map<String, dynamic>
+            ? response['booking'] as Map<String, dynamic>
+            : response;
         _fallbackBookingStore[bookingSlug] = Map<String, dynamic>.from(
           detailMap,
         );
@@ -167,15 +212,18 @@ class BookingSubmissionSlotRepositoryImpl
         .toLowerCase();
     final normalizedSlugSeed = slugSeed.isEmpty ? 'booking' : slugSeed;
     final sanitizedDate = request.bookingDate.replaceAll('-', '');
-    final sanitizedTime = request.teeTimeSlot
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
-    final suffix = DateTime.now().millisecondsSinceEpoch
-        .toString()
-        .substring(7);
+    final sanitizedTime = request.teeTimeSlot.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]'),
+      '',
+    );
+    final suffix = DateTime.now().millisecondsSinceEpoch.toString().substring(
+      7,
+    );
     final bookingSlug =
         '$normalizedSlugSeed-$sanitizedDate-$sanitizedTime-$suffix';
-    final bookingIdPrefix = normalizedSlugSeed.replaceAll('-', '').toUpperCase();
+    final bookingIdPrefix = normalizedSlugSeed
+        .replaceAll('-', '')
+        .toUpperCase();
     final bookingId =
         '${bookingIdPrefix.substring(0, bookingIdPrefix.length.clamp(0, 4))}-$suffix';
 

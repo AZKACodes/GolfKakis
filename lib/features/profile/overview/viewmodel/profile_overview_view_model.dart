@@ -1,6 +1,6 @@
-import 'package:xxx_demo_app/features/foundation/session/session_state.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:xxx_demo_app/features/profile/overview/data/profile_overview_repository.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
+import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository.dart';
 
 import 'profile_overview_view_contract.dart';
 

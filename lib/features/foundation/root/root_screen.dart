@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import '../navigation/activity_nav_graph.dart';
 import '../navigation/booking_nav_graph.dart';
 import '../navigation/home_nav_graph.dart';
 import '../navigation/profile_nav_graph.dart';
@@ -25,14 +24,12 @@ class _RootScreenState extends State<RootScreen> {
   static const List<NavItem> _items = [
     NavItem(label: 'Home', icon: Icons.home_outlined),
     NavItem(label: 'Booking', icon: Icons.event_outlined),
-    NavItem(label: 'Activity', icon: Icons.local_activity_outlined),
     NavItem(label: 'Profile', icon: Icons.person_outline),
   ];
 
   static const List<Widget> _pages = [
     HomeNavGraph(),
     BookingNavGraph(),
-    ActivityNavGraph(),
     ProfileNavGraph(),
   ];
 

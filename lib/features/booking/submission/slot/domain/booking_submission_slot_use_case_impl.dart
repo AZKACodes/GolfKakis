@@ -1,10 +1,10 @@
-import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/data_status_model.dart';
-import 'package:xxx_demo_app/features/foundation/network/api_exception.dart';
+import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/network/api_exception.dart';
 
 class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
   BookingSubmissionSlotUseCaseImpl(this._repository);

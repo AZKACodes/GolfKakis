@@ -6,27 +6,10 @@ abstract class HomeRepository {
 }
 
 class HomeRepositoryImpl implements HomeRepository {
-  HomeRepositoryImpl({ApiClient? apiClient, HomeApiService? apiService})
-    : _apiService =
-          apiService ?? HomeApiService(apiClient: apiClient ?? ApiClient());
-
-  final HomeApiService _apiService;
+  HomeRepositoryImpl({ApiClient? apiClient, HomeApiService? apiService});
 
   @override
   Future<String> fetchWelcomeMessage() async {
-    try {
-      final response = await _apiService.getHello();
-
-      if (response is Map<String, dynamic>) {
-        final message = response['message'];
-        if (message is String && message.trim().isNotEmpty) {
-          return message;
-        }
-      }
-    } catch (_) {
-      // Keep a safe fallback so UI can still render if the endpoint is unavailable.
-    }
-
-    return 'Welcome to Home';
+    return 'Welcome to GolfKakis';
   }
 }

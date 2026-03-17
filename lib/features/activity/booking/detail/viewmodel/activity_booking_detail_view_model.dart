@@ -1,6 +1,6 @@
-import 'package:xxx_demo_app/features/activity/booking/detail/data/activity_booking_detail_repository.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
+import 'package:golf_kakis/features/activity/booking/detail/data/activity_booking_detail_repository.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'activity_booking_detail_view_contract.dart';
 

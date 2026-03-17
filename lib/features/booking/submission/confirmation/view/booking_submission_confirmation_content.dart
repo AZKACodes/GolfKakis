@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
-import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
+import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
   const BookingSubmissionConfirmationContent({required this.state, super.key});

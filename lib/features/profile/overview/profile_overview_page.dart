@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:xxx_demo_app/features/foundation/session/session_scope.dart';
-import 'package:xxx_demo_app/features/foundation/session/session_state.dart';
-import 'package:xxx_demo_app/features/profile/login/profile_login_page.dart';
-import 'package:xxx_demo_app/features/profile/overview/data/profile_overview_repository_impl.dart';
-import 'package:xxx_demo_app/features/profile/overview/view/profile_overview_view.dart';
-import 'package:xxx_demo_app/features/profile/overview/viewmodel/profile_overview_view_contract.dart';
-import 'package:xxx_demo_app/features/profile/overview/viewmodel/profile_overview_view_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
+import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
+import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository_impl.dart';
+import 'package:golf_kakis/features/profile/overview/view/profile_overview_view.dart';
+import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_contract.dart';
+import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_model.dart';
 
 class ProfileOverviewPage extends StatefulWidget {
   const ProfileOverviewPage({super.key});

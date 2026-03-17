@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 
 class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
   const BookingSubmissionDetailSelectionSummary({

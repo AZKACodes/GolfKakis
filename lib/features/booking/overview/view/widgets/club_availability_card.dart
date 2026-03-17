@@ -7,6 +7,7 @@ class ClubAvailabilityCard extends StatelessWidget {
     required this.openSlotsLabel,
     required this.greenFeeLabel,
     required this.peakLabel,
+    this.onTap,
     super.key,
   });
 
@@ -15,38 +16,59 @@ class ClubAvailabilityCard extends StatelessWidget {
   final String openSlotsLabel;
   final String greenFeeLabel;
   final String peakLabel;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            clubName,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black12),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _InfoChip(text: distanceLabel),
-              _InfoChip(text: openSlotsLabel),
-              _InfoChip(text: greenFeeLabel),
-              _InfoChip(text: peakLabel),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      clubName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.black45,
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoChip(text: distanceLabel),
+                  _InfoChip(text: openSlotsLabel),
+                  _InfoChip(text: greenFeeLabel),
+                  _InfoChip(text: peakLabel),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
