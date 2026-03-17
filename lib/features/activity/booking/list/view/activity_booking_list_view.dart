@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 
 import '../viewmodel/activity_booking_list_view_contract.dart';
 

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/activity/booking/detail/data/activity_booking_detail_repository.dart';
-import 'package:xxx_demo_app/features/booking/api/booking_api_service.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
-import 'package:xxx_demo_app/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/activity/booking/detail/data/activity_booking_detail_repository.dart';
+import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/network/network.dart';
 
 class ActivityBookingDetailRepositoryImpl
     implements ActivityBookingDetailRepository {
+  static const bool _preferImmediateFallback = true;
+
   ActivityBookingDetailRepositoryImpl({
     ApiClient? apiClient,
     BookingApiService? apiService,
@@ -19,6 +21,10 @@ class ActivityBookingDetailRepositoryImpl
   Future<ActivityBookingDetailResult> onFetchBookingDetail({
     required BookingModel booking,
   }) async {
+    if (_preferImmediateFallback) {
+      return ActivityBookingDetailResult(booking: booking, isFallback: true);
+    }
+
     try {
       final response = await _apiService.onFetchBookingDetails(
         bookingSlug: booking.bookingId,
@@ -38,6 +44,10 @@ class ActivityBookingDetailRepositoryImpl
   Future<ActivityBookingDeleteResult> onDeleteBooking({
     required BookingModel booking,
   }) async {
+    if (_preferImmediateFallback) {
+      return const ActivityBookingDeleteResult(isFallback: true);
+    }
+
     try {
       await _apiService.onDeleteBookingDetails(bookingId: booking.bookingId);
       return const ActivityBookingDeleteResult(isFallback: false);

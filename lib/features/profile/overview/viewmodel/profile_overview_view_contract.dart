@@ -1,6 +1,6 @@
-import 'package:xxx_demo_app/features/foundation/model/profile/user_profile_model.dart';
-import 'package:xxx_demo_app/features/foundation/session/session_state.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ProfileOverviewViewContract {
   ProfileOverviewViewState get viewState;

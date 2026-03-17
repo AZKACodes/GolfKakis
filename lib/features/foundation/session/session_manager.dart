@@ -13,6 +13,7 @@ class SessionManager extends ChangeNotifier {
 
   SessionState _state = SessionState.initial;
   SessionState get state => _state;
+  String get deviceId => _state.deviceId;
 
   bool _initialized = false;
   bool get isInitialized => _initialized;

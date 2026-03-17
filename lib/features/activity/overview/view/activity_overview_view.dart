@@ -35,6 +35,8 @@ class ActivityOverviewDashboardView extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
+          const _MomentumHeaderCard(),
+          const SizedBox(height: 16),
           _BookingListTouchpoint(onTap: onBookingListClick),
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Upcoming'),
@@ -49,6 +51,8 @@ class ActivityOverviewDashboardView extends StatelessWidget {
             checkInStatus: 'Check-in opens in 3h',
             onOpenDetails: onUpcomingBookingDetailClick,
           ),
+          const SizedBox(height: 16),
+          const _CheckInReadinessCard(),
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Recent Rounds'),
           const SizedBox(height: 10),
@@ -72,6 +76,107 @@ class ActivityOverviewDashboardView extends StatelessWidget {
             girLabel: '67%',
             puttsLabel: '29',
             onOpenDetails: onRecentRoundTwoDetailClick,
+          ),
+          const SizedBox(height: 16),
+          const _PerformancePulseCard(),
+        ],
+      ),
+    );
+  }
+}
+
+class _MomentumHeaderCard extends StatelessWidget {
+  const _MomentumHeaderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF4FBF8), Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD9EEE5)),
+      ),
+      child: Row(
+        children: const [
+          Expanded(
+            child: _MomentumStat(
+              label: 'Upcoming',
+              value: '3',
+              accent: Color(0xFF1E5B4A),
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: _MomentumStat(
+              label: 'Rounds Won vs Par',
+              value: '2',
+              accent: Color(0xFF2F7BFF),
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: _MomentumStat(
+              label: 'Consistency',
+              value: 'A-',
+              accent: Color(0xFFFF9F1C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MomentumStat extends StatelessWidget {
+  const _MomentumStat({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 6,
+            decoration: BoxDecoration(
+              color: accent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -112,10 +217,7 @@ class _BookingListTouchpoint extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton(
-            onPressed: onTap,
-            child: const Text('Open'),
-          ),
+          FilledButton(onPressed: onTap, child: const Text('Open')),
         ],
       ),
     );
@@ -206,9 +308,15 @@ class _UpcomingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              OutlinedButton(onPressed: onOpenDetails, child: const Text('Modify')),
+              OutlinedButton(
+                onPressed: onOpenDetails,
+                child: const Text('Modify'),
+              ),
               const SizedBox(width: 8),
-              FilledButton(onPressed: onOpenDetails, child: const Text('Details')),
+              FilledButton(
+                onPressed: onOpenDetails,
+                child: const Text('Details'),
+              ),
             ],
           ),
         ],
@@ -287,9 +395,137 @@ class _RoundCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              TextButton(onPressed: onOpenDetails, child: const Text('View Details')),
+              TextButton(
+                onPressed: onOpenDetails,
+                child: const Text('View Details'),
+              ),
               const SizedBox(width: 6),
-              TextButton(onPressed: onOpenDetails, child: const Text('Book Again')),
+              TextButton(
+                onPressed: onOpenDetails,
+                child: const Text('Book Again'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckInReadinessCard extends StatelessWidget {
+  const _CheckInReadinessCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Check-in Readiness',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          const _ReadinessRow(
+            label: 'Flight confirmed',
+            status: 'Ready',
+            color: Color(0xFF2FBF71),
+          ),
+          const SizedBox(height: 8),
+          const _ReadinessRow(
+            label: 'Deposit status',
+            status: 'Paid',
+            color: Color(0xFF2F7BFF),
+          ),
+          const SizedBox(height: 8),
+          const _ReadinessRow(
+            label: 'Arrival reminder',
+            status: 'Set for 5:45 AM',
+            color: Color(0xFFFF9F1C),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadinessRow extends StatelessWidget {
+  const _ReadinessRow({
+    required this.label,
+    required this.status,
+    required this.color,
+  });
+
+  final String label;
+  final String status;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            status,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PerformancePulseCard extends StatelessWidget {
+  const _PerformancePulseCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Performance Pulse',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your recent rounds show better greens-in-regulation and lower putt counts when teeing off before 8 AM.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
+          ),
+          const SizedBox(height: 12),
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Tag(
+                text: 'Best start window 7:00-7:45',
+                color: Color(0xFF2A6654),
+              ),
+              _Tag(text: 'Putting trending down', color: Color(0xFF2F7BFF)),
+              _Tag(text: 'Iron play stable', color: Color(0xFFFF9F1C)),
             ],
           ),
         ],

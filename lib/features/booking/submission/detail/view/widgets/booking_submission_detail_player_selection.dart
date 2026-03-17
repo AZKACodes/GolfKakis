@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/widgets/booking_submission_detail_counter_control.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_counter_control.dart';
 
 class BookingSubmissionDetailPlayerSelection extends StatelessWidget {
   const BookingSubmissionDetailPlayerSelection({

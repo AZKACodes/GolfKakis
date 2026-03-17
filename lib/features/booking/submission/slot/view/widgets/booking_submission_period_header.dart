@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/foundation/enums/booking/time_period.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 
 class BookingSubmissionPeriodHeader extends StatelessWidget {
   const BookingSubmissionPeriodHeader({
