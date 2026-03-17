@@ -1,5 +1,5 @@
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_detail_view_contract.dart';
 

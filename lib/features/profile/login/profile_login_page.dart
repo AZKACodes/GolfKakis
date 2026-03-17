@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/foundation/enums/session/user_role.dart';
-import 'package:xxx_demo_app/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 
 import 'view/profile_login_view.dart';
 import 'viewmodel/profile_login_view_contract.dart';

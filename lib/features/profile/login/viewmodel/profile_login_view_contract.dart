@@ -1,5 +1,5 @@
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:xxx_demo_app/features/foundation/enums/session/user_role.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 
 abstract class ProfileLoginViewContract {
   ProfileLoginViewState get viewState;

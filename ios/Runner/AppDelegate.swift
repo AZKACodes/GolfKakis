@@ -3,7 +3,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
-  private let channelName = "xxx_demo_app/device_id"
+  private let channelName = "golf_kakis/device_id"
 
   override func application(
     _ application: UIApplication,

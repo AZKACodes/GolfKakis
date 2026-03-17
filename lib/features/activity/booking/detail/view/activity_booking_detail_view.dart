@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
+import 'package:golf_kakis/features/foundation/widgets/booking_submission_metric_column.dart';
 
 import '../viewmodel/activity_booking_detail_view_contract.dart';
 

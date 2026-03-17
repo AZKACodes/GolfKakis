@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/activity/booking/detail/data/activity_booking_detail_repository_impl.dart';
-import 'package:xxx_demo_app/features/activity/booking/edit/activity_booking_edit_page.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/activity/booking/detail/data/activity_booking_detail_repository_impl.dart';
+import 'package:golf_kakis/features/activity/booking/edit/activity_booking_edit_page.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 
 import 'view/activity_booking_detail_view.dart';
 import 'viewmodel/activity_booking_detail_view_contract.dart';

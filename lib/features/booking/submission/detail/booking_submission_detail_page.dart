@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/booking_submission_confirmation_page.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/booking_submission_detail_view.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/booking_submission_confirmation_page.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
+import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({

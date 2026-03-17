@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## API Docs
+
+Booking API documentation lives in [BOOKING_API_DOCUMENTATION.md](./BOOKING_API_DOCUMENTATION.md).
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

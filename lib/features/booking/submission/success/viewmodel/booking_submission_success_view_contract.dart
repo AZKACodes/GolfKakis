@@ -1,6 +1,6 @@
-import 'package:xxx_demo_app/features/foundation/default_values.dart';
-import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingSubmissionSuccessViewContract {
   BookingSubmissionSuccessViewState get viewState;

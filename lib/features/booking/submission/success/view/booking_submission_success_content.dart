@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/booking_submission_metric_column.dart';
+import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
+import 'package:golf_kakis/features/foundation/widgets/booking_submission_metric_column.dart';
 
 class BookingSubmissionSuccessContent extends StatelessWidget {
   const BookingSubmissionSuccessContent({required this.state, super.key});

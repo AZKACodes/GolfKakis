@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection_item.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/widgets/booking_submission_detail_player_selection.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection_item.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_player_selection.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
+import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 
 class BookingSubmissionDetailContent extends StatefulWidget {
   const BookingSubmissionDetailContent({

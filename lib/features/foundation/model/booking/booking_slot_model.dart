@@ -1,4 +1,4 @@
-import 'package:xxx_demo_app/features/foundation/util/default_constant_util.dart';
+import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 
 class BookingSlotModel {
   const BookingSlotModel({

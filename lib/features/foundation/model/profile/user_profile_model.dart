@@ -1,4 +1,4 @@
-import 'package:xxx_demo_app/features/foundation/enums/session/user_role.dart';
+import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 
 class UserProfileModel {
   const UserProfileModel({

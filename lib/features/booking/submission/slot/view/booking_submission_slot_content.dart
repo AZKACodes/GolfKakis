@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/view/widgets/booking_submission_calendar.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/view/widgets/booking_submission_period_header.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/view/widgets/booking_submission_slot_dot_label.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/view/widgets/booking_submission_slot_grid.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/app_date_picker_button.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking_submission_calendar.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking_submission_period_header.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking_submission_slot_dot_label.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking_submission_slot_grid.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/widgets/app_date_picker_button.dart';
 
 class BookingSubmissionSlotContent extends StatelessWidget {
   const BookingSubmissionSlotContent({

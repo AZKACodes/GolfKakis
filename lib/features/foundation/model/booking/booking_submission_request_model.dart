@@ -1,4 +1,4 @@
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 
 class BookingSubmissionRequestModel {
   const BookingSubmissionRequestModel({

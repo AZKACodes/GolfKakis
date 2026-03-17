@@ -1,4 +1,4 @@
-import 'package:xxx_demo_app/features/foundation/enums/booking/time_period.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 
 enum TeeTimeSlot {
   seven00Am('07:00 AM', TimePeriod.am),

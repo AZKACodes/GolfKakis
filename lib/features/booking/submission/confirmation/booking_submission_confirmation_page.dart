@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/view/booking_submission_confirmation_view.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
-import 'package:xxx_demo_app/features/booking/submission/success/booking_submission_success_page.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/view/booking_submission_confirmation_view.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/success/booking_submission_success_page.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({

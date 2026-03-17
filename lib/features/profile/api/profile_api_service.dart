@@ -1,4 +1,4 @@
-import 'package:xxx_demo_app/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/foundation/network/network.dart';
 
 class ProfileApiService {
   ProfileApiService({ApiClient? apiClient})

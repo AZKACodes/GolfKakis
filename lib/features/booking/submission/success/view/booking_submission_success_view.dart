@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/success/view/booking_submission_success_content.dart';
-import 'package:xxx_demo_app/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_content.dart';
+import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
 
 class BookingSubmissionSuccessView extends StatelessWidget {
   const BookingSubmissionSuccessView({required this.viewModel, super.key});

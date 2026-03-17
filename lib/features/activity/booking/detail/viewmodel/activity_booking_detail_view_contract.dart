@@ -1,5 +1,5 @@
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_model.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ActivityBookingDetailViewContract {
   ActivityBookingDetailViewState get viewState;

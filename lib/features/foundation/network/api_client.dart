@@ -5,10 +5,14 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
 
+typedef HeaderProvider = Map<String, String> Function();
+
 class ApiClient {
   ApiClient({http.Client? client, String? baseUrl})
     : _client = client ?? http.Client(),
       _baseUrl = baseUrl ?? ApiConfig.baseUrl;
+
+  static HeaderProvider? _sharedHeaderProvider;
 
   final http.Client _client;
   final String _baseUrl;
@@ -17,6 +21,10 @@ class ApiClient {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
   };
+
+  static void configureSharedHeaders(HeaderProvider? provider) {
+    _sharedHeaderProvider = provider;
+  }
 
   Future<dynamic> getJson(
     String path, {
@@ -89,8 +97,11 @@ class ApiClient {
   }
 
   Map<String, String> _mergeHeaders(Map<String, String>? headers) {
+    final sharedHeaders =
+        _sharedHeaderProvider?.call() ?? const <String, String>{};
     return <String, String>{
       ..._defaultHeaders,
+      ...sharedHeaders,
       if (headers != null) ...headers,
     };
   }

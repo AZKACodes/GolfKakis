@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:xxx_demo_app/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
-import 'package:xxx_demo_app/features/foundation/default_values.dart';
-import 'package:xxx_demo_app/features/foundation/enums/booking/tee_time_slot.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/data_status_model.dart';
-import 'package:xxx_demo_app/features/foundation/util/date_util.dart';
-import 'package:xxx_demo_app/features/foundation/viewmodel/mvi_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
+import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_slot_view_contract.dart';
 
@@ -19,9 +19,11 @@ class BookingSubmissionSlotViewModel
           BookingSubmissionSlotNavEffect
         >
     implements BookingSubmissionSlotViewContract {
-  BookingSubmissionSlotViewModel(this._useCase);
+  BookingSubmissionSlotViewModel(this._useCase, {String? initialClubSlug})
+    : _initialClubSlug = initialClubSlug ?? emptyString;
 
   final BookingSubmissionSlotUseCase _useCase;
+  final String _initialClubSlug;
 
   StreamSubscription<DataStatusModel<List<GolfClubModel>>>?
   _golfClubSubscription;
@@ -30,7 +32,9 @@ class BookingSubmissionSlotViewModel
 
   @override
   BookingSubmissionSlotViewState createInitialState() {
-    return BookingSubmissionSlotDataLoaded.initial();
+    return BookingSubmissionSlotDataLoaded.initial(
+      selectedClubSlug: _initialClubSlug,
+    );
   }
 
   @override
@@ -114,7 +118,9 @@ class BookingSubmissionSlotViewModel
       return state;
     }
 
-    return BookingSubmissionSlotDataLoaded.initial();
+    return BookingSubmissionSlotDataLoaded.initial(
+      selectedClubSlug: _initialClubSlug,
+    );
   }
 
   Future<void> onFetchGolfClubList() async {
@@ -128,16 +134,25 @@ class BookingSubmissionSlotViewModel
     _golfClubSubscription = _useCase.onFetchGolfClubList().listen((result) {
       switch (result.status) {
         case DataStatus.success:
+          final current = getCurrentAsLoaded();
+          final selectedClubSlug = _resolveSelectedClub(result.data);
+          final updatedState = _derivePresentationState(
+            current.copyWith(
+              golfClubList: result.data,
+              selectedClubSlug: selectedClubSlug,
+              isLoading: false,
+              clearErrorMessage: true,
+            ),
+          );
           emitViewState((state) {
-            return _derivePresentationState(
-              getCurrentAsLoaded().copyWith(
-                golfClubList: result.data,
-                selectedClubSlug: _resolveSelectedClub(result.data),
-                isLoading: false,
-                clearErrorMessage: true,
-              ),
-            );
+            return updatedState;
           });
+          if (selectedClubSlug.isNotEmpty) {
+            onFetchAvailableSlots(
+              clubSlug: selectedClubSlug,
+              date: updatedState.selectedDate,
+            );
+          }
         case DataStatus.error:
           emitViewState((state) {
             return _derivePresentationState(

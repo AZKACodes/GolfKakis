@@ -1,6 +1,6 @@
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_submission_request_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:xxx_demo_app/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
 abstract class BookingSubmissionSlotRepository {
   Future<List<GolfClubModel>> onFetchGolfClubList();

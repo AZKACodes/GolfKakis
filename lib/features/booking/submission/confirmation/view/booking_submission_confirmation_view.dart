@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/view/booking_submission_confirmation_content.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
-import 'package:xxx_demo_app/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
-import 'package:xxx_demo_app/features/foundation/widgets/app_nav_bar.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/view/booking_submission_confirmation_content.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
+import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 
 class BookingSubmissionConfirmationView extends StatelessWidget {
   const BookingSubmissionConfirmationView({required this.viewModel, super.key});

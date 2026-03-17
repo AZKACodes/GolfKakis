@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/activity/booking/detail/activity_booking_detail_page.dart';
+import 'package:golf_kakis/features/activity/booking/list/activity_booking_list_page.dart';
+import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
+import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 
 import 'view/booking_overview_view.dart';
 import 'viewmodel/booking_overview_view_contract.dart';
@@ -33,6 +36,39 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
           ),
         );
       }
+
+      if (effect is NavigateToGolfClubDetail) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => GolfClubDetailPage(club: effect.club),
+          ),
+        );
+      }
+
+      if (effect is NavigateToBookingList) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ActivityBookingListPage(),
+          ),
+        );
+      }
+
+      if (effect is NavigateToBookingDetail) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ActivityBookingDetailPage(booking: effect.booking),
+          ),
+        );
+      }
     });
   }
 
@@ -50,6 +86,16 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
       child: BookingOverviewDashboardView(
         onBookingSubmissionClick: () =>
             _viewModel.onUserIntent(const OnBookingSubmissionClick()),
+        onPopularClubClick: (club) =>
+            _viewModel.onUserIntent(OnPopularClubClick(club)),
+        onBookingListClick: () =>
+            _viewModel.onUserIntent(const OnBookingListClick()),
+        onUpcomingBookingDetailClick: () =>
+            _viewModel.onUserIntent(const OnUpcomingBookingDetailClick()),
+        onRecentRoundOneDetailClick: () =>
+            _viewModel.onUserIntent(const OnRecentRoundOneDetailClick()),
+        onRecentRoundTwoDetailClick: () =>
+            _viewModel.onUserIntent(const OnRecentRoundTwoDetailClick()),
       ),
     );
   }

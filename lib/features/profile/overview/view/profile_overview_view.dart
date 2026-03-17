@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:xxx_demo_app/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile.dart';
 
 import '../viewmodel/profile_overview_view_contract.dart';
 
@@ -198,6 +199,31 @@ class _RoleTabbedBody extends StatelessWidget {
                         child: _DashboardSection(
                           title: dashboardTitle,
                           accent: accent,
+                          quickActions: profile.isAgent
+                              ? const [
+                                  _DashboardQuickAction(
+                                    icon: Icons.event_note_outlined,
+                                    label: 'Manage Booking',
+                                  ),
+                                  _DashboardQuickAction(
+                                    icon: Icons.apartment_outlined,
+                                    label: 'Manage Organisation',
+                                  ),
+                                ]
+                              : const [
+                                  _DashboardQuickAction(
+                                    icon: Icons.event_note_outlined,
+                                    label: 'Manage Booking',
+                                  ),
+                                  _DashboardQuickAction(
+                                    icon: Icons.group_outlined,
+                                    label: 'Manage Users',
+                                  ),
+                                  _DashboardQuickAction(
+                                    icon: Icons.apartment_outlined,
+                                    label: 'Manage Organisation',
+                                  ),
+                                ],
                           items: profile.isAgent
                               ? const [
                                   _DashboardItem(
@@ -389,11 +415,13 @@ class _DashboardSection extends StatelessWidget {
   const _DashboardSection({
     required this.title,
     required this.accent,
+    required this.quickActions,
     required this.items,
   });
 
   final String title;
   final Color accent;
+  final List<_DashboardQuickAction> quickActions;
   final List<_DashboardItem> items;
 
   @override
@@ -401,40 +429,70 @@ class _DashboardSection extends StatelessWidget {
     return _SectionCard(
       title: title,
       accent: accent,
-      children: items
-          .map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
+      children: [
+        Text(
+          'Quick Actions',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: quickActions
+              .map(
+                (action) => SizedBox(
+                  width: quickActions.length == 2 ? 132 : 120,
+                  child: QuickActionTile(
+                    icon: action.icon,
+                    label: action.label,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+              )
+              .toList(),
+        ),
+        const SizedBox(height: 18),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.subtitle,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.subtitle,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                  ),
+                ],
               ),
             ),
-          )
-          .toList(),
+          ),
+        ),
+      ],
     );
   }
+}
+
+class _DashboardQuickAction {
+  const _DashboardQuickAction({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
 }
 
 class _DashboardItem {
