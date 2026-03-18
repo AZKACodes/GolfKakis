@@ -29,8 +29,15 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       userId: isLoggedIn ? 'USR-1001' : 'guest-${session.deviceId}',
       userSlug: isLoggedIn ? 'zack-green' : 'guest-${session.deviceId}',
       displayName: isLoggedIn ? session.effectiveUsername : 'Guest User',
-      email: isLoggedIn ? 'zack.green@example.com' : '-',
-      phoneNumber: isLoggedIn ? '+60 12-310 4472' : '-',
+      nickname: isLoggedIn ? session.profileNickname ?? 'Zack' : 'Guest',
+      occupation: isLoggedIn ? session.profileOccupation ?? 'Golfer' : '-',
+      email: isLoggedIn
+          ? session.profileEmail ?? 'zack.green@example.com'
+          : '-',
+      phoneNumber: isLoggedIn
+          ? session.profilePhoneNumber ?? '+60 12-310 4472'
+          : '-',
+      avatarIndex: isLoggedIn ? session.profileAvatarIndex ?? 0 : 0,
       role: role,
       membershipLabel: _defaultMembershipLabel(role),
       isLoggedIn: isLoggedIn,

@@ -9,6 +9,7 @@ class ProfileLoginView extends StatefulWidget {
     required this.onEmailChanged,
     required this.onPasswordChanged,
     required this.onLoginClick,
+    required this.onRegisterClick,
     super.key,
   });
 
@@ -16,6 +17,7 @@ class ProfileLoginView extends StatefulWidget {
   final ValueChanged<String> onEmailChanged;
   final ValueChanged<String> onPasswordChanged;
   final ValueChanged<UserRole> onLoginClick;
+  final VoidCallback onRegisterClick;
 
   @override
   State<ProfileLoginView> createState() => _ProfileLoginViewState();
@@ -164,13 +166,57 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     ),
                   ],
                   const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F8FF),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFD8E4FF)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.app_registration_outlined,
+                          color: Color(0xFF2F7BFF),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'New here?',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Try the phone-first registration proof of concept.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: widget.onRegisterClick,
+                          child: const Text('Register'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                     physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 1.4,
+                    childAspectRatio: 1.22,
                     children: [
                       _RoleButton(
                         label: 'Guest',

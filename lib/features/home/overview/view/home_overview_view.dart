@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
 
 import '../data/home_repository.dart';
+import '../data/home_overview_models.dart';
 import 'widgets/deal_card.dart';
 import 'widgets/quick_action_tile.dart';
 
+const double _bottomNavScrollClearance = 136;
+
 class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+  const HomeView({
+    required this.onNewBookingTap,
+    required this.onCoursesTap,
+    required this.onMyTeeTimesTap,
+    super.key,
+  });
+
+  final VoidCallback onNewBookingTap;
+  final VoidCallback onCoursesTap;
+  final VoidCallback onMyTeeTimesTap;
 
   @override
   State<HomeView> createState() => _HomeViewState();
 }
 
 class _HomeViewState extends State<HomeView> {
+  late final HomeRepository _repository;
   late final Future<String> _helloMessageFuture;
+  late final Future<List<HomeSmartRebookItem>> _smartRebookFuture;
+  late final Future<List<HomeHotDealItem>> _hotDealsFuture;
 
   @override
   void initState() {
     super.initState();
-    _helloMessageFuture = HomeRepositoryImpl().fetchWelcomeMessage();
+    _repository = HomeRepositoryImpl();
+    _helloMessageFuture = _repository.fetchWelcomeMessage();
+    _smartRebookFuture = _repository.fetchSmartRebookItems();
+    _hotDealsFuture = _repository.fetchHotDeals();
   }
 
   @override
@@ -25,7 +43,7 @@ class _HomeViewState extends State<HomeView> {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,11 +66,12 @@ class _HomeViewState extends State<HomeView> {
           ),
           const SizedBox(height: 12),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: QuickActionTile(
                   icon: Icons.add_box_outlined,
                   label: 'New Booking',
+                  onTap: widget.onNewBookingTap,
                 ),
               ),
               SizedBox(width: 10),
@@ -60,6 +79,7 @@ class _HomeViewState extends State<HomeView> {
                 child: QuickActionTile(
                   icon: Icons.golf_course_outlined,
                   label: 'Courses',
+                  onTap: widget.onCoursesTap,
                 ),
               ),
               SizedBox(width: 10),
@@ -67,6 +87,7 @@ class _HomeViewState extends State<HomeView> {
                 child: QuickActionTile(
                   icon: Icons.receipt_long_outlined,
                   label: 'My Tee Times',
+                  onTap: widget.onMyTeeTimesTap,
                 ),
               ),
             ],
@@ -81,25 +102,12 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
           const SizedBox(height: 12),
-          const _SmartRebookRow(),
-          const SizedBox(height: 24),
-          Text(
-            'Action Queue',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          FutureBuilder<List<HomeSmartRebookItem>>(
+            future: _smartRebookFuture,
+            builder: (context, snapshot) {
+              return _SmartRebookRow(items: snapshot.data ?? const []);
+            },
           ),
-          const SizedBox(height: 12),
-          const _ActionQueueCard(),
-          const SizedBox(height: 24),
-          Text(
-            'Progress Strip',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const _ProgressStripCard(),
           const SizedBox(height: 24),
           Text(
             "Today's Hot Deals",
@@ -108,18 +116,24 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
           const SizedBox(height: 12),
-          const DealCard(
-            title: 'Sunrise Tee Time',
-            subtitle: 'Green Valley Golf Club',
-            price: '\$49',
-            badge: 'Hot',
-          ),
-          const SizedBox(height: 10),
-          const DealCard(
-            title: 'Weekend Pair Deal',
-            subtitle: '2 players at Harbor Links',
-            price: '\$89',
-            badge: 'Top',
+          FutureBuilder<List<HomeHotDealItem>>(
+            future: _hotDealsFuture,
+            builder: (context, snapshot) {
+              final items = snapshot.data ?? const [];
+              return Column(
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    DealCard(
+                      title: items[i].title,
+                      subtitle: items[i].subtitle,
+                      price: items[i].priceLabel,
+                      badge: items[i].badge,
+                    ),
+                    if (i != items.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -300,7 +314,9 @@ class _HeroTag extends StatelessWidget {
 }
 
 class _SmartRebookRow extends StatelessWidget {
-  const _SmartRebookRow();
+  const _SmartRebookRow({required this.items});
+
+  final List<HomeSmartRebookItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -308,24 +324,15 @@ class _SmartRebookRow extends StatelessWidget {
       height: 162,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children: const [
-          _RebookCard(
-            title: 'Saujana G&CC',
-            subtitle: 'Last played Tue, 07:20 AM',
-            price: 'From \$52',
-          ),
-          SizedBox(width: 10),
-          _RebookCard(
-            title: 'Kinrara Golf Club',
-            subtitle: 'Last played Sat, 07:30 AM',
-            price: 'From \$39',
-          ),
-          SizedBox(width: 10),
-          _RebookCard(
-            title: 'Kota Permai',
-            subtitle: 'Last played Fri, 08:10 AM',
-            price: 'From \$47',
-          ),
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            _RebookCard(
+              title: items[i].title,
+              subtitle: items[i].subtitle,
+              price: items[i].priceLabel,
+            ),
+            if (i != items.length - 1) const SizedBox(width: 10),
+          ],
         ],
       ),
     );
@@ -382,44 +389,6 @@ class _RebookCard extends StatelessWidget {
               const Spacer(),
               FilledButton(onPressed: () {}, child: const Text('Rebook')),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionQueueCard extends StatelessWidget {
-  const _ActionQueueCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: const Column(
-        children: [
-          _ActionRow(
-            title: 'Pending deposit',
-            subtitle: 'Mines Resort - MYR 18 due today',
-            action: 'Pay',
-          ),
-          Divider(height: 18),
-          _ActionRow(
-            title: 'Confirm pairing',
-            subtitle: 'Kinrara - add 1 player before 9 PM',
-            action: 'Confirm',
-          ),
-          Divider(height: 18),
-          _ActionRow(
-            title: 'Promo expiring',
-            subtitle: 'Morning Saver ends in 14h',
-            action: 'Use Now',
           ),
         ],
       ),
@@ -516,123 +485,6 @@ class _InsightChip extends StatelessWidget {
           color: const Color(0xFF6D4B00),
         ),
       ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.title,
-    required this.subtitle,
-    required this.action,
-  });
-
-  final String title;
-  final String subtitle;
-  final String action;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(color: Colors.black54)),
-            ],
-          ),
-        ),
-        TextButton(onPressed: () {}, child: Text(action)),
-      ],
-    );
-  }
-}
-
-class _ProgressStripCard extends StatelessWidget {
-  const _ProgressStripCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: const Column(
-        children: [
-          _ProgressRow(
-            label: 'Handicap Trend',
-            value: '7.8 -> 7.2',
-            progress: 0.82,
-          ),
-          SizedBox(height: 10),
-          _ProgressRow(
-            label: 'Last 5 Scores Avg',
-            value: '74.6',
-            progress: 0.74,
-          ),
-          SizedBox(height: 10),
-          _ProgressRow(
-            label: 'Weekly Fairway Goal (>70%)',
-            value: '68%',
-            progress: 0.68,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({
-    required this.label,
-    required this.value,
-    required this.progress,
-  });
-
-  final String label;
-  final String value;
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Color(0xFF12332A),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: Color(0xFFE7EFEB),
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2FBF71)),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile
 
 import '../viewmodel/profile_overview_view_contract.dart';
 
+const double _bottomNavScrollClearance = 136;
+
 class ProfileOverviewView extends StatelessWidget {
   const ProfileOverviewView({
     required this.state,
@@ -60,7 +62,12 @@ class ProfileOverviewView extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            _bottomNavScrollClearance,
+          ),
           children: [
             if (state.isUsingFallback) ...[
               const _InfoBanner(
@@ -136,139 +143,116 @@ class _RoleTabbedBody extends StatelessWidget {
 
     return DefaultTabController(
       length: 2,
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.black12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x10000000),
-                  blurRadius: 14,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: TabBar(
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: accent.withValues(alpha: 0.12),
+      child: Builder(
+        builder: (context) {
+          final controller = DefaultTabController.of(context);
+
+          return AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              final selectedIndex = controller.index;
+              final selectedBody = selectedIndex == 0
+                  ? Column(
+                      children: [
+                        _PrimaryTouchpoint(
+                          profile: profile,
+                          onTap: onPrimaryTouchpointClick,
+                        ),
+                        const SizedBox(height: 16),
+                        _AccountAndPreferencesSection(
+                          footer: Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: _LogoutButton(onLogoutClick: onLogoutClick),
+                          ),
+                        ),
+                      ],
+                    )
+                  : _DashboardSection(
+                      title: dashboardTitle,
+                      accent: accent,
+                      quickActions: profile.isAgent
+                          ? const [
+                              _DashboardQuickAction(
+                                icon: Icons.event_note_outlined,
+                                label: 'Manage Booking',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.groups_outlined,
+                                label: 'Lead Queue',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.apartment_outlined,
+                                label: 'Manage Organisation',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.payments_outlined,
+                                label: 'Commissions',
+                              ),
+                            ]
+                          : const [
+                              _DashboardQuickAction(
+                                icon: Icons.event_note_outlined,
+                                label: 'Manage Booking',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.group_outlined,
+                                label: 'Manage Users',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.apartment_outlined,
+                                label: 'Manage Organisation',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.tune_outlined,
+                                label: 'Platform Controls',
+                              ),
+                              _DashboardQuickAction(
+                                icon: Icons.fact_check_outlined,
+                                label: 'Audit Overview',
+                              ),
+                            ],
+                    );
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      labelColor: accent,
-                      unselectedLabelColor: Colors.black54,
-                      tabs: [
-                        const Tab(text: 'Account'),
-                        Tab(text: dashboardTitle),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: 360,
-                  child: TabBarView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: ListView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            _PrimaryTouchpoint(
-                              profile: profile,
-                              onTap: onPrimaryTouchpointClick,
-                            ),
-                            const SizedBox(height: 16),
-                            const _AccountAndPreferencesSection(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: TabBar(
+                          dividerColor: Colors.transparent,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          labelStyle: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                          unselectedLabelStyle: Theme.of(
+                            context,
+                          ).textTheme.labelLarge,
+                          labelColor: Colors.black87,
+                          unselectedLabelColor: Colors.black54,
+                          splashBorderRadius: BorderRadius.circular(8),
+                          tabs: [
+                            const Tab(text: 'Account'),
+                            Tab(text: dashboardTitle),
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: _DashboardSection(
-                          title: dashboardTitle,
-                          accent: accent,
-                          quickActions: profile.isAgent
-                              ? const [
-                                  _DashboardQuickAction(
-                                    icon: Icons.event_note_outlined,
-                                    label: 'Manage Booking',
-                                  ),
-                                  _DashboardQuickAction(
-                                    icon: Icons.apartment_outlined,
-                                    label: 'Manage Organisation',
-                                  ),
-                                ]
-                              : const [
-                                  _DashboardQuickAction(
-                                    icon: Icons.event_note_outlined,
-                                    label: 'Manage Booking',
-                                  ),
-                                  _DashboardQuickAction(
-                                    icon: Icons.group_outlined,
-                                    label: 'Manage Users',
-                                  ),
-                                  _DashboardQuickAction(
-                                    icon: Icons.apartment_outlined,
-                                    label: 'Manage Organisation',
-                                  ),
-                                ],
-                          items: profile.isAgent
-                              ? const [
-                                  _DashboardItem(
-                                    title: 'Lead Queue',
-                                    subtitle: 'Review incoming customer leads.',
-                                  ),
-                                  _DashboardItem(
-                                    title: 'Booking Follow Up',
-                                    subtitle:
-                                        'Track active booking assistance.',
-                                  ),
-                                  _DashboardItem(
-                                    title: 'Commission Snapshot',
-                                    subtitle:
-                                        'Monitor pending and confirmed payouts.',
-                                  ),
-                                ]
-                              : const [
-                                  _DashboardItem(
-                                    title: 'User Management',
-                                    subtitle:
-                                        'Monitor account approvals and flags.',
-                                  ),
-                                  _DashboardItem(
-                                    title: 'Platform Controls',
-                                    subtitle:
-                                        'Manage operational settings and releases.',
-                                  ),
-                                  _DashboardItem(
-                                    title: 'Audit Overview',
-                                    subtitle:
-                                        'Inspect recent admin-level actions.',
-                                  ),
-                                ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          _LogoutButton(onLogoutClick: onLogoutClick),
-        ],
+                  selectedBody,
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -302,24 +286,7 @@ class _HeroCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-            ),
-            child: Center(
-              child: Text(
-                profile.initials,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
+          _ProfileAvatar(profile: profile, size: 72),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -380,49 +347,89 @@ class _PrimaryTouchpoint extends StatelessWidget {
 }
 
 class _AccountAndPreferencesSection extends StatelessWidget {
-  const _AccountAndPreferencesSection();
+  const _AccountAndPreferencesSection({this.footer});
+
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
-    return const _SectionCard(
+    final footerChildren = footer == null ? null : <Widget>[footer!];
+
+    return _SectionCard(
       title: 'Account & Preferences',
       accent: Color(0xFF2F7BFF),
-      children: [
-        _TouchpointTile(
-          icon: Icons.manage_accounts_outlined,
-          title: 'Manage Account',
-          subtitle: 'Update account details and linked access later.',
-          accent: Color(0xFF2F7BFF),
-        ),
-        _TouchpointTile(
+      children: <Widget>[
+        const _TouchpointTile(
           icon: Icons.notifications_none_outlined,
           title: 'Notifications',
           subtitle: 'Control alerts and reminders.',
           accent: Color(0xFFFF9F1C),
         ),
-        _TouchpointTile(
+        const _TouchpointTile(
           icon: Icons.language_outlined,
           title: 'Language',
           subtitle: 'Choose your preferred app language.',
           accent: Color(0xFF00A76F),
         ),
+        ...?footerChildren,
       ],
     );
   }
 }
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.profile, required this.size});
+
+  final UserProfileModel profile;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette =
+        _avatarPalettes[profile.avatarIndex % _avatarPalettes.length];
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: palette,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+      ),
+      child: Center(
+        child: Text(
+          profile.initials,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const List<List<Color>> _avatarPalettes = [
+  [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
+  [Color(0xFFFF9F1C), Color(0xFFFFD166)],
+  [Color(0xFF9C4DFF), Color(0xFF5E60CE)],
+  [Color(0xFF00A76F), Color(0xFF52B788)],
+];
 
 class _DashboardSection extends StatelessWidget {
   const _DashboardSection({
     required this.title,
     required this.accent,
     required this.quickActions,
-    required this.items,
   });
 
   final String title;
   final Color accent;
   final List<_DashboardQuickAction> quickActions;
-  final List<_DashboardItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -443,7 +450,7 @@ class _DashboardSection extends StatelessWidget {
           children: quickActions
               .map(
                 (action) => SizedBox(
-                  width: quickActions.length == 2 ? 132 : 120,
+                  width: 140,
                   child: QuickActionTile(
                     icon: action.icon,
                     label: action.label,
@@ -451,37 +458,6 @@ class _DashboardSection extends StatelessWidget {
                 ),
               )
               .toList(),
-        ),
-        const SizedBox(height: 18),
-        ...items.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.subtitle,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
       ],
     );
@@ -493,13 +469,6 @@ class _DashboardQuickAction {
 
   final IconData icon;
   final String label;
-}
-
-class _DashboardItem {
-  const _DashboardItem({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
 }
 
 class _SectionCard extends StatelessWidget {

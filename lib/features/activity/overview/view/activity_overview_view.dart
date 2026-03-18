@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const double _bottomNavScrollClearance = 136;
+
 class ActivityOverviewDashboardView extends StatelessWidget {
   const ActivityOverviewDashboardView({
     required this.onBookingListClick,
@@ -19,7 +21,7 @@ class ActivityOverviewDashboardView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

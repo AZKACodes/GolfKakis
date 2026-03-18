@@ -29,11 +29,46 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void login({required String username, required UserRole role}) {
+  void login({
+    required String username,
+    required UserRole role,
+    String? profileFullName,
+    String? profileNickname,
+    String? profileOccupation,
+    String? profileEmail,
+    String? profilePhoneNumber,
+    int? profileAvatarIndex,
+  }) {
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
       authenticatedUsername: username,
       authenticatedUserRole: role,
+      profileFullName: profileFullName,
+      profileNickname: profileNickname,
+      profileOccupation: profileOccupation,
+      profileEmail: profileEmail,
+      profilePhoneNumber: profilePhoneNumber,
+      profileAvatarIndex: profileAvatarIndex,
+    );
+    notifyListeners();
+  }
+
+  void updateProfile({
+    required String fullName,
+    required String nickname,
+    required String occupation,
+    required String email,
+    required String phoneNumber,
+    required int avatarIndex,
+  }) {
+    _state = _state.copyWith(
+      authenticatedUsername: fullName,
+      profileFullName: fullName,
+      profileNickname: nickname,
+      profileOccupation: occupation,
+      profileEmail: email,
+      profilePhoneNumber: phoneNumber,
+      profileAvatarIndex: avatarIndex,
     );
     notifyListeners();
   }
@@ -43,6 +78,7 @@ class SessionManager extends ChangeNotifier {
       status: SessionStatus.loggedOut,
       clearAuthenticatedUsername: true,
       clearAuthenticatedUserRole: true,
+      clearProfileDetails: true,
     );
     notifyListeners();
   }

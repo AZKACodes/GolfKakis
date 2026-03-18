@@ -34,6 +34,8 @@ class ProfileOverviewViewModel
       case OnPrimaryTouchpointClick():
         if (currentState.profile?.isLoggedIn == false) {
           sendNavEffect(() => const LoginRequested());
+        } else if (currentState.profile?.isLoggedIn == true) {
+          sendNavEffect(() => const EditProfileRequested());
         }
     }
   }

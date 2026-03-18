@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
+import 'package:golf_kakis/features/profile/edit/profile_edit_page.dart';
 import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
 import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository_impl.dart';
 import 'package:golf_kakis/features/profile/overview/view/profile_overview_view.dart';
@@ -42,6 +43,18 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
           MaterialPageRoute<void>(
             builder: (_) => const ProfileLoginPage(),
             fullscreenDialog: true,
+          ),
+        );
+      }
+
+      if (effect is EditProfileRequested) {
+        final profile = _viewModel.viewState.profile;
+        if (!mounted || profile == null) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ProfileEditPage(profile: profile),
           ),
         );
       }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/register/method/profile_register_method_page.dart';
 
 import 'view/profile_login_view.dart';
 import 'viewmodel/profile_login_view_contract.dart';
@@ -44,6 +45,17 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
         }
         Navigator.of(context).maybePop();
       }
+
+      if (effect is RegisterRequested) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ProfileRegisterMethodPage(),
+          ),
+        );
+      }
     });
   }
 
@@ -74,6 +86,8 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
             onPasswordChanged: (value) =>
                 _viewModel.onUserIntent(OnPasswordChanged(value)),
             onLoginClick: (role) => _viewModel.onUserIntent(OnLoginClick(role)),
+            onRegisterClick: () =>
+                _viewModel.onUserIntent(const OnRegisterClick()),
           ),
         );
       },

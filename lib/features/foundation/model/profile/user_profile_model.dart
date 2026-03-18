@@ -5,21 +5,29 @@ class UserProfileModel {
     required this.userId,
     required this.userSlug,
     required this.displayName,
+    required this.nickname,
+    required this.occupation,
     required this.email,
     required this.phoneNumber,
+    int? avatarIndex,
     required this.role,
     required this.membershipLabel,
     required this.isLoggedIn,
-  });
+  }) : _avatarIndex = avatarIndex;
 
   final String userId;
   final String userSlug;
   final String displayName;
+  final String nickname;
+  final String occupation;
   final String email;
   final String phoneNumber;
+  final int? _avatarIndex;
   final UserRole role;
   final String membershipLabel;
   final bool isLoggedIn;
+
+  int get avatarIndex => _avatarIndex ?? 0;
 
   bool get isGuest => role == UserRole.guest;
   bool get isUser => role == UserRole.user;

@@ -73,6 +73,10 @@ class OnBackClick extends ProfileLoginUserIntent {
   const OnBackClick();
 }
 
+class OnRegisterClick extends ProfileLoginUserIntent {
+  const OnRegisterClick();
+}
+
 sealed class ProfileLoginNavEffect extends NavEffect {
   const ProfileLoginNavEffect() : super();
 }
@@ -86,4 +90,8 @@ class LoginSucceeded extends ProfileLoginNavEffect {
 
   final String username;
   final UserRole role;
+}
+
+class RegisterRequested extends ProfileLoginNavEffect {
+  const RegisterRequested();
 }
