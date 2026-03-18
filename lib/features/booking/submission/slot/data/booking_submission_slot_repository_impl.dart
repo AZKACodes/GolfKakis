@@ -22,79 +22,8 @@ class BookingSubmissionSlotRepositoryImpl
 
   @override
   Future<List<GolfClubModel>> onFetchGolfClubList() async {
-    if (_preferImmediateFallback) {
-      return const <GolfClubModel>[
-        GolfClubModel(
-          id: '1',
-          slug: 'kinrara-golf-club',
-          name: 'Kinrara Golf Club',
-          address: 'Bandar Kinrara, Puchong',
-          noOfHoles: 18,
-        ),
-        GolfClubModel(
-          id: '2',
-          slug: 'saujana-golf-country-club',
-          name: 'Saujana Golf & Country Club',
-          address: 'Shah Alam, Selangor',
-          noOfHoles: 36,
-        ),
-        GolfClubModel(
-          id: '3',
-          slug: 'kota-permai-golf-country-club',
-          name: 'Kota Permai Golf & Country Club',
-          address: 'Kota Kemuning, Shah Alam',
-          noOfHoles: 18,
-        ),
-        GolfClubModel(
-          id: '4',
-          slug: 'mines-resort-golf-club',
-          name: 'The Mines Resort & Golf Club',
-          address: 'Serdang, Selangor',
-          noOfHoles: 18,
-        ),
-      ];
-    }
-
-    try {
-      final response = await _apiService.onFetchGolfClubList();
-      final clubs = _parseGolfClubList(response);
-      if (clubs.isNotEmpty) {
-        return clubs;
-      }
-    } catch (_) {
-      // Temporary fallback until the golf club list endpoint contract is ready.
-    }
-
-    return const <GolfClubModel>[
-      GolfClubModel(
-        id: '1',
-        slug: 'kinrara-golf-club',
-        name: 'Kinrara Golf Club',
-        address: 'Bandar Kinrara, Puchong',
-        noOfHoles: 18,
-      ),
-      GolfClubModel(
-        id: '2',
-        slug: 'saujana-golf-country-club',
-        name: 'Saujana Golf & Country Club',
-        address: 'Shah Alam, Selangor',
-        noOfHoles: 36,
-      ),
-      GolfClubModel(
-        id: '3',
-        slug: 'kota-permai-golf-country-club',
-        name: 'Kota Permai Golf & Country Club',
-        address: 'Kota Kemuning, Shah Alam',
-        noOfHoles: 18,
-      ),
-      GolfClubModel(
-        id: '4',
-        slug: 'mines-resort-golf-club',
-        name: 'The Mines Resort & Golf Club',
-        address: 'Serdang, Selangor',
-        noOfHoles: 18,
-      ),
-    ];
+    final response = await _apiService.onFetchGolfClubList();
+    return _parseGolfClubList(response);
   }
 
   @override
@@ -102,25 +31,11 @@ class BookingSubmissionSlotRepositoryImpl
     required String clubSlug,
     required String date,
   }) async {
-    if (_preferImmediateFallback) {
-      return _buildFallbackSlots(clubSlug: clubSlug, date: date);
-    }
-
-    try {
-      final response = await _apiService.onFetchAvailableSlots(
-        clubSlug: clubSlug,
-        date: date,
-      );
-
-      final slots = _parseAvailableSlots(response);
-      if (slots.isNotEmpty) {
-        return slots;
-      }
-    } catch (_) {
-      // Temporary fallback until the available slots endpoint contract is ready.
-    }
-
-    return _buildFallbackSlots(clubSlug: clubSlug, date: date);
+    final response = await _apiService.onFetchAvailableSlots(
+      clubSlug: clubSlug,
+      date: date,
+    );
+    return _parseAvailableSlots(response);
   }
 
   @override
@@ -302,51 +217,6 @@ class BookingSubmissionSlotRepositoryImpl
           .toList(),
       'status': 'Confirmed',
     };
-  }
-
-  List<BookingSlotModel> _buildFallbackSlots({
-    required String clubSlug,
-    required String date,
-  }) {
-    if (clubSlug == 'kinrara-golf-club') {
-      return const <BookingSlotModel>[
-        BookingSlotModel(time: '07:00 AM', price: 145, noOfHoles: 18),
-        BookingSlotModel(time: '07:30 AM', price: 145, noOfHoles: 18),
-        BookingSlotModel(time: '08:15 AM', price: 155, noOfHoles: 18),
-        BookingSlotModel(time: '09:45 AM', price: 165, noOfHoles: 18),
-        BookingSlotModel(time: '01:15 PM', price: 118, noOfHoles: 9),
-      ];
-    }
-
-    if (clubSlug == 'saujana-golf-country-club') {
-      return const <BookingSlotModel>[
-        BookingSlotModel(time: '02:00 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:15 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:30 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:45 PM', price: 125, noOfHoles: 9),
-        BookingSlotModel(time: '03:00 PM', price: 125, noOfHoles: 9),
-      ];
-    }
-
-    if (clubSlug == 'kota-permai-golf-country-club') {
-      return date.endsWith('-01') || date.endsWith('-15')
-          ? const <BookingSlotModel>[]
-          : const <BookingSlotModel>[
-              BookingSlotModel(time: '10:00 AM', price: 188, noOfHoles: 18),
-              BookingSlotModel(time: '12:00 PM', price: 164, noOfHoles: 18),
-              BookingSlotModel(time: '04:15 PM', price: 105, noOfHoles: 9),
-            ];
-    }
-
-    if (clubSlug == 'mines-resort-golf-club') {
-      return const <BookingSlotModel>[];
-    }
-
-    return const <BookingSlotModel>[
-      BookingSlotModel(time: '08:00 AM', price: 150, noOfHoles: 18),
-      BookingSlotModel(time: '11:30 AM', price: 135, noOfHoles: 18),
-      BookingSlotModel(time: '03:15 PM', price: 120, noOfHoles: 9),
-    ];
   }
 
   List<GolfClubModel> _parseGolfClubList(dynamic response) {

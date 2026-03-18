@@ -60,6 +60,15 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
             ),
           ),
         );
+      case ShowErrorMessage():
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(effect.message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
     }
   }
 

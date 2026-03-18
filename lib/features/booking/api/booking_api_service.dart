@@ -25,7 +25,10 @@ class BookingApiService {
   }) {
     return _apiClient.postJson(
       '/booking/available-slots',
-      body: <String, dynamic>{'clubSlug': clubSlug, 'date': date},
+      body: <String, dynamic>{
+        'golfClubSlug': clubSlug,
+        'bookingDate': date,
+      },
     );
   }
 

@@ -216,3 +216,9 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   final String currency;
   final String? guestId;
 }
+
+class ShowErrorMessage extends BookingSubmissionSlotNavEffect {
+  const ShowErrorMessage(this.message);
+
+  final String message;
+}

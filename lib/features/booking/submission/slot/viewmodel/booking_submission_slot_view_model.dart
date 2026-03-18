@@ -154,18 +154,20 @@ class BookingSubmissionSlotViewModel
             );
           }
         case DataStatus.error:
+          final message = result.apiMessage.isEmpty
+              ? 'Failed to fetch golf club list'
+              : result.apiMessage;
           emitViewState((state) {
             return _derivePresentationState(
               getCurrentAsLoaded().copyWith(
                 golfClubList: const <GolfClubModel>[],
                 selectedClubSlug: emptyString,
                 isLoading: false,
-                errorMessage: result.apiMessage.isEmpty
-                    ? 'Failed to fetch golf club list'
-                    : result.apiMessage,
+                errorMessage: message,
               ),
             );
           });
+          sendNavEffect(() => ShowErrorMessage(message));
         default:
           break;
       }
@@ -228,17 +230,19 @@ class BookingSubmissionSlotViewModel
                 );
               });
             case DataStatus.error:
+              final message = result.apiMessage.isEmpty
+                  ? 'Failed to fetch available slots'
+                  : result.apiMessage;
               emitViewState((state) {
                 return _derivePresentationState(
                   getCurrentAsLoaded().copyWith(
                     bookingSlots: const <BookingSlotModel>[],
                     isLoading: false,
-                    errorMessage: result.apiMessage.isEmpty
-                        ? 'Failed to fetch available slots'
-                        : result.apiMessage,
+                    errorMessage: message,
                   ),
                 );
               });
+              sendNavEffect(() => ShowErrorMessage(message));
             default:
               break;
           }
@@ -250,13 +254,13 @@ class BookingSubmissionSlotViewModel
       return emptyString;
     }
 
-    if (clubs.any(
-      (club) => club.slug == getCurrentAsLoaded().selectedClubSlug,
-    )) {
-      return getCurrentAsLoaded().selectedClubSlug;
+    final currentSelectedClubSlug = getCurrentAsLoaded().selectedClubSlug;
+    if (currentSelectedClubSlug.isNotEmpty &&
+        clubs.any((club) => club.slug == currentSelectedClubSlug)) {
+      return currentSelectedClubSlug;
     }
 
-    return clubs.first.slug;
+    return emptyString;
   }
 
   BookingSubmissionSlotDataLoaded _derivePresentationState(
@@ -281,7 +285,10 @@ class BookingSubmissionSlotViewModel
           ? today
           : DateUtil.dateOnly(state.selectedDate),
       visibleSlots: visibleSlots,
-      visibleUnavailableIndices: const <int>{},
+      visibleUnavailableIndices: visibleSlots.indexed
+          .where((entry) => !entry.$2.isAvailable)
+          .map((entry) => entry.$1)
+          .toSet(),
       visibleSelectedIndex: visibleSelectedIndex == -1
           ? null
           : visibleSelectedIndex,

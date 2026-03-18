@@ -19,11 +19,7 @@ class GolfClubModel {
       slug: json['slug']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
-      noOfHoles:
-          (json['noOfHoles'] as num?)?.toInt() ??
-          (json['no_of_holes'] as num?)?.toInt() ??
-          (json['holes'] as num?)?.toInt() ??
-          0,
+      noOfHoles: _parseHoleCount(json),
     );
   }
 
@@ -51,5 +47,16 @@ class GolfClubModel {
       address: address ?? this.address,
       noOfHoles: noOfHoles ?? this.noOfHoles,
     );
+  }
+
+  static int _parseHoleCount(Map<String, dynamic> json) {
+    final dynamic value =
+        json['noOfHoles'] ?? json['no_of_holes'] ?? json['holes'];
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
