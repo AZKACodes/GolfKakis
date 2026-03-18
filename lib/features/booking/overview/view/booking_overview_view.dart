@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
+const double _bottomNavScrollClearance = 136;
+
 class BookingOverviewDashboardView extends StatelessWidget {
   const BookingOverviewDashboardView({
     required this.onBookingSubmissionClick,
@@ -24,7 +26,7 @@ class BookingOverviewDashboardView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -31,6 +31,8 @@ class ProfileLoginViewModel
         await _login(intent.role);
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
+      case OnRegisterClick():
+        sendNavEffect(() => const RegisterRequested());
     }
   }
 

@@ -7,14 +7,29 @@ class SessionState {
     required this.deviceId,
     this.authenticatedUsername,
     this.authenticatedUserRole,
+    this.profileFullName,
+    this.profileNickname,
+    this.profileOccupation,
+    this.profileEmail,
+    this.profilePhoneNumber,
+    this.profileAvatarIndex,
   });
 
   final SessionStatus status;
   final String deviceId;
   final String? authenticatedUsername;
   final UserRole? authenticatedUserRole;
+  final String? profileFullName;
+  final String? profileNickname;
+  final String? profileOccupation;
+  final String? profileEmail;
+  final String? profilePhoneNumber;
+  final int? profileAvatarIndex;
 
   String get effectiveUsername {
+    if (status == SessionStatus.loggedIn && profileFullName != null) {
+      return profileFullName!;
+    }
     if (status == SessionStatus.loggedIn && authenticatedUsername != null) {
       return authenticatedUsername!;
     }
@@ -33,8 +48,15 @@ class SessionState {
     String? deviceId,
     String? authenticatedUsername,
     UserRole? authenticatedUserRole,
+    String? profileFullName,
+    String? profileNickname,
+    String? profileOccupation,
+    String? profileEmail,
+    String? profilePhoneNumber,
+    int? profileAvatarIndex,
     bool clearAuthenticatedUsername = false,
     bool clearAuthenticatedUserRole = false,
+    bool clearProfileDetails = false,
   }) {
     return SessionState(
       status: status ?? this.status,
@@ -45,6 +67,24 @@ class SessionState {
       authenticatedUserRole: clearAuthenticatedUserRole
           ? null
           : (authenticatedUserRole ?? this.authenticatedUserRole),
+      profileFullName: clearProfileDetails
+          ? null
+          : (profileFullName ?? this.profileFullName),
+      profileNickname: clearProfileDetails
+          ? null
+          : (profileNickname ?? this.profileNickname),
+      profileOccupation: clearProfileDetails
+          ? null
+          : (profileOccupation ?? this.profileOccupation),
+      profileEmail: clearProfileDetails
+          ? null
+          : (profileEmail ?? this.profileEmail),
+      profilePhoneNumber: clearProfileDetails
+          ? null
+          : (profilePhoneNumber ?? this.profilePhoneNumber),
+      profileAvatarIndex: clearProfileDetails
+          ? null
+          : (profileAvatarIndex ?? this.profileAvatarIndex),
     );
   }
 

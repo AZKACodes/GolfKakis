@@ -79,3 +79,7 @@ class LogoutRequested extends ProfileOverviewNavEffect {
 class LoginRequested extends ProfileOverviewNavEffect {
   const LoginRequested();
 }
+
+class EditProfileRequested extends ProfileOverviewNavEffect {
+  const EditProfileRequested();
+}

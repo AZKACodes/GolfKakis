@@ -16,6 +16,7 @@ class MyApp extends StatelessWidget {
       sessionManager: sessionManager,
       child: MaterialApp(
         title: 'Bottom Nav Demo',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: AppTheme.colors.primary),
           scaffoldBackgroundColor: AppTheme.colors.surfaceBase,
