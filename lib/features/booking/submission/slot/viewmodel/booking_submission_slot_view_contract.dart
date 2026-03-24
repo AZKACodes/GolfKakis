@@ -2,6 +2,7 @@ import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
@@ -84,7 +85,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     final price = selectedSlot?.price ?? 0;
     final currency =
         selectedSlot?.currency ?? DefaultConstantUtil.defaultCurrency;
-    return '$currency ${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)} / pax';
+    return CurrencyUtil.formatPrice(price, currency, suffix: '/ pax');
   }
 
   BookingSubmissionSlotDataLoaded copyWith({
@@ -199,6 +200,7 @@ class NavigateBack extends BookingSubmissionSlotNavEffect {
 
 class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   const NavigateToBookingSubmissionDetail({
+    required this.slotId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -208,6 +210,7 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
     this.guestId,
   });
 
+  final String slotId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;

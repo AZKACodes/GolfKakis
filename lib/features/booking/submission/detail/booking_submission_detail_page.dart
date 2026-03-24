@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:golf_kakis/features/booking/submission/confirmation/booking_submission_confirmation_page.dart';
+import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
+    required this.slotId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -17,6 +20,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
     super.key,
   });
 
+  final String slotId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -39,12 +43,15 @@ class _BookingSubmissionDetailPageState
   void initState() {
     super.initState();
 
-    _viewModel = BookingSubmissionDetailViewModel();
+    _viewModel = BookingSubmissionDetailViewModel(
+      BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
+    );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
 
     _viewModel.performAction(
       OnInit(
+        slotId: widget.slotId,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         selectedDate: widget.selectedDate,
@@ -71,6 +78,7 @@ class _BookingSubmissionDetailPageState
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionConfirmationPage(
+              bookingId: effect.bookingId,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,
@@ -87,6 +95,15 @@ class _BookingSubmissionDetailPageState
             ),
           ),
         );
+      case ShowErrorMessage():
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(effect.message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
     }
   }
 

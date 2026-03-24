@@ -50,6 +50,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionDetailPage(
+              slotId: effect.slotId,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,

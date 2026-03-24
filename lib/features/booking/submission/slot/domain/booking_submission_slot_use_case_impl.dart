@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
@@ -61,6 +62,33 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     } catch (error) {
       yield DataStatusModel<List<BookingSlotModel>>(
         data: const <BookingSlotModel>[],
+        status: DataStatus.error,
+        apiMessage: error.toString(),
+      );
+    }
+  }
+
+  @override
+  Stream<DataStatusModel<dynamic>> onCreateBookingHold({
+    required BookingHoldRequestModel request,
+  }) async* {
+    try {
+      final response = await _repository.onCreateBookingHold(request: request);
+
+      yield DataStatusModel<dynamic>(
+        data: response,
+        status: DataStatus.success,
+      );
+    } on ApiException catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: error.message,
+        rawResponseCode: error.statusCode ?? 0,
+      );
+    } catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
         status: DataStatus.error,
         apiMessage: error.toString(),
       );

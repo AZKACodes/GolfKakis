@@ -23,6 +23,7 @@ class GolfClubPickerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final club = selectedClub;
+    final hasAvailableClubs = clubs.isNotEmpty;
 
     return Material(
       color: Colors.transparent,
@@ -87,7 +88,9 @@ class GolfClubPickerCard extends StatelessWidget {
                         )
                       : club == null
                       ? Text(
-                          'No golf clubs available',
+                          hasAvailableClubs
+                              ? 'Select Golf Club'
+                              : 'No Golf Clubs Available',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.black54,
                             fontWeight: FontWeight.w600,
@@ -122,7 +125,6 @@ class GolfClubPickerCard extends StatelessWidget {
                                   icon: Icons.flag_outlined,
                                   label: '${club.noOfHoles} holes',
                                 ),
-                        
                               ],
                             ),
                           ],

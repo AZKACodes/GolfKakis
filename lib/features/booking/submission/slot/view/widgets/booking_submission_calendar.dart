@@ -12,13 +12,16 @@ class BookingSubmissionCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final today = DateUtils.dateOnly(DateTime.now());
     final DateTime preferredBaseDate = DateUtils.dateOnly(
       selectedDate.subtract(const Duration(days: 3)),
     );
+    
     final DateTime baseDate = preferredBaseDate.isBefore(today)
         ? today
         : preferredBaseDate;
+
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
 
@@ -60,6 +63,7 @@ class BookingSubmissionCalendar extends StatelessWidget {
                       ]
                     : null,
               ),
+
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -70,7 +74,9 @@ class BookingSubmissionCalendar extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+
                   const SizedBox(height: 6),
+
                   Text(
                     '${date.day}',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -78,7 +84,9 @@ class BookingSubmissionCalendar extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+                  
                   Text(
                     localizations.formatMonthYear(date).split(' ').first,
                     style: theme.textTheme.bodySmall?.copyWith(

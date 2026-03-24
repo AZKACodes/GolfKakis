@@ -1,4 +1,5 @@
 import '../../foundation/network/network.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 
 class BookingApiService {
@@ -25,10 +26,7 @@ class BookingApiService {
   }) {
     return _apiClient.postJson(
       '/booking/available-slots',
-      body: <String, dynamic>{
-        'golfClubSlug': clubSlug,
-        'bookingDate': date,
-      },
+      body: <String, dynamic>{'golfClubSlug': clubSlug, 'bookingDate': date},
     );
   }
 
@@ -36,6 +34,12 @@ class BookingApiService {
     required BookingSubmissionRequestModel request,
   }) {
     return _apiClient.postJson('/booking/submit', body: request.toJson());
+  }
+
+  Future<dynamic> onCreateBookingHold({
+    required BookingHoldRequestModel request,
+  }) {
+    return _apiClient.postJson('/booking/hold', body: request.toJson());
   }
 
   Future<dynamic> onFetchBookingDetails({required String bookingSlug}) {

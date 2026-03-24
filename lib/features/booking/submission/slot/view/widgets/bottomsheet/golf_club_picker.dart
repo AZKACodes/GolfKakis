@@ -32,7 +32,9 @@ class GolfClubPicker {
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
+
                       const SizedBox(height: 2),
+
                       Text(
                         '${club.address} • ${club.noOfHoles} holes',
                         textAlign: TextAlign.center,
@@ -78,16 +80,22 @@ class GolfClubPicker {
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
+
               const SizedBox(height: 6),
+
               Text(
                 'Choose the course for this booking.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
               ),
+
               const SizedBox(height: 14),
+
               const Divider(height: 1),
+
               const SizedBox(height: 16),
+
               Flexible(
                 child: ListView.separated(
                   shrinkWrap: true,
@@ -132,7 +140,9 @@ class GolfClubPicker {
                                             fontWeight: FontWeight.w700,
                                           ),
                                     ),
+
                                     const SizedBox(height: 4),
+
                                     Text(
                                       club.address,
                                       style: Theme.of(context)
@@ -143,7 +153,9 @@ class GolfClubPicker {
                                   ],
                                 ),
                               ),
+
                               const SizedBox(width: 12),
+
                               Text(
                                 '${club.noOfHoles} holes',
                                 style: Theme.of(context).textTheme.bodySmall
@@ -152,8 +164,10 @@ class GolfClubPicker {
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
+
                               if (isSelected) ...[
                                 const SizedBox(width: 10),
+                                
                                 const Icon(
                                   Icons.check_circle_rounded,
                                   color: Color(0xFF0D7A3A),

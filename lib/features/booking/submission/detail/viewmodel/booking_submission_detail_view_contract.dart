@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -22,6 +23,7 @@ sealed class BookingSubmissionDetailViewState extends ViewState {
 class BookingSubmissionDetailDataLoaded
     extends BookingSubmissionDetailViewState {
   BookingSubmissionDetailDataLoaded({
+    this.slotId = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     DateTime? selectedDate,
@@ -37,6 +39,7 @@ class BookingSubmissionDetailDataLoaded
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
     this.canContinue = false,
+    this.isSubmitting = false,
   }) : selectedDate = selectedDate ?? DateTime.now(),
        super();
 
@@ -44,6 +47,7 @@ class BookingSubmissionDetailDataLoaded
     return BookingSubmissionDetailDataLoaded();
   }
 
+  final String slotId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -59,13 +63,16 @@ class BookingSubmissionDetailDataLoaded
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
   final bool canContinue;
+  final bool isSubmitting;
 
-  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+  String get pricePerPersonLabel =>
+      CurrencyUtil.formatPrice(pricePerPerson, currency);
 
   String get totalCostLabel =>
-      _formatCurrency(pricePerPerson * playerCount, currency);
+      CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
   BookingSubmissionDetailDataLoaded copyWith({
+    String? slotId,
     String? golfClubName,
     String? golfClubSlug,
     DateTime? selectedDate,
@@ -81,8 +88,10 @@ class BookingSubmissionDetailDataLoaded
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
     bool? canContinue,
+    bool? isSubmitting,
   }) {
     return BookingSubmissionDetailDataLoaded(
+      slotId: slotId ?? this.slotId,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -98,6 +107,7 @@ class BookingSubmissionDetailDataLoaded
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
       canContinue: canContinue ?? this.canContinue,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 }
@@ -112,6 +122,7 @@ sealed class BookingSubmissionDetailUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
+    required this.slotId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -121,6 +132,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
     this.guestId,
   });
 
+  final String slotId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -197,6 +209,7 @@ class NavigateBack extends BookingSubmissionDetailNavEffect {
 class NavigateToBookingSubmissionConfirmation
     extends BookingSubmissionDetailNavEffect {
   const NavigateToBookingSubmissionConfirmation({
+    required this.bookingId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -212,6 +225,7 @@ class NavigateToBookingSubmissionConfirmation
     required this.playerDetails,
   });
 
+  final String bookingId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -227,6 +241,8 @@ class NavigateToBookingSubmissionConfirmation
   final List<BookingSubmissionPlayerModel> playerDetails;
 }
 
-String _formatCurrency(double value, String currency) {
-  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
+class ShowErrorMessage extends BookingSubmissionDetailNavEffect {
+  const ShowErrorMessage(this.message);
+
+  final String message;
 }

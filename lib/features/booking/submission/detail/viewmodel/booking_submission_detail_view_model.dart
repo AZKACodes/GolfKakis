@@ -1,4 +1,9 @@
+import 'dart:async';
+
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_detail_view_contract.dart';
@@ -11,7 +16,10 @@ class BookingSubmissionDetailViewModel
           BookingSubmissionDetailNavEffect
         >
     implements BookingSubmissionDetailViewContract {
-  BookingSubmissionDetailViewModel();
+  BookingSubmissionDetailViewModel(this._useCase);
+
+  final BookingSubmissionSlotUseCase _useCase;
+  StreamSubscription<DataStatusModel<dynamic>>? _bookingHoldSubscription;
 
   @override
   BookingSubmissionDetailViewState createInitialState() {
@@ -26,6 +34,7 @@ class BookingSubmissionDetailViewModel
         emitViewState((state) {
           return _deriveState(
             getCurrentAsLoaded().copyWith(
+              slotId: intent.slotId,
               golfClubName: intent.golfClubName,
               golfClubSlug: intent.golfClubSlug,
               selectedDate: intent.selectedDate,
@@ -106,27 +115,10 @@ class BookingSubmissionDetailViewModel
         });
       case OnContinueClick():
         final current = getCurrentAsLoaded();
-        if (!current.canContinue) {
+        if (!current.canContinue || current.isSubmitting) {
           return;
         }
-
-        sendNavEffect(
-          () => NavigateToBookingSubmissionConfirmation(
-            golfClubName: current.golfClubName,
-            golfClubSlug: current.golfClubSlug,
-            selectedDate: current.selectedDate,
-            teeTimeSlot: current.teeTimeSlot,
-            pricePerPerson: current.pricePerPerson,
-            currency: current.currency,
-            guestId: current.guestId,
-            hostName: current.hostName,
-            hostPhoneNumber: current.hostPhoneNumber,
-            playerCount: current.playerCount,
-            caddieCount: current.caddieCount,
-            golfCartCount: current.golfCartCount,
-            playerDetails: current.playerDetails,
-          ),
-        );
+        await _createBookingHold(current);
     }
   }
 
@@ -156,11 +148,88 @@ class BookingSubmissionDetailViewModel
       golfCartCount: normalizedGolfCartCount,
       playerDetails: normalizedPlayerDetails,
       canContinue:
+          state.slotId.trim().isNotEmpty &&
           state.hostName.trim().isNotEmpty &&
           state.hostPhoneNumber.trim().isNotEmpty &&
           normalizedPlayerDetails.length == normalizedPlayerCount &&
           normalizedPlayerDetails.every((player) => player.isComplete),
     );
+  }
+
+  Future<void> _createBookingHold(
+    BookingSubmissionDetailDataLoaded current,
+  ) async {
+    emitViewState((state) {
+      return getCurrentAsLoaded().copyWith(isSubmitting: true);
+    });
+
+    await _bookingHoldSubscription?.cancel();
+    _bookingHoldSubscription = _useCase
+        .onCreateBookingHold(request: _buildBookingHoldRequest(current))
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final latest = getCurrentAsLoaded();
+              emitViewState((state) {
+                return latest.copyWith(isSubmitting: false);
+              });
+              sendNavEffect(
+                () => NavigateToBookingSubmissionConfirmation(
+                  bookingId: _resolveBookingId(result.data),
+                  golfClubName: latest.golfClubName,
+                  golfClubSlug: latest.golfClubSlug,
+                  selectedDate: latest.selectedDate,
+                  teeTimeSlot: latest.teeTimeSlot,
+                  pricePerPerson: latest.pricePerPerson,
+                  currency: latest.currency,
+                  guestId: latest.guestId,
+                  hostName: latest.hostName,
+                  hostPhoneNumber: latest.hostPhoneNumber,
+                  playerCount: latest.playerCount,
+                  caddieCount: latest.caddieCount,
+                  golfCartCount: latest.golfCartCount,
+                  playerDetails: latest.playerDetails,
+                ),
+              );
+            case DataStatus.error:
+              final message = result.apiMessage.isEmpty
+                  ? 'Failed to hold booking. Please try again.'
+                  : result.apiMessage;
+              emitViewState((state) {
+                return getCurrentAsLoaded().copyWith(isSubmitting: false);
+              });
+              sendNavEffect(() => ShowErrorMessage(message));
+            default:
+              break;
+          }
+        });
+  }
+
+  BookingHoldRequestModel _buildBookingHoldRequest(
+    BookingSubmissionDetailDataLoaded current,
+  ) {
+    return BookingHoldRequestModel(
+      slotId: current.slotId,
+      hostName: current.hostName,
+      hostPhoneNumber: current.hostPhoneNumber,
+      playerCount: current.playerCount,
+      caddieCount: current.caddieCount,
+      golfCartCount: current.golfCartCount,
+    );
+  }
+
+  String _resolveBookingId(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      final bookingId = response['bookingId'] ?? response['booking_id'];
+      if (bookingId is String && bookingId.trim().isNotEmpty) {
+        return bookingId;
+      }
+      if (bookingId != null) {
+        return bookingId.toString();
+      }
+    }
+
+    return '';
   }
 
   BookingSubmissionDetailDataLoaded _updatePlayerDetails({
@@ -256,5 +325,11 @@ class BookingSubmissionDetailViewModel
     }
 
     return BookingSubmissionDetailDataLoaded.initial();
+  }
+
+  @override
+  void dispose() {
+    _bookingHoldSubscription?.cancel();
+    super.dispose();
   }
 }

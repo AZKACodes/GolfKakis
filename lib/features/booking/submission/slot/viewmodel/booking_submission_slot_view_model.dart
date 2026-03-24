@@ -71,6 +71,10 @@ class BookingSubmissionSlotViewModel
       case OnSelectDate():
         await onSelectDate(intent.date);
       case OnSelectSlot():
+        if (!intent.slot.isAvailable) {
+          return;
+        }
+
         emitViewState((state) {
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
@@ -101,6 +105,7 @@ class BookingSubmissionSlotViewModel
 
         sendNavEffect(
           () => NavigateToBookingSubmissionDetail(
+            slotId: selectedSlot.slotId,
             golfClubName: current.selectedClubName,
             golfClubSlug: current.selectedClubSlug,
             selectedDate: current.selectedDate,
@@ -293,7 +298,8 @@ class BookingSubmissionSlotViewModel
           ? null
           : visibleSelectedIndex,
       canContinue:
-          state.selectedClubSlug.isNotEmpty && state.selectedSlot != null,
+          state.selectedClubSlug.isNotEmpty &&
+          state.selectedSlot?.isAvailable == true,
     );
   }
 

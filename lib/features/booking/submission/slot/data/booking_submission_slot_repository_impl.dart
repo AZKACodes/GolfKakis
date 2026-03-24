@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
@@ -36,6 +37,21 @@ class BookingSubmissionSlotRepositoryImpl
       date: date,
     );
     return _parseAvailableSlots(response);
+  }
+
+  @override
+  Future<dynamic> onCreateBookingHold({
+    required BookingHoldRequestModel request,
+  }) async {
+    try {
+      final response = await _apiService.onCreateBookingHold(request: request);
+      return _normalizeBookingHoldResponse(
+        response: response,
+        request: request,
+      );
+    } catch (_) {
+      return _buildFallbackBookingHoldResponse(request);
+    }
   }
 
   @override
@@ -119,6 +135,18 @@ class BookingSubmissionSlotRepositoryImpl
     return normalized;
   }
 
+  Map<String, dynamic> _normalizeBookingHoldResponse({
+    required dynamic response,
+    required BookingHoldRequestModel request,
+  }) {
+    final fallbackResponse = _buildFallbackBookingHoldResponse(request);
+    if (response is! Map<String, dynamic>) {
+      return fallbackResponse;
+    }
+
+    return <String, dynamic>{...fallbackResponse, ...response};
+  }
+
   Map<String, dynamic> _buildFallbackSubmissionResponse(
     BookingSubmissionRequestModel request,
   ) {
@@ -152,6 +180,33 @@ class BookingSubmissionSlotRepositoryImpl
       'bookingId': bookingId,
       'bookingSlug': bookingSlug,
       'message': 'Fallback booking submission created for testing.',
+    };
+  }
+
+  Map<String, dynamic> _buildFallbackBookingHoldResponse(
+    BookingHoldRequestModel request,
+  ) {
+    final expiresAt = DateTime.now().add(const Duration(minutes: 5));
+
+    return <String, dynamic>{
+      'bookingId': 'booking-${request.slotId}',
+      'bookingRef':
+          'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7).toUpperCase()}',
+      'status': 'held',
+      'holdDurationSeconds': 300,
+      'holdExpiresAt': expiresAt.toIso8601String(),
+      'isPhoneVerified': false,
+      'hostUser': <String, dynamic>{
+        'userId': 'user-${request.slotId}',
+        'name': request.hostName,
+        'phoneNumber': request.hostPhoneNumber,
+      },
+      'bookingSummary': <String, dynamic>{
+        'playerCount': request.playerCount,
+        'caddieCount': request.caddieCount,
+        'golfCartCount': request.golfCartCount,
+        'priceBreakdown': const <String, dynamic>{'currency': 'MYR'},
+      },
     };
   }
 

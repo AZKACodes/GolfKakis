@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -52,10 +53,11 @@ class BookingSubmissionSuccessDataLoaded
   final int golfCartCount;
   final bool isLoading;
 
-  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+  String get pricePerPersonLabel =>
+      CurrencyUtil.formatPrice(pricePerPerson, currency);
 
   String get totalCostLabel =>
-      _formatCurrency(pricePerPerson * playerCount, currency);
+      CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
@@ -138,8 +140,4 @@ sealed class BookingSubmissionSuccessNavEffect extends NavEffect {
 
 class NavigateToSubmissionStart extends BookingSubmissionSuccessNavEffect {
   const NavigateToSubmissionStart();
-}
-
-String _formatCurrency(double value, String currency) {
-  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
 }
