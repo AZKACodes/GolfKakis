@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection.dart';
-import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_add_on_selection_item.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/add_on/booking_submission_add_on_selection.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/add_on/booking_submission_add_on_selection_item.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_player_selection.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';

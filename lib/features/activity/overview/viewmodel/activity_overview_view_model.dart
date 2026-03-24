@@ -117,15 +117,15 @@ class ActivityOverviewViewModel extends ChangeNotifier
         _navEffectsController.add(const NavigateToActivityBookingList());
       case OnUpcomingBookingDetailClick():
         _navEffectsController.add(
-          const NavigateToActivityBookingDetail(_upcomingBooking),
+          const NavigateToBookingDetails(_upcomingBooking),
         );
       case OnRecentRoundOneDetailClick():
         _navEffectsController.add(
-          const NavigateToActivityBookingDetail(_recentRoundOne),
+          const NavigateToBookingDetails(_recentRoundOne),
         );
       case OnRecentRoundTwoDetailClick():
         _navEffectsController.add(
-          const NavigateToActivityBookingDetail(_recentRoundTwo),
+          const NavigateToBookingDetails(_recentRoundTwo),
         );
     }
   }

@@ -30,18 +30,6 @@ class BookingOverviewDashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Booking',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Quick access to booking actions, your next round, and recent play.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
-          ),
-          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -50,11 +38,17 @@ class BookingOverviewDashboardView extends StatelessWidget {
               label: const Text('Start New Booking'),
             ),
           ),
+
           const SizedBox(height: 18),
+
           _BookingListTouchpoint(onTap: onBookingListClick),
+
           const SizedBox(height: 18),
+
           const _SectionTitle(title: 'Upcoming Booking'),
+
           const SizedBox(height: 10),
+
           _UpcomingCard(
             course: 'Kinrara Golf Club',
             dateLabel: 'Fri, Mar 6',
@@ -65,9 +59,13 @@ class BookingOverviewDashboardView extends StatelessWidget {
             checkInStatus: 'Check-in opens in 3h',
             onOpenDetails: onUpcomingBookingDetailClick,
           ),
+
           const SizedBox(height: 18),
+
           const _SectionTitle(title: 'Popular Clubs Today'),
+
           const SizedBox(height: 10),
+
           SizedBox(
             height: 212,
             child: ListView.separated(
@@ -86,9 +84,13 @@ class BookingOverviewDashboardView extends StatelessWidget {
               },
             ),
           ),
+
           const SizedBox(height: 18),
+
           const _SectionTitle(title: 'Recent Rounds'),
+
           const SizedBox(height: 10),
+
           SizedBox(
             height: 208,
             child: ListView(
@@ -107,7 +109,9 @@ class BookingOverviewDashboardView extends StatelessWidget {
                     onOpenDetails: onRecentRoundOneDetailClick,
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
                 SizedBox(
                   width: 252,
                   child: _RoundCard(
@@ -144,6 +148,7 @@ final List<_PopularClubItem> _popularClubs = <_PopularClubItem>[
     greenFeeLabel: 'From MYR 39',
     peakLabel: 'Peak 7:20 AM',
   ),
+
   _PopularClubItem(
     club: GolfClubModel(
       id: '2',
@@ -157,6 +162,7 @@ final List<_PopularClubItem> _popularClubs = <_PopularClubItem>[
     greenFeeLabel: 'From MYR 52',
     peakLabel: 'Peak 8:00 AM',
   ),
+
   _PopularClubItem(
     club: GolfClubModel(
       id: '4',
@@ -206,7 +212,9 @@ class _BookingListTouchpoint extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.list_alt_outlined, color: Color(0xFF0A1F1A)),
+
           const SizedBox(width: 10),
+          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +225,9 @@ class _BookingListTouchpoint extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   'View all upcoming and past bookings',
                   style: Theme.of(
@@ -281,7 +291,9 @@ class _PopularClubCard extends StatelessWidget {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
+
           const SizedBox(height: 4),
+
           Text(
             item.club.address,
             maxLines: 1,
@@ -290,7 +302,9 @@ class _PopularClubCard extends StatelessWidget {
               context,
             ).textTheme.bodySmall?.copyWith(color: Colors.black54),
           ),
+
           const SizedBox(height: 10),
+
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -299,7 +313,9 @@ class _PopularClubCard extends StatelessWidget {
               _Tag(text: item.openSlotsLabel, color: const Color(0xFF2F7BFF)),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Row(
             children: [
               Expanded(
@@ -313,7 +329,9 @@ class _PopularClubCard extends StatelessWidget {
               ),
             ],
           ),
+
           const SizedBox(height: 10),
+          
           SizedBox(
             width: double.infinity,
             child: FilledButton(
