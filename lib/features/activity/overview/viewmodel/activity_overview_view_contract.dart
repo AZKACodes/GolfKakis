@@ -44,8 +44,8 @@ class NavigateToActivityBookingList extends ActivityOverviewNavEffect {
   const NavigateToActivityBookingList();
 }
 
-class NavigateToActivityBookingDetail extends ActivityOverviewNavEffect {
-  const NavigateToActivityBookingDetail(this.booking);
+class NavigateToBookingDetails extends ActivityOverviewNavEffect {
+  const NavigateToBookingDetails(this.booking);
 
   final BookingModel booking;
 }

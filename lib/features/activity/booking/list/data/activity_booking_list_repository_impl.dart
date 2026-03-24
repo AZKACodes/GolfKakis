@@ -28,10 +28,93 @@ class ActivityBookingListRepositoryImpl
 
     try {
       final response = await _apiService.onFetchBookingUpcomingList();
-      final bookings = _parseBookingList(response);
-      if (bookings.isNotEmpty) {
-        return ActivityBookingTabData(bookings: bookings, isFallback: false);
-      }
+      final rawList = response is List
+          ? response
+          : response is Map<String, dynamic>
+          ? response['items'] is List
+                ? response['items'] as List<dynamic>
+                : response['data'] is List
+                ? response['data'] as List<dynamic>
+                : response['bookings'] is List
+                ? response['bookings'] as List<dynamic>
+                : const <dynamic>[]
+          : const <dynamic>[];
+      final bookings = rawList.whereType<Map<dynamic, dynamic>>().map((item) {
+        final data = Map<String, dynamic>.from(
+          item.map((key, value) => MapEntry(key.toString(), value)),
+        );
+        final bookingDate = _readString(data, <String>[
+          'bookingDate',
+          'date',
+          'teeDate',
+          'playDate',
+        ]);
+        final teeTimeSlot = _readString(data, <String>[
+          'teeTimeSlot',
+          'tee_time_slot',
+          'time',
+          'teeTime',
+        ]);
+        final statusLabel = _readString(data, <String>[
+          'status',
+          'statusLabel',
+          'bookingStatus',
+        ], fallback: 'Confirmed');
+        final total = _readNum(data, <String>[
+          'grandTotal',
+          'total',
+          'amount',
+          'fee',
+          'pricePerPerson',
+          'price',
+        ]);
+        final currency = _readString(data, <String>[
+          'currency',
+          'currencyCode',
+        ], fallback: 'MYR');
+
+        return BookingModel(
+          bookingId: _readString(data, <String>[
+            'bookingRef',
+            'bookingId',
+            'id',
+            'bookingCode',
+            'referenceNo',
+          ], fallback: 'BOOKING-${DateTime.now().millisecondsSinceEpoch}'),
+          courseName: _readString(data, <String>[
+            'golfClubName',
+            'courseName',
+            'clubName',
+            'name',
+          ], fallback: 'Golf Club'),
+          dateLabel: _formatDateLabel(bookingDate),
+          timeLabel: _formatTimeLabel(teeTimeSlot),
+          teeTimeSlot: teeTimeSlot.isEmpty ? '-' : teeTimeSlot,
+          feeLabel: total == null
+              ? '$currency --'
+              : '$currency ${total.toStringAsFixed(0)}',
+          statusLabel: statusLabel,
+          statusColor: _statusColor(statusLabel),
+          guestId: _readNullableString(data, <String>['guestId', 'guestCode']),
+          hostName: _readString(
+            data,
+            <String>['hostName', 'bookedByName', 'contactName'],
+            fallback: 'Guest Host',
+          ),
+          hostPhoneNumber: _readString(
+            data,
+            <String>['hostPhoneNumber', 'contactPhone', 'bookedByPhone'],
+          ),
+          playerCount: _readInt(data, <String>['playerCount', 'players'], fallback: 1),
+          caddieCount: _readInt(data, <String>['caddieCount', 'caddies']),
+          golfCartCount: _readInt(
+            data,
+            <String>['golfCartCount', 'cartCount', 'buggyCount'],
+          ),
+          playerDetails: const <BookingSubmissionPlayerModel>[],
+        );
+      }).toList();
+      return ActivityBookingTabData(bookings: bookings, isFallback: false);
     } catch (_) {
       // Temporary fallback until the upcoming booking endpoint is ready.
     }
@@ -53,10 +136,93 @@ class ActivityBookingListRepositoryImpl
 
     try {
       final response = await _apiService.onFetchBookingPastList();
-      final bookings = _parseBookingList(response);
-      if (bookings.isNotEmpty) {
-        return ActivityBookingTabData(bookings: bookings, isFallback: false);
-      }
+      final rawList = response is List
+          ? response
+          : response is Map<String, dynamic>
+          ? response['items'] is List
+                ? response['items'] as List<dynamic>
+                : response['data'] is List
+                ? response['data'] as List<dynamic>
+                : response['bookings'] is List
+                ? response['bookings'] as List<dynamic>
+                : const <dynamic>[]
+          : const <dynamic>[];
+      final bookings = rawList.whereType<Map<dynamic, dynamic>>().map((item) {
+        final data = Map<String, dynamic>.from(
+          item.map((key, value) => MapEntry(key.toString(), value)),
+        );
+        final bookingDate = _readString(data, <String>[
+          'bookingDate',
+          'date',
+          'teeDate',
+          'playDate',
+        ]);
+        final teeTimeSlot = _readString(data, <String>[
+          'teeTimeSlot',
+          'tee_time_slot',
+          'time',
+          'teeTime',
+        ]);
+        final statusLabel = _readString(data, <String>[
+          'status',
+          'statusLabel',
+          'bookingStatus',
+        ], fallback: 'Completed');
+        final total = _readNum(data, <String>[
+          'grandTotal',
+          'total',
+          'amount',
+          'fee',
+          'pricePerPerson',
+          'price',
+        ]);
+        final currency = _readString(data, <String>[
+          'currency',
+          'currencyCode',
+        ], fallback: 'MYR');
+
+        return BookingModel(
+          bookingId: _readString(data, <String>[
+            'bookingRef',
+            'bookingId',
+            'id',
+            'bookingCode',
+            'referenceNo',
+          ], fallback: 'BOOKING-${DateTime.now().millisecondsSinceEpoch}'),
+          courseName: _readString(data, <String>[
+            'golfClubName',
+            'courseName',
+            'clubName',
+            'name',
+          ], fallback: 'Golf Club'),
+          dateLabel: _formatDateLabel(bookingDate),
+          timeLabel: _formatTimeLabel(teeTimeSlot),
+          teeTimeSlot: teeTimeSlot.isEmpty ? '-' : teeTimeSlot,
+          feeLabel: total == null
+              ? '$currency --'
+              : '$currency ${total.toStringAsFixed(0)}',
+          statusLabel: statusLabel,
+          statusColor: _statusColor(statusLabel),
+          guestId: _readNullableString(data, <String>['guestId', 'guestCode']),
+          hostName: _readString(
+            data,
+            <String>['hostName', 'bookedByName', 'contactName'],
+            fallback: 'Guest Host',
+          ),
+          hostPhoneNumber: _readString(
+            data,
+            <String>['hostPhoneNumber', 'contactPhone', 'bookedByPhone'],
+          ),
+          playerCount: _readInt(data, <String>['playerCount', 'players'], fallback: 1),
+          caddieCount: _readInt(data, <String>['caddieCount', 'caddies']),
+          golfCartCount: _readInt(
+            data,
+            <String>['golfCartCount', 'cartCount', 'buggyCount'],
+          ),
+          playerDetails: const <BookingSubmissionPlayerModel>[],
+        );
+      }).toList();
+      return ActivityBookingTabData(bookings: bookings, isFallback: false);
     } catch (_) {
       // Temporary fallback until the past booking endpoint is ready.
     }
@@ -67,150 +233,6 @@ class ActivityBookingListRepositoryImpl
     );
   }
 
-  List<BookingModel> _parseBookingList(dynamic response) {
-    final rawList = response is List
-        ? response
-        : response is Map<String, dynamic>
-        ? response['data'] is List
-              ? response['data'] as List<dynamic>
-              : response['bookings'] is List
-              ? response['bookings'] as List<dynamic>
-              : response['items'] is List
-              ? response['items'] as List<dynamic>
-              : const <dynamic>[]
-        : const <dynamic>[];
-
-    return rawList
-        .whereType<Map<dynamic, dynamic>>()
-        .map(
-          (item) => _parseBooking(
-            Map<String, dynamic>.from(
-              item.map((key, value) => MapEntry(key.toString(), value)),
-            ),
-          ),
-        )
-        .toList();
-  }
-
-  BookingModel _parseBooking(Map<String, dynamic> item) {
-    final bookingDate = _readString(item, <String>[
-      'bookingDate',
-      'date',
-      'teeDate',
-      'playDate',
-    ]);
-    final teeTimeSlot = _readString(item, <String>[
-      'teeTimeSlot',
-      'tee_time_slot',
-      'time',
-      'teeTime',
-    ]);
-    final statusLabel = _readString(item, <String>[
-      'statusLabel',
-      'status',
-      'bookingStatus',
-    ], fallback: 'Confirmed');
-    final price = _readNum(item, <String>[
-      'pricePerPerson',
-      'price',
-      'amount',
-      'fee',
-    ]);
-    final currency = _readString(item, <String>[
-      'currency',
-      'currencyCode',
-    ], fallback: 'MYR');
-    final playerCount = _readInt(item, <String>[
-      'playerCount',
-      'players',
-    ], fallback: 1);
-    final caddieCount = _readInt(item, <String>[
-      'caddieCount',
-      'caddies',
-    ], fallback: 0);
-    final golfCartCount = _readInt(item, <String>[
-      'golfCartCount',
-      'cartCount',
-      'buggyCount',
-    ], fallback: 0);
-    final playerDetails = _parsePlayers(
-      item['playerDetails'] ?? item['players'],
-    );
-    final primaryPlayer = playerDetails.isNotEmpty ? playerDetails.first : null;
-    final hostName = _readString(item, <String>[
-      'hostName',
-      'bookedByName',
-      'contactName',
-    ], fallback: primaryPlayer?.name ?? 'Guest Host');
-    final hostPhone = _readString(item, <String>[
-      'hostPhoneNumber',
-      'contactPhone',
-      'bookedByPhone',
-    ], fallback: primaryPlayer?.phoneNumber ?? '');
-
-    return BookingModel(
-      bookingId: _readString(item, <String>[
-        'bookingId',
-        'id',
-        'bookingCode',
-        'referenceNo',
-      ], fallback: 'BOOKING-${DateTime.now().millisecondsSinceEpoch}'),
-      courseName: _readString(item, <String>[
-        'courseName',
-        'golfClubName',
-        'clubName',
-        'name',
-      ], fallback: 'Golf Club'),
-      dateLabel: _formatDateLabel(bookingDate),
-      timeLabel: _formatTimeLabel(teeTimeSlot),
-      teeTimeSlot: teeTimeSlot.isEmpty ? '-' : teeTimeSlot,
-      feeLabel: price == null
-          ? '$currency --'
-          : '$currency ${price.toStringAsFixed(0)}',
-      statusLabel: statusLabel,
-      statusColor: _statusColor(statusLabel),
-      guestId: _readNullableString(item, <String>['guestId', 'guestCode']),
-      hostName: hostName,
-      hostPhoneNumber: hostPhone,
-      playerCount: playerCount,
-      caddieCount: caddieCount,
-      golfCartCount: golfCartCount,
-      playerDetails: playerDetails.isEmpty
-          ? <BookingSubmissionPlayerModel>[
-              BookingSubmissionPlayerModel(
-                name: hostName,
-                phoneNumber: hostPhone,
-              ),
-            ]
-          : playerDetails,
-    );
-  }
-
-  List<BookingSubmissionPlayerModel> _parsePlayers(dynamic response) {
-    if (response is! List) {
-      return const <BookingSubmissionPlayerModel>[];
-    }
-
-    return response
-        .whereType<Map<dynamic, dynamic>>()
-        .map(
-          (item) => BookingSubmissionPlayerModel(
-            name: _readString(
-              Map<String, dynamic>.from(
-                item.map((key, value) => MapEntry(key.toString(), value)),
-              ),
-              <String>['name', 'playerName'],
-            ),
-            phoneNumber: _readString(
-              Map<String, dynamic>.from(
-                item.map((key, value) => MapEntry(key.toString(), value)),
-              ),
-              <String>['phoneNumber', 'phone', 'playerPhone'],
-            ),
-          ),
-        )
-        .toList();
-  }
 
   String _readString(
     Map<String, dynamic> item,

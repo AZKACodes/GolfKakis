@@ -35,7 +35,7 @@ class _ActivityOverviewPageState extends State<ActivityOverviewPage> {
         );
       }
 
-      if (effect is NavigateToActivityBookingDetail) {
+      if (effect is NavigateToBookingDetails) {
         if (!mounted) {
           return;
         }

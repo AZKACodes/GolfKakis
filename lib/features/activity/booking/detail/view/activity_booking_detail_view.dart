@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/booking_submission_metric_column.dart';
+import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
+import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
+import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
 import '../viewmodel/activity_booking_detail_view_contract.dart';
 
@@ -31,14 +34,14 @@ class ActivityBookingDetailView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (state.isUsingFallback) ...[
-              const _InfoBanner(
+              const InfoBanner(
                 message:
                     'Showing fallback booking detail until the detail endpoint is ready.',
               ),
               const SizedBox(height: 12),
             ],
             if (state.errorMessage != null) ...[
-              _ErrorBanner(message: state.errorMessage!),
+              ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
             ],
             if (state.isLoading) ...[
@@ -59,7 +62,7 @@ class ActivityBookingDetailView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      _StatusChip(
+                      StatusPill(
                         label: booking.statusLabel,
                         color: booking.statusColor,
                       ),
@@ -230,58 +233,6 @@ class ActivityBookingDetailView extends StatelessWidget {
   }
 }
 
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF3D6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE9C46A)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF7A5B00),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDECEC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE7A1A1)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF8A3D3D),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 class _ComingSoonBanner extends StatelessWidget {
   const _ComingSoonBanner({required this.message});
 
@@ -399,31 +350,6 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

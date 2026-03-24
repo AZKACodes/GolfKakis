@@ -24,7 +24,25 @@ class BookingSubmissionSlotRepositoryImpl
   @override
   Future<List<GolfClubModel>> onFetchGolfClubList() async {
     final response = await _apiService.onFetchGolfClubList();
-    return _parseGolfClubList(response);
+    List<GolfClubModel> parseGolfClubList(dynamic rawResponse) {
+      if (rawResponse is List) {
+        return rawResponse
+            .whereType<Map<String, dynamic>>()
+            .map(GolfClubModel.fromJson)
+            .where((club) => club.slug.isNotEmpty)
+            .toList();
+      }
+
+      if (rawResponse is Map<String, dynamic>) {
+        final dynamic nestedList =
+            rawResponse['data'] ?? rawResponse['items'] ?? rawResponse['clubs'];
+        return parseGolfClubList(nestedList);
+      }
+
+      return const <GolfClubModel>[];
+    }
+
+    return parseGolfClubList(response);
   }
 
   @override
@@ -36,7 +54,42 @@ class BookingSubmissionSlotRepositoryImpl
       clubSlug: clubSlug,
       date: date,
     );
-    return _parseAvailableSlots(response);
+
+    List<BookingSlotModel> parseAvailableSlots(dynamic rawResponse) {
+      if (rawResponse is List) {
+        return rawResponse
+            .map(
+              (slot) => slot is Map<String, dynamic>
+                  ? BookingSlotModel.fromJson(slot)
+                  : BookingSlotModel(
+                      time: slot.toString(),
+                      price: 0,
+                      noOfHoles: 18,
+                    ),
+            )
+            .where((slot) => slot.time.isNotEmpty)
+            .toList();
+      }
+
+      if (rawResponse is Map<String, dynamic>) {
+        final dynamic nestedList =
+            rawResponse['data'] ??
+            rawResponse['items'] ??
+            rawResponse['slots'] ??
+            rawResponse['availableSlots'];
+        return parseAvailableSlots(nestedList);
+      }
+
+      if (rawResponse is String && rawResponse.isNotEmpty) {
+        return <BookingSlotModel>[
+          BookingSlotModel(time: rawResponse, price: 0, noOfHoles: 18),
+        ];
+      }
+
+      return const <BookingSlotModel>[];
+    }
+
+    return parseAvailableSlots(response);
   }
 
   @override
@@ -272,57 +325,5 @@ class BookingSubmissionSlotRepositoryImpl
           .toList(),
       'status': 'Confirmed',
     };
-  }
-
-  List<GolfClubModel> _parseGolfClubList(dynamic response) {
-    if (response is List) {
-      return response
-          .whereType<Map<String, dynamic>>()
-          .map(GolfClubModel.fromJson)
-          .where((club) => club.slug.isNotEmpty)
-          .toList();
-    }
-
-    if (response is Map<String, dynamic>) {
-      final dynamic nestedList =
-          response['data'] ?? response['items'] ?? response['clubs'];
-      return _parseGolfClubList(nestedList);
-    }
-
-    return const <GolfClubModel>[];
-  }
-
-  List<BookingSlotModel> _parseAvailableSlots(dynamic response) {
-    if (response is List) {
-      return response
-          .map(
-            (slot) => slot is Map<String, dynamic>
-                ? BookingSlotModel.fromJson(slot)
-                : BookingSlotModel(
-                    time: slot.toString(),
-                    price: 0,
-                    noOfHoles: 18,
-                  ),
-          )
-          .where((slot) => slot.time.isNotEmpty)
-          .toList();
-    }
-
-    if (response is Map<String, dynamic>) {
-      final dynamic nestedList =
-          response['data'] ??
-          response['items'] ??
-          response['slots'] ??
-          response['availableSlots'];
-      return _parseAvailableSlots(nestedList);
-    }
-
-    if (response is String && response.isNotEmpty) {
-      return <BookingSlotModel>[
-        BookingSlotModel(time: response, price: 0, noOfHoles: 18),
-      ];
-    }
-
-    return const <BookingSlotModel>[];
   }
 }

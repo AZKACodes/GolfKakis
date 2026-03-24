@@ -1,32 +1,31 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/activity/booking/list/data/activity_booking_list_repository.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'activity_booking_list_view_contract.dart';
 
-class ActivityBookingListViewModel extends ChangeNotifier
+class ActivityBookingListViewModel
+    extends
+        MviViewModel<
+          ActivityBookingListUserIntent,
+          ActivityBookingListViewState,
+          ActivityBookingListNavEffect
+        >
     implements ActivityBookingListViewContract {
   ActivityBookingListViewModel({
     required ActivityBookingListRepository repository,
   }) : _repository = repository;
 
   final ActivityBookingListRepository _repository;
-  final StreamController<ActivityBookingListNavEffect> _navEffectsController =
-      StreamController<ActivityBookingListNavEffect>.broadcast();
-
-  ActivityBookingListViewState _viewState =
-      ActivityBookingListViewState.initial;
 
   @override
-  ActivityBookingListViewState get viewState => _viewState;
+  ActivityBookingListViewState createInitialState() {
+    return ActivityBookingListViewState.initial;
+  }
 
   @override
-  Stream<ActivityBookingListNavEffect> get navEffects =>
-      _navEffectsController.stream;
-
-  @override
-  void onUserIntent(ActivityBookingListUserIntent intent) {
+  Future<void> handleIntent(ActivityBookingListUserIntent intent) async {
     switch (intent) {
       case OnInit():
         unawaited(_loadTab(ActivityBookingListTab.upcoming));
@@ -37,9 +36,7 @@ class ActivityBookingListViewModel extends ChangeNotifier
       case OnRetryClick():
         unawaited(_loadTab(intent.tab, forceRefresh: true));
       case OnViewBookingDetailClick():
-        _navEffectsController.add(
-          NavigateToActivityBookingDetail(intent.booking),
-        );
+        sendNavEffect(() => NavigateToBookingDetails(intent.booking));
     }
   }
 
@@ -50,8 +47,8 @@ class ActivityBookingListViewModel extends ChangeNotifier
 
   bool _shouldLoad(ActivityBookingListTab tab) {
     return switch (tab) {
-      ActivityBookingListTab.upcoming => !_viewState.hasLoadedUpcoming,
-      ActivityBookingListTab.past => !_viewState.hasLoadedPast,
+      ActivityBookingListTab.upcoming => !viewState.hasLoadedUpcoming,
+      ActivityBookingListTab.past => !viewState.hasLoadedPast,
     };
   }
 
@@ -61,25 +58,26 @@ class ActivityBookingListViewModel extends ChangeNotifier
   }) async {
     if (!forceRefresh) {
       final isLoading = switch (tab) {
-        ActivityBookingListTab.upcoming => _viewState.isUpcomingLoading,
-        ActivityBookingListTab.past => _viewState.isPastLoading,
+        ActivityBookingListTab.upcoming => viewState.isUpcomingLoading,
+        ActivityBookingListTab.past => viewState.isPastLoading,
       };
       if (isLoading) {
         return;
       }
     }
 
-    _viewState = switch (tab) {
-      ActivityBookingListTab.upcoming => _viewState.copyWith(
-        isUpcomingLoading: true,
-        clearUpcomingErrorMessage: true,
-      ),
-      ActivityBookingListTab.past => _viewState.copyWith(
-        isPastLoading: true,
-        clearPastErrorMessage: true,
-      ),
-    };
-    notifyListeners();
+    emitViewState((state) {
+      return switch (tab) {
+        ActivityBookingListTab.upcoming => state.copyWith(
+          isUpcomingLoading: true,
+          clearUpcomingErrorMessage: true,
+        ),
+        ActivityBookingListTab.past => state.copyWith(
+          isPastLoading: true,
+          clearPastErrorMessage: true,
+        ),
+      };
+    });
 
     try {
       final data = switch (tab) {
@@ -89,43 +87,39 @@ class ActivityBookingListViewModel extends ChangeNotifier
           await _repository.onFetchPastBookingList(),
       };
 
-      _viewState = switch (tab) {
-        ActivityBookingListTab.upcoming => _viewState.copyWith(
-          upcomingBookings: data.bookings,
-          isUpcomingLoading: false,
-          hasLoadedUpcoming: true,
-          isUsingUpcomingFallback: data.isFallback,
-          clearUpcomingErrorMessage: true,
-        ),
-        ActivityBookingListTab.past => _viewState.copyWith(
-          pastBookings: data.bookings,
-          isPastLoading: false,
-          hasLoadedPast: true,
-          isUsingPastFallback: data.isFallback,
-          clearPastErrorMessage: true,
-        ),
-      };
+      emitViewState((state) {
+        return switch (tab) {
+          ActivityBookingListTab.upcoming => state.copyWith(
+            upcomingBookings: data.bookings,
+            isUpcomingLoading: false,
+            hasLoadedUpcoming: true,
+            isUsingUpcomingFallback: data.isFallback,
+            clearUpcomingErrorMessage: true,
+          ),
+          ActivityBookingListTab.past => state.copyWith(
+            pastBookings: data.bookings,
+            isPastLoading: false,
+            hasLoadedPast: true,
+            isUsingPastFallback: data.isFallback,
+            clearPastErrorMessage: true,
+          ),
+        };
+      });
     } catch (_) {
-      _viewState = switch (tab) {
-        ActivityBookingListTab.upcoming => _viewState.copyWith(
-          isUpcomingLoading: false,
-          isUsingUpcomingFallback: false,
-          upcomingErrorMessage: 'Unable to load upcoming bookings right now.',
-        ),
-        ActivityBookingListTab.past => _viewState.copyWith(
-          isPastLoading: false,
-          isUsingPastFallback: false,
-          pastErrorMessage: 'Unable to load past bookings right now.',
-        ),
-      };
+      emitViewState((state) {
+        return switch (tab) {
+          ActivityBookingListTab.upcoming => state.copyWith(
+            isUpcomingLoading: false,
+            isUsingUpcomingFallback: false,
+            upcomingErrorMessage: 'Unable to load upcoming bookings right now.',
+          ),
+          ActivityBookingListTab.past => state.copyWith(
+            isPastLoading: false,
+            isUsingPastFallback: false,
+            pastErrorMessage: 'Unable to load past bookings right now.',
+          ),
+        };
+      });
     }
-
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _navEffectsController.close();
-    super.dispose();
   }
 }

@@ -16,23 +16,22 @@ class ActivityBookingListPage extends StatefulWidget {
       _ActivityBookingListPageState();
 }
 
-class _ActivityBookingListPageState extends State<ActivityBookingListPage>
-    with SingleTickerProviderStateMixin {
+class _ActivityBookingListPageState extends State<ActivityBookingListPage> with SingleTickerProviderStateMixin {
   late final ActivityBookingListViewModel _viewModel;
   late final TabController _tabController;
+  
   StreamSubscription<ActivityBookingListNavEffect>? _navEffectSubscription;
   int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ActivityBookingListViewModel(
-      repository: ActivityBookingListRepositoryImpl(),
-    );
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(_handleTabChanged);
+
+    _viewModel = ActivityBookingListViewModel(repository: ActivityBookingListRepositoryImpl());
+    _tabController = TabController(length: 2, vsync: this)..addListener(_handleTabChanged);
+
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
-      if (effect is NavigateToActivityBookingDetail) {
+      if (effect is NavigateToBookingDetails) {
         if (!mounted) {
           return;
         }
@@ -43,6 +42,7 @@ class _ActivityBookingListPageState extends State<ActivityBookingListPage>
         );
       }
     });
+    
     _viewModel.onUserIntent(const OnInit());
   }
 
@@ -52,6 +52,7 @@ class _ActivityBookingListPageState extends State<ActivityBookingListPage>
     }
 
     _currentTabIndex = _tabController.index;
+
     _viewModel.onUserIntent(
       OnTabChanged(
         _currentTabIndex == 0
@@ -76,9 +77,9 @@ class _ActivityBookingListPageState extends State<ActivityBookingListPage>
     return Scaffold(
       appBar: AppBar(title: const Text('My Bookings')),
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _viewModel,
-          builder: (context, child) => ActivityBookingListView(
+        child: ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) => ActivityBookingListView(
             controller: _tabController,
             state: _viewModel.viewState,
             onRetryClick: (tab) => _viewModel.onUserIntent(OnRetryClick(tab)),

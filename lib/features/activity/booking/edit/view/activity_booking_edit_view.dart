@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
+import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
 import 'package:flutter/services.dart';
 
 import '../viewmodel/activity_booking_edit_view_contract.dart';
@@ -62,14 +64,14 @@ class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.state.isUsingFallback) ...[
-            const _InfoBanner(
+            const InfoBanner(
               message:
                   'Changes were handled using fallback mode until the update endpoint is ready.',
             ),
             const SizedBox(height: 12),
           ],
           if (widget.state.errorMessage != null) ...[
-            _ErrorBanner(message: widget.state.errorMessage!),
+            ErrorBanner(message: widget.state.errorMessage!),
             const SizedBox(height: 12),
           ],
           if (widget.state.isSaving) ...[
@@ -174,58 +176,6 @@ class _ActivityBookingEditViewState extends State<ActivityBookingEditView> {
         _phoneControllers[i].text = players[i].phoneNumber;
       }
     }
-  }
-}
-
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF3D6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE9C46A)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF7A5B00),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDECEC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE7A1A1)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF8A3D3D),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
   }
 }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
+import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile.dart';
 
@@ -70,14 +72,14 @@ class ProfileOverviewView extends StatelessWidget {
           ),
           children: [
             if (state.isUsingFallback) ...[
-              const _InfoBanner(
+              const InfoBanner(
                 message:
                     'Showing temporary fallback profile until the user profile endpoint is ready.',
               ),
               const SizedBox(height: 12),
             ],
             if (state.errorMessage != null) ...[
-              _ErrorBanner(message: state.errorMessage!),
+              ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
             ],
             if (state.isLoading) ...[
@@ -645,58 +647,6 @@ class _RoleBadge extends StatelessWidget {
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: const Color(0xFF173B7A),
           fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF3D6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE9C46A)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF7A5B00),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDECEC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE7A1A1)),
-      ),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF8A3D3D),
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

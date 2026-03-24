@@ -29,7 +29,7 @@ class BookingSubmissionAddOnSelectionItem extends StatelessWidget {
               ),
             ),
           ),
-          
+
           BookingSubmissionDetailCounterControl(
             value: value,
             onChanged: onChanged,
