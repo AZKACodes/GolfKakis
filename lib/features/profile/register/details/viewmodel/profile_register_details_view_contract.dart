@@ -12,6 +12,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
     required this.name,
     required this.nickname,
     required this.occupation,
+    required this.password,
     required this.isSubmitting,
     this.errorMessage,
   }) : super();
@@ -24,6 +25,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
       name: '',
       nickname: '',
       occupation: '',
+      password: '',
       isSubmitting: false,
     );
   }
@@ -32,6 +34,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
   final String name;
   final String nickname;
   final String occupation;
+  final String password;
   final bool isSubmitting;
   final String? errorMessage;
 
@@ -39,6 +42,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
       name.trim().isNotEmpty &&
       nickname.trim().isNotEmpty &&
       occupation.trim().isNotEmpty &&
+      password.trim().isNotEmpty &&
       !isSubmitting;
 
   ProfileRegisterDetailsViewState copyWith({
@@ -46,6 +50,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
     String? name,
     String? nickname,
     String? occupation,
+    String? password,
     bool? isSubmitting,
     String? errorMessage,
     bool clearErrorMessage = false,
@@ -55,6 +60,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
       name: name ?? this.name,
       nickname: nickname ?? this.nickname,
       occupation: occupation ?? this.occupation,
+      password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? null
@@ -81,6 +87,12 @@ class OnRegisterNicknameChanged extends ProfileRegisterDetailsUserIntent {
 
 class OnRegisterOccupationChanged extends ProfileRegisterDetailsUserIntent {
   const OnRegisterOccupationChanged(this.value);
+
+  final String value;
+}
+
+class OnRegisterPasswordChanged extends ProfileRegisterDetailsUserIntent {
+  const OnRegisterPasswordChanged(this.value);
 
   final String value;
 }

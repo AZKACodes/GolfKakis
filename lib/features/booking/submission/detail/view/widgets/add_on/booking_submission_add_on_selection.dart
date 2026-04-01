@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class BookingSubmissionAddOnSelection extends StatelessWidget {
   const BookingSubmissionAddOnSelection({
-    required this.title,
+    this.title,
     required this.children,
     super.key,
   });
 
-  final String title;
+  final String? title;
   final List<Widget> children;
 
   @override
@@ -22,15 +22,16 @@ class BookingSubmissionAddOnSelection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+          if (title != null && title!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                title!,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
           ...children,
         ],
       ),

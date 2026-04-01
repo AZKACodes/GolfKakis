@@ -37,6 +37,14 @@ class ProfileRegisterMethodViewModel
             clearInfoMessage: true,
           ),
         );
+      case OnRegisterCountryCodeSelected():
+        emitViewState(
+          (state) => state.copyWith(
+            countryCode: intent.value,
+            clearErrorMessage: true,
+            clearInfoMessage: true,
+          ),
+        );
       case OnRegisterMethodContinueClick():
         await _continueRegistration();
       case OnRegisterMethodBackClick():
@@ -76,7 +84,7 @@ class ProfileRegisterMethodViewModel
     await Future<void>.delayed(const Duration(milliseconds: 250));
     emitViewState((state) => state.copyWith(isSubmitting: false));
     sendNavEffect(
-      () => RegisterMethodNavigateToOtp(currentState.phoneNumber.trim()),
+      () => RegisterMethodNavigateToOtp(currentState.fullPhoneNumber),
     );
   }
 }

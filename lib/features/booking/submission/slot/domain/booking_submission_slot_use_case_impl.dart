@@ -32,7 +32,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       yield DataStatusModel<List<GolfClubModel>>(
         data: const <GolfClubModel>[],
         status: DataStatus.error,
-        apiMessage: error.toString(),
+        apiMessage: _messageFromError(error),
       );
     }
   }
@@ -41,11 +41,15 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
   Stream<DataStatusModel<List<BookingSlotModel>>> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
+    required String playType,
+    String? selectedNine,
   }) async* {
     try {
       final slotModels = await _repository.onFetchAvailableSlots(
         clubSlug: clubSlug,
         date: date,
+        playType: playType,
+        selectedNine: selectedNine,
       );
 
       yield DataStatusModel<List<BookingSlotModel>>(
@@ -63,7 +67,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       yield DataStatusModel<List<BookingSlotModel>>(
         data: const <BookingSlotModel>[],
         status: DataStatus.error,
-        apiMessage: error.toString(),
+        apiMessage: _messageFromError(error),
       );
     }
   }
@@ -90,7 +94,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       yield DataStatusModel<dynamic>(
         data: const EmptyType(),
         status: DataStatus.error,
-        apiMessage: error.toString(),
+        apiMessage: _messageFromError(error),
       );
     }
   }
@@ -119,7 +123,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       yield DataStatusModel<dynamic>(
         data: const EmptyType(),
         status: DataStatus.error,
-        apiMessage: error.toString(),
+        apiMessage: _messageFromError(error),
       );
     }
   }
@@ -148,8 +152,19 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       yield DataStatusModel<dynamic>(
         data: const EmptyType(),
         status: DataStatus.error,
-        apiMessage: error.toString(),
+        apiMessage: _messageFromError(error),
       );
     }
+  }
+
+  String _messageFromError(Object error) {
+    if (error is ApiException) {
+      return error.message;
+    }
+
+    final raw = error.toString();
+    final exceptionPrefix = RegExp(r'^[A-Za-z]+Exception:\s*');
+    final cleaned = raw.replaceFirst(exceptionPrefix, '').trim();
+    return cleaned.isEmpty ? 'Request failed.' : cleaned;
   }
 }

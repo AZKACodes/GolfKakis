@@ -8,6 +8,7 @@ class ProfileRegisterDetailsView extends StatefulWidget {
     required this.onNameChanged,
     required this.onNicknameChanged,
     required this.onOccupationChanged,
+    required this.onPasswordChanged,
     required this.onSubmitClick,
     super.key,
   });
@@ -16,6 +17,7 @@ class ProfileRegisterDetailsView extends StatefulWidget {
   final ValueChanged<String> onNameChanged;
   final ValueChanged<String> onNicknameChanged;
   final ValueChanged<String> onOccupationChanged;
+  final ValueChanged<String> onPasswordChanged;
   final VoidCallback onSubmitClick;
 
   @override
@@ -28,6 +30,7 @@ class _ProfileRegisterDetailsViewState
   late final TextEditingController _nameController;
   late final TextEditingController _nicknameController;
   late final TextEditingController _occupationController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _ProfileRegisterDetailsViewState
     _occupationController = TextEditingController(
       text: widget.state.occupation,
     );
+    _passwordController = TextEditingController(text: widget.state.password);
   }
 
   @override
@@ -51,6 +55,9 @@ class _ProfileRegisterDetailsViewState
     if (_occupationController.text != widget.state.occupation) {
       _occupationController.text = widget.state.occupation;
     }
+    if (_passwordController.text != widget.state.password) {
+      _passwordController.text = widget.state.password;
+    }
   }
 
   @override
@@ -58,6 +65,7 @@ class _ProfileRegisterDetailsViewState
     _nameController.dispose();
     _nicknameController.dispose();
     _occupationController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -162,11 +170,28 @@ class _ProfileRegisterDetailsViewState
                     const SizedBox(height: 14),
                     TextField(
                       controller: _occupationController,
-                      textInputAction: TextInputAction.done,
+                      textInputAction: TextInputAction.next,
                       onChanged: widget.onOccupationChanged,
                       decoration: InputDecoration(
                         labelText: 'Occupation',
                         prefixIcon: const Icon(Icons.work_outline),
+                        filled: true,
+                        fillColor: const Color(0xFFF6F8FC),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onChanged: widget.onPasswordChanged,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
                         filled: true,
                         fillColor: const Color(0xFFF6F8FC),
                         border: OutlineInputBorder(

@@ -10,6 +10,8 @@ abstract class BookingSubmissionSlotUseCase {
   Stream<DataStatusModel<List<BookingSlotModel>>> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
+    required String playType,
+    String? selectedNine,
   });
 
   Stream<DataStatusModel<dynamic>> onCreateBookingHold({

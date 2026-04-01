@@ -1,3 +1,4 @@
+import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 enum RegisterMethod { phone, email }
@@ -11,6 +12,7 @@ abstract class ProfileRegisterMethodViewContract {
 class ProfileRegisterMethodViewState extends ViewState {
   const ProfileRegisterMethodViewState({
     required this.selectedMethod,
+    required this.countryCode,
     required this.phoneNumber,
     required this.isSubmitting,
     this.errorMessage,
@@ -19,11 +21,13 @@ class ProfileRegisterMethodViewState extends ViewState {
 
   static const initial = ProfileRegisterMethodViewState(
     selectedMethod: RegisterMethod.phone,
+    countryCode: PhoneUtil.defaultCountryCodeOption,
     phoneNumber: '',
     isSubmitting: false,
   );
 
   final RegisterMethod selectedMethod;
+  final PhoneCountryCodeOption countryCode;
   final String phoneNumber;
   final bool isSubmitting;
   final String? errorMessage;
@@ -31,8 +35,18 @@ class ProfileRegisterMethodViewState extends ViewState {
 
   bool get canContinuePhone => phoneNumber.trim().isNotEmpty && !isSubmitting;
 
+  String get fullPhoneNumber {
+    final normalized = phoneNumber.trim();
+    if (normalized.isEmpty) {
+      return countryCode.dialCode;
+    }
+
+    return '${countryCode.dialCode} $normalized';
+  }
+
   ProfileRegisterMethodViewState copyWith({
     RegisterMethod? selectedMethod,
+    PhoneCountryCodeOption? countryCode,
     String? phoneNumber,
     bool? isSubmitting,
     String? errorMessage,
@@ -42,6 +56,7 @@ class ProfileRegisterMethodViewState extends ViewState {
   }) {
     return ProfileRegisterMethodViewState(
       selectedMethod: selectedMethod ?? this.selectedMethod,
+      countryCode: countryCode ?? this.countryCode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
@@ -66,6 +81,12 @@ class OnRegisterPhoneChanged extends ProfileRegisterMethodUserIntent {
   const OnRegisterPhoneChanged(this.value);
 
   final String value;
+}
+
+class OnRegisterCountryCodeSelected extends ProfileRegisterMethodUserIntent {
+  const OnRegisterCountryCodeSelected(this.value);
+
+  final PhoneCountryCodeOption value;
 }
 
 class OnRegisterMethodContinueClick extends ProfileRegisterMethodUserIntent {

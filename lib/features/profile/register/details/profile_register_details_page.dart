@@ -50,10 +50,9 @@ class _ProfileRegisterDetailsPageState
           profilePhoneNumber: effect.phoneNumber,
           profileAvatarIndex: 0,
         );
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true).popUntil(
+          (route) => !_registerRouteNames.contains(route.settings.name),
+        );
       }
     });
   }
@@ -87,6 +86,8 @@ class _ProfileRegisterDetailsPageState
                 _viewModel.onUserIntent(OnRegisterNicknameChanged(value)),
             onOccupationChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterOccupationChanged(value)),
+            onPasswordChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterPasswordChanged(value)),
             onSubmitClick: () =>
                 _viewModel.onUserIntent(const OnRegisterDetailsSubmitClick()),
           ),
@@ -95,3 +96,9 @@ class _ProfileRegisterDetailsPageState
     );
   }
 }
+
+const Set<String> _registerRouteNames = <String>{
+  'register_method',
+  'register_otp',
+  'register_details',
+};

@@ -26,35 +26,37 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: ElevatedButton(
-                onPressed: state.isSubmitting ? null : () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (dialogContext) {
-                      return AlertDialog(
-                        title: const Text('Confirm Booking'),
-                        content: const Text(
-                          'Please ensure all booking details are correct before proceeding.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(false),
-                            child: const Text('Review Again'),
-                          ),
-                          FilledButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(true),
-                            child: const Text('Proceed'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                onPressed: state.isSubmitting
+                    ? null
+                    : () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) {
+                            return AlertDialog(
+                              title: const Text('Confirm Booking'),
+                              content: const Text(
+                                'Please ensure all booking details are correct before proceeding.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(false),
+                                  child: const Text('Review Again'),
+                                ),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(true),
+                                  child: const Text('Proceed'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
 
-                  if (confirmed == true) {
-                    viewModel.performAction(const OnConfirmClick());
-                  }
-                },
+                        if (confirmed == true) {
+                          viewModel.performAction(const OnConfirmClick());
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D7A3A),
                   foregroundColor: Colors.white,

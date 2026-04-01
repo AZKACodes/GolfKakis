@@ -7,7 +7,9 @@ import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_re
 import 'package:golf_kakis/features/profile/register/otp/profile_register_otp_page.dart';
 
 class ProfileRegisterMethodPage extends StatefulWidget {
-  const ProfileRegisterMethodPage({super.key});
+  const ProfileRegisterMethodPage({this.skipAboutYou = false, super.key});
+
+  final bool skipAboutYou;
 
   @override
   State<ProfileRegisterMethodPage> createState() =>
@@ -36,8 +38,11 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
         }
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) =>
-                ProfileRegisterOtpPage(phoneNumber: effect.phoneNumber),
+            settings: const RouteSettings(name: _registerOtpRouteName),
+            builder: (_) => ProfileRegisterOtpPage(
+              phoneNumber: effect.phoneNumber,
+              skipAboutYou: widget.skipAboutYou,
+            ),
           ),
         );
       }
@@ -69,6 +74,8 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
             state: _viewModel.viewState,
             onMethodSelected: (method) =>
                 _viewModel.onUserIntent(OnRegisterMethodSelected(method)),
+            onCountryCodeSelected: (value) =>
+                _viewModel.onUserIntent(OnRegisterCountryCodeSelected(value)),
             onPhoneChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterPhoneChanged(value)),
             onContinueClick: () =>
@@ -79,3 +86,5 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
     );
   }
 }
+
+const String _registerOtpRouteName = 'register_otp';

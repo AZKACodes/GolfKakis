@@ -49,10 +49,14 @@ class BookingSubmissionSlotRepositoryImpl
   Future<List<BookingSlotModel>> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
+    required String playType,
+    String? selectedNine,
   }) async {
     final response = await _apiService.onFetchAvailableSlots(
       clubSlug: clubSlug,
       date: date,
+      playType: playType,
+      selectedNine: selectedNine,
     );
 
     List<BookingSlotModel> parseAvailableSlots(dynamic rawResponse) {
@@ -72,11 +76,25 @@ class BookingSubmissionSlotRepositoryImpl
       }
 
       if (rawResponse is Map<String, dynamic>) {
+        final playType = rawResponse['playType']?.toString();
+        final inferredHoleCount = playType == '9_holes' ? 9 : 18;
         final dynamic nestedList =
             rawResponse['data'] ??
             rawResponse['items'] ??
             rawResponse['slots'] ??
             rawResponse['availableSlots'];
+        if (nestedList is List) {
+          return nestedList
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (slot) => BookingSlotModel.fromJson(<String, dynamic>{
+                  ...slot,
+                  'noOfHoles': slot['noOfHoles'] ?? inferredHoleCount,
+                }),
+              )
+              .where((slot) => slot.time.isNotEmpty)
+              .toList();
+        }
         return parseAvailableSlots(nestedList);
       }
 
@@ -96,15 +114,8 @@ class BookingSubmissionSlotRepositoryImpl
   Future<dynamic> onCreateBookingHold({
     required BookingHoldRequestModel request,
   }) async {
-    try {
-      final response = await _apiService.onCreateBookingHold(request: request);
-      return _normalizeBookingHoldResponse(
-        response: response,
-        request: request,
-      );
-    } catch (_) {
-      return _buildFallbackBookingHoldResponse(request);
-    }
+    final response = await _apiService.onCreateBookingHold(request: request);
+    return _normalizeBookingHoldResponse(response: response, request: request);
   }
 
   @override
@@ -194,10 +205,18 @@ class BookingSubmissionSlotRepositoryImpl
   }) {
     final fallbackResponse = _buildFallbackBookingHoldResponse(request);
     if (response is! Map<String, dynamic>) {
-      return fallbackResponse;
+      throw ApiException(message: 'Invalid booking hold response.');
     }
 
-    return <String, dynamic>{...fallbackResponse, ...response};
+    final normalized = <String, dynamic>{...fallbackResponse, ...response};
+    final bookingId = normalized['bookingId']?.toString() ?? '';
+    final status = normalized['status']?.toString().toLowerCase() ?? '';
+
+    if (bookingId.trim().isEmpty || status != 'held') {
+      throw ApiException(message: 'Booking hold was not completed.');
+    }
+
+    return normalized;
   }
 
   Map<String, dynamic> _buildFallbackSubmissionResponse(
@@ -256,8 +275,10 @@ class BookingSubmissionSlotRepositoryImpl
       },
       'bookingSummary': <String, dynamic>{
         'playerCount': request.playerCount,
-        'caddieCount': request.caddieCount,
-        'golfCartCount': request.golfCartCount,
+        'normalPlayerCount': request.normalPlayerCount ?? request.playerCount,
+        'seniorPlayerCount': request.seniorPlayerCount,
+        'caddieArrangement': request.caddieArrangement,
+        'buggyType': request.buggyType,
         'priceBreakdown': const <String, dynamic>{'currency': 'MYR'},
       },
     };

@@ -13,6 +13,37 @@ abstract class BookingSubmissionSlotViewContract {
   void onUserIntent(BookingSubmissionSlotUserIntent intent);
 }
 
+enum BookingCaddiePreference {
+  none('none', 'None'),
+  shared('shared', 'Shared'),
+  perPlayer('per_player', 'Per Player');
+
+  const BookingCaddiePreference(this.value, this.label);
+
+  final String value;
+  final String label;
+}
+
+enum BookingBuggyType {
+  normal('normal', 'Normal'),
+  jumbo('jumbo', 'Jumbo');
+
+  const BookingBuggyType(this.value, this.label);
+
+  final String value;
+  final String label;
+}
+
+enum BookingBuggySharingPreference {
+  shared('shared', 'Shared'),
+  mix('mix', 'Mix');
+
+  const BookingBuggySharingPreference(this.value, this.label);
+
+  final String value;
+  final String label;
+}
+
 // =========================
 // ViewState
 // =========================
@@ -28,6 +59,11 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.golfClubList = const <GolfClubModel>[],
     this.bookingSlots = const <BookingSlotModel>[],
     this.selectedClubSlug = emptyString,
+    this.selectedSupportedNine = emptyString,
+    this.playerCount = 4,
+    this.caddiePreference = BookingCaddiePreference.none,
+    this.buggyType = BookingBuggyType.normal,
+    this.buggySharingPreference = BookingBuggySharingPreference.shared,
     DateTime? selectedDate,
     this.selectedSlot,
     this.selectedPeriod = TimePeriod.am,
@@ -58,6 +94,11 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   final List<GolfClubModel> golfClubList;
   final List<BookingSlotModel> bookingSlots;
   final String selectedClubSlug;
+  final String selectedSupportedNine;
+  final int playerCount;
+  final BookingCaddiePreference caddiePreference;
+  final BookingBuggyType buggyType;
+  final BookingBuggySharingPreference buggySharingPreference;
   final DateTime selectedDate;
   final DateTime pickerInitialDate;
   final BookingSlotModel? selectedSlot;
@@ -81,6 +122,37 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
 
   String get selectedClubName => selectedGolfClub?.name ?? emptyString;
 
+  List<String> get availableSupportedNines =>
+      selectedGolfClub?.supportedNines ?? const <String>[];
+
+  String get playTypeValue {
+    final club = selectedGolfClub;
+    if (club == null) {
+      return emptyString;
+    }
+
+    if (club.noOfHoles == 9) {
+      return '9_holes';
+    }
+
+    if (selectedSupportedNine.isNotEmpty) {
+      return '9_holes';
+    }
+
+    return '18_holes';
+  }
+
+  List<BookingBuggyType> get availableBuggyTypes {
+    if (playerCount > 4) {
+      return const <BookingBuggyType>[
+        BookingBuggyType.normal,
+        BookingBuggyType.jumbo,
+      ];
+    }
+
+    return const <BookingBuggyType>[BookingBuggyType.normal];
+  }
+
   String get selectedSlotPriceLabel {
     final price = selectedSlot?.price ?? 0;
     final currency =
@@ -92,6 +164,12 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     List<GolfClubModel>? golfClubList,
     List<BookingSlotModel>? bookingSlots,
     String? selectedClubSlug,
+    String? selectedSupportedNine,
+    bool clearSelectedSupportedNine = false,
+    int? playerCount,
+    BookingCaddiePreference? caddiePreference,
+    BookingBuggyType? buggyType,
+    BookingBuggySharingPreference? buggySharingPreference,
     DateTime? selectedDate,
     DateTime? pickerInitialDate,
     BookingSlotModel? selectedSlot,
@@ -110,6 +188,14 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
       golfClubList: golfClubList ?? this.golfClubList,
       bookingSlots: bookingSlots ?? this.bookingSlots,
       selectedClubSlug: selectedClubSlug ?? this.selectedClubSlug,
+      selectedSupportedNine: clearSelectedSupportedNine
+          ? emptyString
+          : (selectedSupportedNine ?? this.selectedSupportedNine),
+      playerCount: playerCount ?? this.playerCount,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggyType: buggyType ?? this.buggyType,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
       selectedDate: selectedDate ?? this.selectedDate,
       pickerInitialDate: pickerInitialDate ?? this.pickerInitialDate,
       selectedSlot: clearSelectedSlot
@@ -160,6 +246,36 @@ class OnSelectGolfClub extends BookingSubmissionSlotUserIntent {
   final String clubSlug;
 }
 
+class OnSelectSupportedNine extends BookingSubmissionSlotUserIntent {
+  const OnSelectSupportedNine(this.value);
+
+  final String value;
+}
+
+class OnPlayerCountChanged extends BookingSubmissionSlotUserIntent {
+  const OnPlayerCountChanged(this.value);
+
+  final int value;
+}
+
+class OnSelectCaddiePreference extends BookingSubmissionSlotUserIntent {
+  const OnSelectCaddiePreference(this.value);
+
+  final BookingCaddiePreference value;
+}
+
+class OnSelectBuggyType extends BookingSubmissionSlotUserIntent {
+  const OnSelectBuggyType(this.value);
+
+  final BookingBuggyType value;
+}
+
+class OnSelectBuggySharingPreference extends BookingSubmissionSlotUserIntent {
+  const OnSelectBuggySharingPreference(this.value);
+
+  final BookingBuggySharingPreference value;
+}
+
 class OnSelectDate extends BookingSubmissionSlotUserIntent {
   const OnSelectDate(this.date);
 
@@ -201,22 +317,34 @@ class NavigateBack extends BookingSubmissionSlotNavEffect {
 class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   const NavigateToBookingSubmissionDetail({
     required this.slotId,
+    required this.playType,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
+    this.selectedNine,
     this.guestId,
   });
 
   final String slotId;
+  final String playType;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final String? guestId;
 }
 

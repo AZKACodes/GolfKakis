@@ -52,6 +52,7 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
         }
         Navigator.of(context).push(
           MaterialPageRoute<void>(
+            settings: const RouteSettings(name: 'register_method'),
             builder: (_) => const ProfileRegisterMethodPage(),
           ),
         );
@@ -81,8 +82,14 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
           ),
           body: ProfileLoginView(
             state: _viewModel.viewState,
+            onLoginMethodChanged: (value) =>
+                _viewModel.onUserIntent(OnLoginMethodChanged(value)),
             onEmailChanged: (value) =>
                 _viewModel.onUserIntent(OnEmailChanged(value)),
+            onCountryCodeChanged: (value) =>
+                _viewModel.onUserIntent(OnCountryCodeChanged(value)),
+            onPhoneChanged: (value) =>
+                _viewModel.onUserIntent(OnPhoneChanged(value)),
             onPasswordChanged: (value) =>
                 _viewModel.onUserIntent(OnPasswordChanged(value)),
             onLoginClick: (role) => _viewModel.onUserIntent(OnLoginClick(role)),

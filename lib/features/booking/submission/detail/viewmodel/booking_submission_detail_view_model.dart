@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
-import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_detail_view_contract.dart';
@@ -16,10 +14,10 @@ class BookingSubmissionDetailViewModel
           BookingSubmissionDetailNavEffect
         >
     implements BookingSubmissionDetailViewContract {
-  BookingSubmissionDetailViewModel(this._useCase);
+  BookingSubmissionDetailViewModel();
 
-  final BookingSubmissionSlotUseCase _useCase;
-  StreamSubscription<DataStatusModel<dynamic>>? _bookingHoldSubscription;
+  Timer? _holdCountdownTimer;
+  bool _hasShownExpiryDialog = false;
 
   @override
   BookingSubmissionDetailViewState createInitialState() {
@@ -31,10 +29,21 @@ class BookingSubmissionDetailViewModel
     switch (intent) {
       case OnInit():
         final maxPlayerCount = _maxPlayerCountForSlot(intent.teeTimeSlot);
+        final initialPlayerCount = intent.initialPlayerCount.clamp(
+          1,
+          maxPlayerCount,
+        );
+        final initialPhoneParts = PhoneUtil.splitPhoneNumber(
+          intent.initialPlayerPhoneNumber,
+        );
         emitViewState((state) {
           return _deriveState(
             getCurrentAsLoaded().copyWith(
               slotId: intent.slotId,
+              bookingId: intent.bookingId,
+              holdDurationSeconds: intent.holdDurationSeconds,
+              holdExpiresAt: intent.holdExpiresAt,
+              playType: intent.playType,
               golfClubName: intent.golfClubName,
               golfClubSlug: intent.golfClubSlug,
               selectedDate: intent.selectedDate,
@@ -43,25 +52,51 @@ class BookingSubmissionDetailViewModel
               currency: intent.currency,
               guestId: intent.guestId,
               maxPlayerCount: maxPlayerCount,
-              playerCount: _defaultPlayerCount(maxPlayerCount),
-              golfCartCount: _defaultGolfCartCount(
-                _defaultPlayerCount(maxPlayerCount),
+              playerCount: initialPlayerCount,
+              caddiePreference: intent.caddiePreference,
+              buggyType: intent.buggyType,
+              buggySharingPreference: intent.buggySharingPreference,
+              selectedNine: intent.selectedNine,
+              golfCartCount: _defaultGolfCartCount(initialPlayerCount),
+              playerDetails: _buildInitialPlayerDetails(
+                playerCount: initialPlayerCount,
+                playerName: intent.initialPlayerName,
+                playerPhoneNumber: initialPhoneParts.localNumber.isEmpty
+                    ? intent.initialPlayerPhoneNumber
+                    : PhoneUtil.normalizeFullPhoneNumber(
+                        countryCode: initialPhoneParts.countryCode,
+                        localNumber: initialPhoneParts.localNumber,
+                      ),
               ),
+              remainingHoldSeconds: _remainingSecondsUntil(
+                intent.holdExpiresAt,
+              ),
+              isHoldExpired: _remainingSecondsUntil(intent.holdExpiresAt) <= 0,
             ),
           );
         });
+        _hasShownExpiryDialog = false;
+        _startHoldCountdown();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnHostNameChanged():
         emitViewState((state) {
           return _deriveState(
-            getCurrentAsLoaded().copyWith(hostName: intent.value),
+            _updatePlayerDetails(
+              current: getCurrentAsLoaded(),
+              index: 0,
+              name: intent.value,
+            ),
           );
         });
       case OnHostPhoneNumberChanged():
         emitViewState((state) {
           return _deriveState(
-            getCurrentAsLoaded().copyWith(hostPhoneNumber: intent.value),
+            _updatePlayerDetails(
+              current: getCurrentAsLoaded(),
+              index: 0,
+              phoneNumber: intent.value,
+            ),
           );
         });
       case OnPlayerCountChanged():
@@ -115,10 +150,30 @@ class BookingSubmissionDetailViewModel
         });
       case OnContinueClick():
         final current = getCurrentAsLoaded();
-        if (!current.canContinue || current.isSubmitting) {
+        if (!current.canContinue ||
+            current.isSubmitting ||
+            current.isHoldExpired ||
+            current.bookingId.trim().isEmpty) {
           return;
         }
-        await _createBookingHold(current);
+        sendNavEffect(
+          () => NavigateToBookingSubmissionConfirmation(
+            bookingId: current.bookingId,
+            golfClubName: current.golfClubName,
+            golfClubSlug: current.golfClubSlug,
+            selectedDate: current.selectedDate,
+            teeTimeSlot: current.teeTimeSlot,
+            pricePerPerson: current.pricePerPerson,
+            currency: current.currency,
+            guestId: current.guestId,
+            hostName: _primaryPlayer(current).name,
+            hostPhoneNumber: _primaryPlayer(current).phoneNumber,
+            playerCount: current.playerCount,
+            caddieCount: current.caddieCount,
+            golfCartCount: current.golfCartCount,
+            playerDetails: current.playerDetails,
+          ),
+        );
     }
   }
 
@@ -149,87 +204,49 @@ class BookingSubmissionDetailViewModel
       playerDetails: normalizedPlayerDetails,
       canContinue:
           state.slotId.trim().isNotEmpty &&
-          state.hostName.trim().isNotEmpty &&
-          state.hostPhoneNumber.trim().isNotEmpty &&
+          state.bookingId.trim().isNotEmpty &&
+          !state.isHoldExpired &&
           normalizedPlayerDetails.length == normalizedPlayerCount &&
           normalizedPlayerDetails.every((player) => player.isComplete),
     );
   }
 
-  Future<void> _createBookingHold(
-    BookingSubmissionDetailDataLoaded current,
-  ) async {
-    emitViewState((state) {
-      return getCurrentAsLoaded().copyWith(isSubmitting: true);
+  void _startHoldCountdown() {
+    _holdCountdownTimer?.cancel();
+    _tickHoldCountdown();
+    _holdCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tickHoldCountdown();
     });
-
-    await _bookingHoldSubscription?.cancel();
-    _bookingHoldSubscription = _useCase
-        .onCreateBookingHold(request: _buildBookingHoldRequest(current))
-        .listen((result) {
-          switch (result.status) {
-            case DataStatus.success:
-              final latest = getCurrentAsLoaded();
-              emitViewState((state) {
-                return latest.copyWith(isSubmitting: false);
-              });
-              sendNavEffect(
-                () => NavigateToBookingSubmissionConfirmation(
-                  bookingId: _resolveBookingId(result.data),
-                  golfClubName: latest.golfClubName,
-                  golfClubSlug: latest.golfClubSlug,
-                  selectedDate: latest.selectedDate,
-                  teeTimeSlot: latest.teeTimeSlot,
-                  pricePerPerson: latest.pricePerPerson,
-                  currency: latest.currency,
-                  guestId: latest.guestId,
-                  hostName: latest.hostName,
-                  hostPhoneNumber: latest.hostPhoneNumber,
-                  playerCount: latest.playerCount,
-                  caddieCount: latest.caddieCount,
-                  golfCartCount: latest.golfCartCount,
-                  playerDetails: latest.playerDetails,
-                ),
-              );
-            case DataStatus.error:
-              final message = result.apiMessage.isEmpty
-                  ? 'Failed to hold booking. Please try again.'
-                  : result.apiMessage;
-              emitViewState((state) {
-                return getCurrentAsLoaded().copyWith(isSubmitting: false);
-              });
-              sendNavEffect(() => ShowErrorMessage(message));
-            default:
-              break;
-          }
-        });
   }
 
-  BookingHoldRequestModel _buildBookingHoldRequest(
-    BookingSubmissionDetailDataLoaded current,
-  ) {
-    return BookingHoldRequestModel(
-      slotId: current.slotId,
-      hostName: current.hostName,
-      hostPhoneNumber: current.hostPhoneNumber,
-      playerCount: current.playerCount,
-      caddieCount: current.caddieCount,
-      golfCartCount: current.golfCartCount,
-    );
-  }
-
-  String _resolveBookingId(dynamic response) {
-    if (response is Map<String, dynamic>) {
-      final bookingId = response['bookingId'] ?? response['booking_id'];
-      if (bookingId is String && bookingId.trim().isNotEmpty) {
-        return bookingId;
-      }
-      if (bookingId != null) {
-        return bookingId.toString();
-      }
+  void _tickHoldCountdown() {
+    final current = getCurrentAsLoaded();
+    if (current.bookingId.trim().isEmpty) {
+      return;
     }
 
-    return '';
+    final remainingHoldSeconds = _remainingSecondsUntil(current.holdExpiresAt);
+    final isHoldExpired = remainingHoldSeconds <= 0;
+
+    emitViewState((state) {
+      return current.copyWith(
+        remainingHoldSeconds: remainingHoldSeconds,
+        isHoldExpired: isHoldExpired,
+      );
+    });
+
+    if (isHoldExpired) {
+      _holdCountdownTimer?.cancel();
+      if (!_hasShownExpiryDialog) {
+        _hasShownExpiryDialog = true;
+        sendNavEffect(() => const ShowBookingSessionExpired());
+      }
+    }
+  }
+
+  int _remainingSecondsUntil(DateTime expiresAt) {
+    final difference = expiresAt.difference(DateTime.now()).inSeconds;
+    return difference < 0 ? 0 : difference;
   }
 
   BookingSubmissionDetailDataLoaded _updatePlayerDetails({
@@ -274,8 +291,31 @@ class BookingSubmissionDetailViewModel
     });
   }
 
-  int _defaultPlayerCount(int maxPlayerCount) {
-    return maxPlayerCount >= 4 ? 4 : maxPlayerCount;
+  List<BookingSubmissionPlayerModel> _buildInitialPlayerDetails({
+    required int playerCount,
+    required String playerName,
+    required String playerPhoneNumber,
+  }) {
+    return List<BookingSubmissionPlayerModel>.generate(playerCount, (index) {
+      if (index == 0) {
+        return BookingSubmissionPlayerModel(
+          name: playerName,
+          phoneNumber: playerPhoneNumber,
+        );
+      }
+
+      return const BookingSubmissionPlayerModel();
+    });
+  }
+
+  BookingSubmissionPlayerModel _primaryPlayer(
+    BookingSubmissionDetailDataLoaded current,
+  ) {
+    if (current.playerDetails.isNotEmpty) {
+      return current.playerDetails.first;
+    }
+
+    return const BookingSubmissionPlayerModel();
   }
 
   int _defaultGolfCartCount(int playerCount) {
@@ -329,7 +369,7 @@ class BookingSubmissionDetailViewModel
 
   @override
   void dispose() {
-    _bookingHoldSubscription?.cancel();
+    _holdCountdownTimer?.cancel();
     super.dispose();
   }
 }

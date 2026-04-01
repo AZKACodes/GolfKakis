@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:golf_kakis/features/booking/submission/confirmation/booking_submission_confirmation_page.dart';
-import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
-import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
@@ -10,23 +8,45 @@ import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
     required this.slotId,
+    required this.bookingId,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
+    required this.playType,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    this.initialPlayerCount = 4,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
+    this.selectedNine,
+    this.initialPlayerName = '',
+    this.initialPlayerPhoneNumber = '',
     this.guestId,
     super.key,
   });
 
   final String slotId;
+  final String bookingId;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
+  final String playType;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final int initialPlayerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
+  final String initialPlayerName;
+  final String initialPlayerPhoneNumber;
   final String? guestId;
 
   @override
@@ -43,21 +63,30 @@ class _BookingSubmissionDetailPageState
   void initState() {
     super.initState();
 
-    _viewModel = BookingSubmissionDetailViewModel(
-      BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
-    );
+    _viewModel = BookingSubmissionDetailViewModel();
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
 
     _viewModel.performAction(
       OnInit(
         slotId: widget.slotId,
+        bookingId: widget.bookingId,
+        holdDurationSeconds: widget.holdDurationSeconds,
+        holdExpiresAt: widget.holdExpiresAt,
+        playType: widget.playType,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         selectedDate: widget.selectedDate,
         teeTimeSlot: widget.teeTimeSlot,
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
+        initialPlayerCount: widget.initialPlayerCount,
+        caddiePreference: widget.caddiePreference,
+        buggyType: widget.buggyType,
+        buggySharingPreference: widget.buggySharingPreference,
+        selectedNine: widget.selectedNine,
+        initialPlayerName: widget.initialPlayerName,
+        initialPlayerPhoneNumber: widget.initialPlayerPhoneNumber,
         guestId: widget.guestId,
       ),
     );
@@ -94,6 +123,26 @@ class _BookingSubmissionDetailPageState
               playerDetails: effect.playerDetails,
             ),
           ),
+        );
+      case ShowBookingSessionExpired():
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Booking Session Expired'),
+              content: const Text('Your booking session has been expired.'),
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).maybePop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
         );
       case ShowErrorMessage():
         ScaffoldMessenger.of(context)

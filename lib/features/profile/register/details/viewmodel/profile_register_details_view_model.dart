@@ -38,6 +38,11 @@ class ProfileRegisterDetailsViewModel
           (state) =>
               state.copyWith(occupation: intent.value, clearErrorMessage: true),
         );
+      case OnRegisterPasswordChanged():
+        emitViewState(
+          (state) =>
+              state.copyWith(password: intent.value, clearErrorMessage: true),
+        );
       case OnRegisterDetailsSubmitClick():
         await _submit();
       case OnRegisterDetailsBackClick():
@@ -50,7 +55,7 @@ class ProfileRegisterDetailsViewModel
       emitViewState(
         (state) => state.copyWith(
           errorMessage:
-              'Enter your name, nickname, and occupation to continue.',
+              'Enter your name, nickname, occupation, and password to continue.',
         ),
       );
       return;

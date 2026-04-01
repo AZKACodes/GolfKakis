@@ -80,3 +80,19 @@ class RegisterOtpNavigateToAbout extends ProfileRegisterOtpNavEffect {
 
   final String phoneNumber;
 }
+
+class RegisterOtpCompleted extends ProfileRegisterOtpNavEffect {
+  const RegisterOtpCompleted({
+    required this.fullName,
+    required this.nickname,
+    required this.occupation,
+    required this.email,
+    required this.phoneNumber,
+  });
+
+  final String fullName;
+  final String nickname;
+  final String occupation;
+  final String email;
+  final String phoneNumber;
+}

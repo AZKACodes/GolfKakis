@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 
 import '../viewmodel/profile_register_method_view_contract.dart';
+
+const double _compactPhoneInputHeight = 54;
 
 class ProfileRegisterMethodView extends StatefulWidget {
   const ProfileRegisterMethodView({
     required this.state,
     required this.onMethodSelected,
+    required this.onCountryCodeSelected,
     required this.onPhoneChanged,
     required this.onContinueClick,
     super.key,
@@ -13,6 +17,7 @@ class ProfileRegisterMethodView extends StatefulWidget {
 
   final ProfileRegisterMethodViewState state;
   final ValueChanged<RegisterMethod> onMethodSelected;
+  final ValueChanged<PhoneCountryCodeOption> onCountryCodeSelected;
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback onContinueClick;
 
@@ -123,24 +128,12 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                               key: const ValueKey('phone-form'),
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                TextField(
+                                _PhoneNumberInputRow(
+                                  selectedCountryCode: widget.state.countryCode,
                                   controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
-                                  textInputAction: TextInputAction.done,
-                                  onChanged: widget.onPhoneChanged,
-                                  decoration: InputDecoration(
-                                    labelText: 'Phone number',
-                                    hintText: '+60 12 345 6789',
-                                    prefixIcon: const Icon(
-                                      Icons.phone_outlined,
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFFF6F8FC),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
+                                  onCountryCodeSelected:
+                                      widget.onCountryCodeSelected,
+                                  onPhoneChanged: widget.onPhoneChanged,
                                 ),
                                 const SizedBox(height: 14),
                                 Container(
@@ -215,6 +208,200 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhoneNumberInputRow extends StatelessWidget {
+  const _PhoneNumberInputRow({
+    required this.selectedCountryCode,
+    required this.controller,
+    required this.onCountryCodeSelected,
+    required this.onPhoneChanged,
+  });
+
+  final PhoneCountryCodeOption selectedCountryCode;
+  final TextEditingController controller;
+  final ValueChanged<PhoneCountryCodeOption> onCountryCodeSelected;
+  final ValueChanged<String> onPhoneChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CountryCodePickerButton(
+          value: selectedCountryCode,
+          onSelected: onCountryCodeSelected,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SizedBox(
+            height: _compactPhoneInputHeight,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              onChanged: onPhoneChanged,
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                hintText: 'Phone number',
+                prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 16,
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF6F8FC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CountryCodePickerButton extends StatelessWidget {
+  const _CountryCodePickerButton({
+    required this.value,
+    required this.onSelected,
+  });
+
+  final PhoneCountryCodeOption value;
+  final ValueChanged<PhoneCountryCodeOption> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SizedBox(
+      width: 118,
+      height: _compactPhoneInputHeight,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showCountryCodeBottomSheet(context),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F8FC),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value.compactLabel,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCountryCodeBottomSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select Country Code',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Choose the dialing code before entering the phone number.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: PhoneUtil.countryCodeOptions.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final option = PhoneUtil.countryCodeOptions[index];
+                    final isSelected = option.dialCode == value.dialCode;
+
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          onSelected(option);
+                        },
+                        child: Ink(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFFF0F8F2)
+                                : const Color(0xFFF8F8F6),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF0D7A3A)
+                                  : const Color(0x14000000),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  option.bottomSheetLabel,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Color(0xFF0D7A3A),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

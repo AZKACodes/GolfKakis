@@ -10,10 +10,14 @@ class ProfileRegisterOtpViewModel
           ProfileRegisterOtpNavEffect
         >
     implements ProfileRegisterOtpViewContract {
-  ProfileRegisterOtpViewModel({required String phoneNumber})
-    : _phoneNumber = phoneNumber;
+  ProfileRegisterOtpViewModel({
+    required String phoneNumber,
+    bool skipAboutYou = false,
+  }) : _phoneNumber = phoneNumber,
+       _skipAboutYou = skipAboutYou;
 
   final String _phoneNumber;
+  final bool _skipAboutYou;
 
   @override
   ProfileRegisterOtpViewState createInitialState() {
@@ -53,6 +57,30 @@ class ProfileRegisterOtpViewModel
     );
     await Future<void>.delayed(const Duration(milliseconds: 250));
     emitViewState((state) => state.copyWith(isSubmitting: false));
+    if (_skipAboutYou) {
+      final normalizedPhoneNumber = currentState.phoneNumber.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
+      final suffix = normalizedPhoneNumber.isEmpty
+          ? 'User'
+          : normalizedPhoneNumber.substring(
+              normalizedPhoneNumber.length > 4
+                  ? normalizedPhoneNumber.length - 4
+                  : 0,
+            );
+      sendNavEffect(
+        () => RegisterOtpCompleted(
+          fullName: 'User $suffix',
+          nickname: 'Golfer',
+          occupation: 'Golfer',
+          email: 'user$suffix@golfkakis.app',
+          phoneNumber: currentState.phoneNumber,
+        ),
+      );
+      return;
+    }
+
     sendNavEffect(
       () => RegisterOtpNavigateToAbout(phoneNumber: currentState.phoneNumber),
     );

@@ -9,6 +9,8 @@ abstract class BookingSubmissionSlotRepository {
   Future<List<BookingSlotModel>> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
+    required String playType,
+    String? selectedNine,
   });
 
   Future<dynamic> onCreateBookingHold({

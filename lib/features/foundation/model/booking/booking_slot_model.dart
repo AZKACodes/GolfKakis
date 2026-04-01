@@ -34,17 +34,20 @@ class BookingSlotModel {
           json['slot_id']?.toString() ??
           json['id']?.toString() ??
           '',
-      time:
-          json['time']?.toString() ??
-          json['slotTime']?.toString() ??
-          json['teeTimeSlot']?.toString() ??
-          json['teeTime']?.toString() ??
-          json['slot']?.toString() ??
-          '',
+      time: _normalizeTimeLabel(
+        json['time']?.toString() ??
+            json['slotTime']?.toString() ??
+            json['teeTimeSlot']?.toString() ??
+            json['teeTime']?.toString() ??
+            json['slot']?.toString() ??
+            '',
+      ),
       price:
           (json['price'] as num?)?.toDouble() ??
           (json['pricePerPerson'] as num?)?.toDouble() ??
           (json['price_per_person'] as num?)?.toDouble() ??
+          (json['fromPrice'] as num?)?.toDouble() ??
+          (json['from_price'] as num?)?.toDouble() ??
           (json['amount'] as num?)?.toDouble() ??
           0,
       noOfHoles:
@@ -70,7 +73,8 @@ class BookingSlotModel {
           (json['remainingGolfCartCapacity'] as num?)?.toInt() ??
           (json['remaining_golf_cart_capacity'] as num?)?.toInt() ??
           0,
-      isAvailable: json['isAvailable'] as bool? ?? json['is_available'] as bool? ?? true,
+      isAvailable:
+          json['isAvailable'] as bool? ?? json['is_available'] as bool? ?? true,
     );
   }
 
@@ -96,5 +100,18 @@ class BookingSlotModel {
     }
 
     return DateTime.tryParse(value.toString());
+  }
+
+  static String _normalizeTimeLabel(String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+
+    return value
+        .replaceAllMapped(
+          RegExp(r'\b(am|pm)\b', caseSensitive: false),
+          (match) => match.group(0)?.toUpperCase() ?? '',
+        )
+        .trim();
   }
 }
