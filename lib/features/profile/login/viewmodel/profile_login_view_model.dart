@@ -53,7 +53,7 @@ class ProfileLoginViewModel
               state.copyWith(password: intent.value, clearErrorMessage: true),
         );
       case OnLoginClick():
-        await _login(intent.role);
+        await _login();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnRegisterClick():
@@ -61,9 +61,8 @@ class ProfileLoginViewModel
     }
   }
 
-  Future<void> _login(UserRole role) async {
-    if (role != UserRole.guest &&
-        currentState.loginMethod == LoginMethod.email) {
+  Future<void> _login() async {
+    if (currentState.loginMethod == LoginMethod.email) {
       emitViewState(
         (state) => state.copyWith(
           infoMessage:
@@ -74,7 +73,7 @@ class ProfileLoginViewModel
       return;
     }
 
-    if (role != UserRole.guest && !currentState.canSubmit) {
+    if (!currentState.canSubmit) {
       emitViewState(
         (state) => state.copyWith(
           errorMessage: currentState.loginMethod == LoginMethod.phone
@@ -97,17 +96,13 @@ class ProfileLoginViewModel
     await Future<void>.delayed(const Duration(milliseconds: 500));
 
     final loginIdentifier = currentState.loginIdentifier;
-    final username = switch (role) {
-      UserRole.guest => 'Guest User',
-      UserRole.user =>
-        loginIdentifier.contains('@')
-            ? loginIdentifier.split('@').first
-            : loginIdentifier,
-      UserRole.agent => 'Agent Zack',
-      UserRole.admin => 'Admin Zack',
-    };
+    final username = loginIdentifier.contains('@')
+        ? loginIdentifier.split('@').first
+        : loginIdentifier;
 
     emitViewState((state) => state.copyWith(isSubmitting: false));
-    sendNavEffect(() => LoginSucceeded(username: username, role: role));
+    sendNavEffect(
+      () => LoginSucceeded(username: username, role: UserRole.user),
+    );
   }
 }

@@ -1,15 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../device/device_id_service.dart';
 import '../enums/session/session_status.dart';
 import '../enums/session/user_role.dart';
 import 'session_state.dart';
+import 'session_storage.dart';
+import 'visitor_api_service.dart';
 
 class SessionManager extends ChangeNotifier {
-  SessionManager({required DeviceIdService deviceIdService})
-    : _deviceIdService = deviceIdService;
+  SessionManager({
+    required DeviceIdService deviceIdService,
+    SessionStorage? sessionStorage,
+    VisitorApiService? visitorApiService,
+  }) : _deviceIdService = deviceIdService,
+       _sessionStorage = sessionStorage ?? SessionStorage(),
+       _visitorApiService = visitorApiService ?? VisitorApiService();
 
   final DeviceIdService _deviceIdService;
+  final SessionStorage _sessionStorage;
+  final VisitorApiService _visitorApiService;
 
   SessionState _state = SessionState.initial;
   SessionState get state => _state;
@@ -23,8 +34,19 @@ class SessionManager extends ChangeNotifier {
       return;
     }
 
+    final restoredState = await _sessionStorage.read();
+    if (restoredState != null) {
+      _state = restoredState;
+    }
+
     final deviceId = await _deviceIdService.getDeviceId();
     _state = _state.copyWith(deviceId: deviceId);
+
+    if (_shouldSyncVisitor(deviceId)) {
+      await _syncVisitor(deviceId);
+    }
+
+    await _persistState();
     _initialized = true;
     notifyListeners();
   }
@@ -50,6 +72,7 @@ class SessionManager extends ChangeNotifier {
       profilePhoneNumber: profilePhoneNumber,
       profileAvatarIndex: profileAvatarIndex,
     );
+    unawaited(_persistState());
     notifyListeners();
   }
 
@@ -70,6 +93,7 @@ class SessionManager extends ChangeNotifier {
       profilePhoneNumber: phoneNumber,
       profileAvatarIndex: avatarIndex,
     );
+    unawaited(_persistState());
     notifyListeners();
   }
 
@@ -80,6 +104,33 @@ class SessionManager extends ChangeNotifier {
       clearAuthenticatedUserRole: true,
       clearProfileDetails: true,
     );
+    unawaited(_persistState());
     notifyListeners();
+  }
+
+  bool _shouldSyncVisitor(String deviceId) {
+    if (deviceId.trim().isEmpty || deviceId == SessionState.initial.deviceId) {
+      return false;
+    }
+
+    final visitor = _state.visitor;
+    return visitor == null || visitor.id != deviceId;
+  }
+
+  Future<void> _syncVisitor(String deviceId) async {
+    try {
+      final visitor = await _visitorApiService.onSetVisitorHeartbeat(
+        visitorId: deviceId,
+        platform: _visitorApiService.resolvePlatform(),
+      );
+      _state = _state.copyWith(visitor: visitor);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to set visitor heartbeat: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> _persistState() {
+    return _sessionStorage.write(_state);
   }
 }
