@@ -76,23 +76,13 @@ class RegisterOtpNavigateBack extends ProfileRegisterOtpNavEffect {
 }
 
 class RegisterOtpNavigateToAbout extends ProfileRegisterOtpNavEffect {
-  const RegisterOtpNavigateToAbout({required this.phoneNumber});
-
-  final String phoneNumber;
-}
-
-class RegisterOtpCompleted extends ProfileRegisterOtpNavEffect {
-  const RegisterOtpCompleted({
-    required this.fullName,
-    required this.nickname,
-    required this.occupation,
-    required this.email,
+  const RegisterOtpNavigateToAbout({
     required this.phoneNumber,
+    required this.password,
+    required this.requiresOccupation,
   });
 
-  final String fullName;
-  final String nickname;
-  final String occupation;
-  final String email;
   final String phoneNumber;
+  final String password;
+  final bool requiresOccupation;
 }

@@ -243,7 +243,8 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         settings: const RouteSettings(name: _registerMethodRouteName),
-        builder: (_) => const ProfileRegisterMethodPage(skipAboutYou: true),
+        builder: (_) =>
+            const ProfileRegisterMethodPage(requiresOccupation: false),
       ),
     );
 

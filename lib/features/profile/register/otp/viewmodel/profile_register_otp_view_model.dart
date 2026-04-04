@@ -12,12 +12,15 @@ class ProfileRegisterOtpViewModel
     implements ProfileRegisterOtpViewContract {
   ProfileRegisterOtpViewModel({
     required String phoneNumber,
-    bool skipAboutYou = false,
+    required String password,
+    bool requiresOccupation = true,
   }) : _phoneNumber = phoneNumber,
-       _skipAboutYou = skipAboutYou;
+       _password = password,
+       _requiresOccupation = requiresOccupation;
 
   final String _phoneNumber;
-  final bool _skipAboutYou;
+  final String _password;
+  final bool _requiresOccupation;
 
   @override
   ProfileRegisterOtpViewState createInitialState() {
@@ -57,32 +60,12 @@ class ProfileRegisterOtpViewModel
     );
     await Future<void>.delayed(const Duration(milliseconds: 250));
     emitViewState((state) => state.copyWith(isSubmitting: false));
-    if (_skipAboutYou) {
-      final normalizedPhoneNumber = currentState.phoneNumber.replaceAll(
-        RegExp(r'[^0-9]'),
-        '',
-      );
-      final suffix = normalizedPhoneNumber.isEmpty
-          ? 'User'
-          : normalizedPhoneNumber.substring(
-              normalizedPhoneNumber.length > 4
-                  ? normalizedPhoneNumber.length - 4
-                  : 0,
-            );
-      sendNavEffect(
-        () => RegisterOtpCompleted(
-          fullName: 'User $suffix',
-          nickname: 'Golfer',
-          occupation: 'Golfer',
-          email: 'user$suffix@golfkakis.app',
-          phoneNumber: currentState.phoneNumber,
-        ),
-      );
-      return;
-    }
-
     sendNavEffect(
-      () => RegisterOtpNavigateToAbout(phoneNumber: currentState.phoneNumber),
+      () => RegisterOtpNavigateToAbout(
+        phoneNumber: currentState.phoneNumber,
+        password: _password,
+        requiresOccupation: _requiresOccupation,
+      ),
     );
   }
 }

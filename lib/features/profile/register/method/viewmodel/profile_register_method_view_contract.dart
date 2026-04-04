@@ -14,6 +14,7 @@ class ProfileRegisterMethodViewState extends ViewState {
     required this.selectedMethod,
     required this.countryCode,
     required this.phoneNumber,
+    required this.password,
     required this.isSubmitting,
     this.errorMessage,
     this.infoMessage,
@@ -23,17 +24,22 @@ class ProfileRegisterMethodViewState extends ViewState {
     selectedMethod: RegisterMethod.phone,
     countryCode: PhoneUtil.defaultCountryCodeOption,
     phoneNumber: '',
+    password: '',
     isSubmitting: false,
   );
 
   final RegisterMethod selectedMethod;
   final PhoneCountryCodeOption countryCode;
   final String phoneNumber;
+  final String password;
   final bool isSubmitting;
   final String? errorMessage;
   final String? infoMessage;
 
-  bool get canContinuePhone => phoneNumber.trim().isNotEmpty && !isSubmitting;
+  bool get canContinuePhone =>
+      phoneNumber.trim().isNotEmpty &&
+      password.trim().isNotEmpty &&
+      !isSubmitting;
 
   String get fullPhoneNumber {
     final normalized = phoneNumber.trim();
@@ -48,6 +54,7 @@ class ProfileRegisterMethodViewState extends ViewState {
     RegisterMethod? selectedMethod,
     PhoneCountryCodeOption? countryCode,
     String? phoneNumber,
+    String? password,
     bool? isSubmitting,
     String? errorMessage,
     String? infoMessage,
@@ -58,6 +65,7 @@ class ProfileRegisterMethodViewState extends ViewState {
       selectedMethod: selectedMethod ?? this.selectedMethod,
       countryCode: countryCode ?? this.countryCode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? null
@@ -79,6 +87,12 @@ class OnRegisterMethodSelected extends ProfileRegisterMethodUserIntent {
 
 class OnRegisterPhoneChanged extends ProfileRegisterMethodUserIntent {
   const OnRegisterPhoneChanged(this.value);
+
+  final String value;
+}
+
+class OnRegisterPasswordChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterPasswordChanged(this.value);
 
   final String value;
 }
@@ -106,7 +120,11 @@ class RegisterMethodNavigateBack extends ProfileRegisterMethodNavEffect {
 }
 
 class RegisterMethodNavigateToOtp extends ProfileRegisterMethodNavEffect {
-  const RegisterMethodNavigateToOtp(this.phoneNumber);
+  const RegisterMethodNavigateToOtp({
+    required this.phoneNumber,
+    required this.password,
+  });
 
   final String phoneNumber;
+  final String password;
 }

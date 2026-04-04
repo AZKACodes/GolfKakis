@@ -8,9 +8,16 @@ import 'package:golf_kakis/features/profile/register/details/viewmodel/profile_r
 import 'package:golf_kakis/features/profile/register/details/viewmodel/profile_register_details_view_model.dart';
 
 class ProfileRegisterDetailsPage extends StatefulWidget {
-  const ProfileRegisterDetailsPage({required this.phoneNumber, super.key});
+  const ProfileRegisterDetailsPage({
+    required this.phoneNumber,
+    required this.password,
+    this.requiresOccupation = true,
+    super.key,
+  });
 
   final String phoneNumber;
+  final String password;
+  final bool requiresOccupation;
 
   @override
   State<ProfileRegisterDetailsPage> createState() =>
@@ -27,6 +34,8 @@ class _ProfileRegisterDetailsPageState
     super.initState();
     _viewModel = ProfileRegisterDetailsViewModel(
       phoneNumber: widget.phoneNumber,
+      password: widget.password,
+      requiresOccupation: widget.requiresOccupation,
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is RegisterDetailsNavigateBack) {
@@ -86,8 +95,6 @@ class _ProfileRegisterDetailsPageState
                 _viewModel.onUserIntent(OnRegisterNicknameChanged(value)),
             onOccupationChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterOccupationChanged(value)),
-            onPasswordChanged: (value) =>
-                _viewModel.onUserIntent(OnRegisterPasswordChanged(value)),
             onSubmitClick: () =>
                 _viewModel.onUserIntent(const OnRegisterDetailsSubmitClick()),
           ),

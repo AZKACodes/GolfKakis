@@ -12,20 +12,21 @@ class ProfileRegisterDetailsViewState extends ViewState {
     required this.name,
     required this.nickname,
     required this.occupation,
-    required this.password,
+    required this.requiresOccupation,
     required this.isSubmitting,
     this.errorMessage,
   }) : super();
 
   factory ProfileRegisterDetailsViewState.initial({
     required String phoneNumber,
+    required bool requiresOccupation,
   }) {
     return ProfileRegisterDetailsViewState(
       phoneNumber: phoneNumber,
       name: '',
       nickname: '',
       occupation: '',
-      password: '',
+      requiresOccupation: requiresOccupation,
       isSubmitting: false,
     );
   }
@@ -34,15 +35,14 @@ class ProfileRegisterDetailsViewState extends ViewState {
   final String name;
   final String nickname;
   final String occupation;
-  final String password;
+  final bool requiresOccupation;
   final bool isSubmitting;
   final String? errorMessage;
 
   bool get canSubmit =>
       name.trim().isNotEmpty &&
       nickname.trim().isNotEmpty &&
-      occupation.trim().isNotEmpty &&
-      password.trim().isNotEmpty &&
+      (!requiresOccupation || occupation.trim().isNotEmpty) &&
       !isSubmitting;
 
   ProfileRegisterDetailsViewState copyWith({
@@ -50,7 +50,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
     String? name,
     String? nickname,
     String? occupation,
-    String? password,
+    bool? requiresOccupation,
     bool? isSubmitting,
     String? errorMessage,
     bool clearErrorMessage = false,
@@ -60,7 +60,7 @@ class ProfileRegisterDetailsViewState extends ViewState {
       name: name ?? this.name,
       nickname: nickname ?? this.nickname,
       occupation: occupation ?? this.occupation,
-      password: password ?? this.password,
+      requiresOccupation: requiresOccupation ?? this.requiresOccupation,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? null
@@ -87,12 +87,6 @@ class OnRegisterNicknameChanged extends ProfileRegisterDetailsUserIntent {
 
 class OnRegisterOccupationChanged extends ProfileRegisterDetailsUserIntent {
   const OnRegisterOccupationChanged(this.value);
-
-  final String value;
-}
-
-class OnRegisterPasswordChanged extends ProfileRegisterDetailsUserIntent {
-  const OnRegisterPasswordChanged(this.value);
 
   final String value;
 }

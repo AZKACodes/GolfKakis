@@ -11,6 +11,7 @@ class ProfileRegisterMethodView extends StatefulWidget {
     required this.onMethodSelected,
     required this.onCountryCodeSelected,
     required this.onPhoneChanged,
+    required this.onPasswordChanged,
     required this.onContinueClick,
     super.key,
   });
@@ -19,6 +20,7 @@ class ProfileRegisterMethodView extends StatefulWidget {
   final ValueChanged<RegisterMethod> onMethodSelected;
   final ValueChanged<PhoneCountryCodeOption> onCountryCodeSelected;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String> onPasswordChanged;
   final VoidCallback onContinueClick;
 
   @override
@@ -28,11 +30,13 @@ class ProfileRegisterMethodView extends StatefulWidget {
 
 class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
   late final TextEditingController _phoneController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
     _phoneController = TextEditingController(text: widget.state.phoneNumber);
+    _passwordController = TextEditingController(text: widget.state.password);
   }
 
   @override
@@ -41,11 +45,15 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
     if (_phoneController.text != widget.state.phoneNumber) {
       _phoneController.text = widget.state.phoneNumber;
     }
+    if (_passwordController.text != widget.state.password) {
+      _passwordController.text = widget.state.password;
+    }
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -134,6 +142,31 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                                   onCountryCodeSelected:
                                       widget.onCountryCodeSelected,
                                   onPhoneChanged: widget.onPhoneChanged,
+                                ),
+                                const SizedBox(height: 14),
+                                TextField(
+                                  controller: _passwordController,
+                                  obscureText: true,
+                                  textInputAction: TextInputAction.done,
+                                  onChanged: widget.onPasswordChanged,
+                                  decoration: InputDecoration(
+                                    hintText: 'Password',
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline,
+                                      size: 20,
+                                    ),
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 16,
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF6F8FC),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(height: 14),
                                 Container(

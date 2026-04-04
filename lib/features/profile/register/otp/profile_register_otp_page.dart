@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
-import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/register/details/profile_register_details_page.dart';
 import 'package:golf_kakis/features/profile/register/otp/view/profile_register_otp_view.dart';
 import 'package:golf_kakis/features/profile/register/otp/viewmodel/profile_register_otp_view_contract.dart';
@@ -11,12 +9,14 @@ import 'package:golf_kakis/features/profile/register/otp/viewmodel/profile_regis
 class ProfileRegisterOtpPage extends StatefulWidget {
   const ProfileRegisterOtpPage({
     required this.phoneNumber,
-    this.skipAboutYou = false,
+    required this.password,
+    this.requiresOccupation = true,
     super.key,
   });
 
   final String phoneNumber;
-  final bool skipAboutYou;
+  final String password;
+  final bool requiresOccupation;
 
   @override
   State<ProfileRegisterOtpPage> createState() => _ProfileRegisterOtpPageState();
@@ -31,7 +31,8 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
     super.initState();
     _viewModel = ProfileRegisterOtpViewModel(
       phoneNumber: widget.phoneNumber,
-      skipAboutYou: widget.skipAboutYou,
+      password: widget.password,
+      requiresOccupation: widget.requiresOccupation,
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is RegisterOtpNavigateBack) {
@@ -48,28 +49,12 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: _registerDetailsRouteName),
-            builder: (_) =>
-                ProfileRegisterDetailsPage(phoneNumber: effect.phoneNumber),
+            builder: (_) => ProfileRegisterDetailsPage(
+              phoneNumber: effect.phoneNumber,
+              password: effect.password,
+              requiresOccupation: effect.requiresOccupation,
+            ),
           ),
-        );
-      }
-
-      if (effect is RegisterOtpCompleted) {
-        if (!mounted) {
-          return;
-        }
-        SessionScope.of(context).login(
-          username: effect.fullName,
-          role: UserRole.user,
-          profileFullName: effect.fullName,
-          profileNickname: effect.nickname,
-          profileOccupation: effect.occupation,
-          profileEmail: effect.email,
-          profilePhoneNumber: effect.phoneNumber,
-          profileAvatarIndex: 0,
-        );
-        Navigator.of(context, rootNavigator: true).popUntil(
-          (route) => !_registerRouteNames.contains(route.settings.name),
         );
       }
     });
@@ -111,8 +96,3 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
 }
 
 const String _registerDetailsRouteName = 'register_details';
-const Set<String> _registerRouteNames = <String>{
-  'register_method',
-  'register_otp',
-  'register_details',
-};

@@ -7,9 +7,9 @@ import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_re
 import 'package:golf_kakis/features/profile/register/otp/profile_register_otp_page.dart';
 
 class ProfileRegisterMethodPage extends StatefulWidget {
-  const ProfileRegisterMethodPage({this.skipAboutYou = false, super.key});
+  const ProfileRegisterMethodPage({this.requiresOccupation = true, super.key});
 
-  final bool skipAboutYou;
+  final bool requiresOccupation;
 
   @override
   State<ProfileRegisterMethodPage> createState() =>
@@ -41,7 +41,8 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
             settings: const RouteSettings(name: _registerOtpRouteName),
             builder: (_) => ProfileRegisterOtpPage(
               phoneNumber: effect.phoneNumber,
-              skipAboutYou: widget.skipAboutYou,
+              password: effect.password,
+              requiresOccupation: widget.requiresOccupation,
             ),
           ),
         );
@@ -78,6 +79,8 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
                 _viewModel.onUserIntent(OnRegisterCountryCodeSelected(value)),
             onPhoneChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterPhoneChanged(value)),
+            onPasswordChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterPasswordChanged(value)),
             onContinueClick: () =>
                 _viewModel.onUserIntent(const OnRegisterMethodContinueClick()),
           ),

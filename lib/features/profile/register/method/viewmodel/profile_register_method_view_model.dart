@@ -37,6 +37,14 @@ class ProfileRegisterMethodViewModel
             clearInfoMessage: true,
           ),
         );
+      case OnRegisterPasswordChanged():
+        emitViewState(
+          (state) => state.copyWith(
+            password: intent.value,
+            clearErrorMessage: true,
+            clearInfoMessage: true,
+          ),
+        );
       case OnRegisterCountryCodeSelected():
         emitViewState(
           (state) => state.copyWith(
@@ -67,7 +75,7 @@ class ProfileRegisterMethodViewModel
     if (!currentState.canContinuePhone) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage: 'Enter a phone number to continue.',
+          errorMessage: 'Enter your phone number and password to continue.',
           clearInfoMessage: true,
         ),
       );
@@ -84,7 +92,10 @@ class ProfileRegisterMethodViewModel
     await Future<void>.delayed(const Duration(milliseconds: 250));
     emitViewState((state) => state.copyWith(isSubmitting: false));
     sendNavEffect(
-      () => RegisterMethodNavigateToOtp(currentState.fullPhoneNumber),
+      () => RegisterMethodNavigateToOtp(
+        phoneNumber: currentState.fullPhoneNumber,
+        password: currentState.password.trim(),
+      ),
     );
   }
 }

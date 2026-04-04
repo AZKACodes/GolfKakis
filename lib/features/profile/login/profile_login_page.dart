@@ -53,7 +53,8 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: 'register_method'),
-            builder: (_) => const ProfileRegisterMethodPage(),
+            builder: (_) =>
+                const ProfileRegisterMethodPage(requiresOccupation: true),
           ),
         );
       }

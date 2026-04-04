@@ -10,14 +10,22 @@ class ProfileRegisterDetailsViewModel
           ProfileRegisterDetailsNavEffect
         >
     implements ProfileRegisterDetailsViewContract {
-  ProfileRegisterDetailsViewModel({required String phoneNumber})
-    : _phoneNumber = phoneNumber;
+  ProfileRegisterDetailsViewModel({
+    required String phoneNumber,
+    required String password,
+    required bool requiresOccupation,
+  }) : _phoneNumber = phoneNumber,
+       _requiresOccupation = requiresOccupation;
 
   final String _phoneNumber;
+  final bool _requiresOccupation;
 
   @override
   ProfileRegisterDetailsViewState createInitialState() {
-    return ProfileRegisterDetailsViewState.initial(phoneNumber: _phoneNumber);
+    return ProfileRegisterDetailsViewState.initial(
+      phoneNumber: _phoneNumber,
+      requiresOccupation: _requiresOccupation,
+    );
   }
 
   @override
@@ -38,11 +46,6 @@ class ProfileRegisterDetailsViewModel
           (state) =>
               state.copyWith(occupation: intent.value, clearErrorMessage: true),
         );
-      case OnRegisterPasswordChanged():
-        emitViewState(
-          (state) =>
-              state.copyWith(password: intent.value, clearErrorMessage: true),
-        );
       case OnRegisterDetailsSubmitClick():
         await _submit();
       case OnRegisterDetailsBackClick():
@@ -54,8 +57,9 @@ class ProfileRegisterDetailsViewModel
     if (!currentState.canSubmit) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage:
-              'Enter your name, nickname, occupation, and password to continue.',
+          errorMessage: currentState.requiresOccupation
+              ? 'Enter your name, username, and occupation to continue.'
+              : 'Enter your name and username to continue.',
         ),
       );
       return;
@@ -70,7 +74,9 @@ class ProfileRegisterDetailsViewModel
       () => RegisterDetailsCompleted(
         fullName: currentState.name.trim(),
         nickname: currentState.nickname.trim(),
-        occupation: currentState.occupation.trim(),
+        occupation: currentState.requiresOccupation
+            ? currentState.occupation.trim()
+            : 'Golfer',
         email:
             '${currentState.nickname.trim().toLowerCase().replaceAll(' ', '.')}@golfkakis.app',
         phoneNumber: currentState.phoneNumber,
