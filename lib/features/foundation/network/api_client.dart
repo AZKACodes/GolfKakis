@@ -36,6 +36,10 @@ class ApiClient {
     return _decodeJsonResponse(response);
   }
 
+  Map<String, String> resolveHeaders(Map<String, String>? headers) {
+    return _mergeHeaders(headers);
+  }
+
   Future<dynamic> postJson(
     String path, {
     Object? body,
@@ -134,17 +138,38 @@ class ApiClient {
     }
 
     try {
-      final decoded = jsonDecode(responseBody);
-      if (decoded is Map<String, dynamic>) {
-        final message = decoded['message'] ?? decoded['error'];
-        if (message is String && message.trim().isNotEmpty) {
-          return message;
-        }
-      }
+      return _extractMessageFromDecoded(jsonDecode(responseBody)) ??
+          responseBody;
     } catch (_) {
       // Keep fallback message below.
     }
 
     return responseBody;
+  }
+
+  String? _extractMessageFromDecoded(dynamic decoded) {
+    if (decoded is Map<String, dynamic>) {
+      final directMessage = decoded['message'];
+      if (directMessage is String && directMessage.trim().isNotEmpty) {
+        return directMessage;
+      }
+
+      final nestedDataMessage = _extractMessageFromDecoded(decoded['data']);
+      if (nestedDataMessage != null) {
+        return nestedDataMessage;
+      }
+
+      final nestedErrorMessage = _extractMessageFromDecoded(decoded['error']);
+      if (nestedErrorMessage != null) {
+        return nestedErrorMessage;
+      }
+
+      final fallbackError = decoded['error'];
+      if (fallbackError is String && fallbackError.trim().isNotEmpty) {
+        return fallbackError;
+      }
+    }
+
+    return null;
   }
 }

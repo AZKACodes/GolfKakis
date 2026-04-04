@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/icon_info_pill.dart';
 
-class BookingSubmissionSlotGrid extends StatelessWidget {
-  const BookingSubmissionSlotGrid({
+class BookingSlotContainer extends StatelessWidget {
+  const BookingSlotContainer({
     super.key,
     required this.slots,
     required this.selectedIndex,
@@ -39,6 +41,7 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
             itemBuilder: (context, index) {
               final slot = slots[index];
               final teeTimeSlot = TeeTimeSlot.fromLabel(slot.time);
+
               final bool isUnavailable = unavailableIndices.contains(index);
               final bool isSelected = selectedIndex == index;
               final bool isExtendedPlayerSlot =
@@ -51,6 +54,7 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                   : isExtendedPlayerSlot
                   ? const Color(0xFFF6FBF4)
                   : Colors.white;
+
               final Color textColor = isUnavailable
                   ? Colors.black45
                   : isSelected
@@ -112,6 +116,7 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                               ),
                             ),
                           ),
+
                           if (isSelected)
                             const Positioned(
                               right: 0,
@@ -123,9 +128,13 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                             ),
                         ],
                       ),
+
                       const SizedBox(height: 10),
+
                       Divider(height: 1, thickness: 1, color: dividerColor),
+
                       const SizedBox(height: 10),
+
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -144,9 +153,15 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                                         fontWeight: FontWeight.w700,
                                       ),
                                 ),
+
                                 const SizedBox(height: 4),
+
                                 Text(
-                                  _formatPrice(slot.price, slot.currency),
+                                  CurrencyUtil.formatPrice(
+                                    slot.price,
+                                    slot.currency,
+                                    suffix: '/ pax',
+                                  ),
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
                                         color: textColor,
@@ -156,30 +171,83 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
                               ],
                             ),
                           ),
+
                           const SizedBox(width: 10),
+
                           Expanded(
                             flex: 3,
-                            child: _SlotMetaPill(
+                            child: IconInfoPill(
                               icon: Icons.group_outlined,
                               label: 'Players',
                               value: teeTimeSlot?.playerRange ?? '1-4',
+                              backgroundColor: isSelected
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : const Color(0xFFF7F7F4),
+                              borderColor: isSelected
+                                  ? Colors.white.withValues(alpha: 0.16)
+                                  : const Color(0x14000000),
+                              foregroundColor: textColor,
                               textColor: textColor,
-                              selected: isSelected,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              borderRadius: 12,
+                              iconSize: 16,
+                              spacing: 8,
+                              expandContent: true,
+                              labelStyle: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: textColor.withValues(alpha: 0.82),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                              valueStyle: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: textColor,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                             ),
                           ),
+
                           const SizedBox(width: 8),
+
                           Expanded(
                             flex: 3,
-                            child: _SlotMetaPill(
+                            child: IconInfoPill(
                               icon: Icons.golf_course_outlined,
                               label: 'Holes',
                               value: '${slot.noOfHoles}',
+                              backgroundColor: isSelected
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : const Color(0xFFF7F7F4),
+                              borderColor: isSelected
+                                  ? Colors.white.withValues(alpha: 0.16)
+                                  : const Color(0x14000000),
+                              foregroundColor: textColor,
                               textColor: textColor,
-                              selected: isSelected,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              borderRadius: 12,
+                              iconSize: 16,
+                              spacing: 8,
+                              expandContent: true,
+                              labelStyle: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: textColor.withValues(alpha: 0.82),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                              valueStyle: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: textColor,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                             ),
                           ),
                         ],
                       ),
+
                       if (isExtendedPlayerSlot)
                         Padding(
                           padding: const EdgeInsets.only(top: 10),
@@ -214,78 +282,6 @@ class BookingSubmissionSlotGrid extends StatelessWidget {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-String _formatPrice(double price, String currency) {
-  return '${currency.toUpperCase()} ${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)} / pax';
-}
-
-class _SlotMetaPill extends StatelessWidget {
-  const _SlotMetaPill({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.textColor,
-    required this.selected,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color textColor;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected
-            ? Colors.white.withValues(alpha: 0.12)
-            : const Color(0xFFF7F7F4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: selected
-              ? Colors.white.withValues(alpha: 0.16)
-              : const Color(0x14000000),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: textColor),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: textColor.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

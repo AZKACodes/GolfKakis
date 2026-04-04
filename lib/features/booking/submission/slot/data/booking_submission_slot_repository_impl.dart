@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
@@ -22,105 +23,99 @@ class BookingSubmissionSlotRepositoryImpl
 
   @override
   Future<List<GolfClubModel>> onFetchGolfClubList() async {
-    if (_preferImmediateFallback) {
-      return const <GolfClubModel>[
-        GolfClubModel(
-          id: '1',
-          slug: 'kinrara-golf-club',
-          name: 'Kinrara Golf Club',
-          address: 'Bandar Kinrara, Puchong',
-          noOfHoles: 18,
-        ),
-        GolfClubModel(
-          id: '2',
-          slug: 'saujana-golf-country-club',
-          name: 'Saujana Golf & Country Club',
-          address: 'Shah Alam, Selangor',
-          noOfHoles: 36,
-        ),
-        GolfClubModel(
-          id: '3',
-          slug: 'kota-permai-golf-country-club',
-          name: 'Kota Permai Golf & Country Club',
-          address: 'Kota Kemuning, Shah Alam',
-          noOfHoles: 18,
-        ),
-        GolfClubModel(
-          id: '4',
-          slug: 'mines-resort-golf-club',
-          name: 'The Mines Resort & Golf Club',
-          address: 'Serdang, Selangor',
-          noOfHoles: 18,
-        ),
-      ];
-    }
-
-    try {
-      final response = await _apiService.onFetchGolfClubList();
-      final clubs = _parseGolfClubList(response);
-      if (clubs.isNotEmpty) {
-        return clubs;
+    final response = await _apiService.onFetchGolfClubList();
+    List<GolfClubModel> parseGolfClubList(dynamic rawResponse) {
+      if (rawResponse is List) {
+        return rawResponse
+            .whereType<Map<String, dynamic>>()
+            .map(GolfClubModel.fromJson)
+            .where((club) => club.slug.isNotEmpty)
+            .toList();
       }
-    } catch (_) {
-      // Temporary fallback until the golf club list endpoint contract is ready.
+
+      if (rawResponse is Map<String, dynamic>) {
+        final dynamic nestedList =
+            rawResponse['data'] ?? rawResponse['items'] ?? rawResponse['clubs'];
+        return parseGolfClubList(nestedList);
+      }
+
+      return const <GolfClubModel>[];
     }
 
-    return const <GolfClubModel>[
-      GolfClubModel(
-        id: '1',
-        slug: 'kinrara-golf-club',
-        name: 'Kinrara Golf Club',
-        address: 'Bandar Kinrara, Puchong',
-        noOfHoles: 18,
-      ),
-      GolfClubModel(
-        id: '2',
-        slug: 'saujana-golf-country-club',
-        name: 'Saujana Golf & Country Club',
-        address: 'Shah Alam, Selangor',
-        noOfHoles: 36,
-      ),
-      GolfClubModel(
-        id: '3',
-        slug: 'kota-permai-golf-country-club',
-        name: 'Kota Permai Golf & Country Club',
-        address: 'Kota Kemuning, Shah Alam',
-        noOfHoles: 18,
-      ),
-      GolfClubModel(
-        id: '4',
-        slug: 'mines-resort-golf-club',
-        name: 'The Mines Resort & Golf Club',
-        address: 'Serdang, Selangor',
-        noOfHoles: 18,
-      ),
-    ];
+    return parseGolfClubList(response);
   }
 
   @override
   Future<List<BookingSlotModel>> onFetchAvailableSlots({
     required String clubSlug,
     required String date,
+    required String playType,
+    String? selectedNine,
   }) async {
-    if (_preferImmediateFallback) {
-      return _buildFallbackSlots(clubSlug: clubSlug, date: date);
-    }
+    final response = await _apiService.onFetchAvailableSlots(
+      clubSlug: clubSlug,
+      date: date,
+      playType: playType,
+      selectedNine: selectedNine,
+    );
 
-    try {
-      final response = await _apiService.onFetchAvailableSlots(
-        clubSlug: clubSlug,
-        date: date,
-      );
-
-      final slots = _parseAvailableSlots(response);
-      if (slots.isNotEmpty) {
-        return slots;
+    List<BookingSlotModel> parseAvailableSlots(dynamic rawResponse) {
+      if (rawResponse is List) {
+        return rawResponse
+            .map(
+              (slot) => slot is Map<String, dynamic>
+                  ? BookingSlotModel.fromJson(slot)
+                  : BookingSlotModel(
+                      time: slot.toString(),
+                      price: 0,
+                      noOfHoles: 18,
+                    ),
+            )
+            .where((slot) => slot.time.isNotEmpty)
+            .toList();
       }
-    } catch (_) {
-      // Temporary fallback until the available slots endpoint contract is ready.
+
+      if (rawResponse is Map<String, dynamic>) {
+        final playType = rawResponse['playType']?.toString();
+        final inferredHoleCount = playType == '9_holes' ? 9 : 18;
+        final dynamic nestedList =
+            rawResponse['data'] ??
+            rawResponse['items'] ??
+            rawResponse['slots'] ??
+            rawResponse['availableSlots'];
+        if (nestedList is List) {
+          return nestedList
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (slot) => BookingSlotModel.fromJson(<String, dynamic>{
+                  ...slot,
+                  'noOfHoles': slot['noOfHoles'] ?? inferredHoleCount,
+                }),
+              )
+              .where((slot) => slot.time.isNotEmpty)
+              .toList();
+        }
+        return parseAvailableSlots(nestedList);
+      }
+
+      if (rawResponse is String && rawResponse.isNotEmpty) {
+        return <BookingSlotModel>[
+          BookingSlotModel(time: rawResponse, price: 0, noOfHoles: 18),
+        ];
+      }
+
+      return const <BookingSlotModel>[];
     }
 
-    return _buildFallbackSlots(clubSlug: clubSlug, date: date);
+    return parseAvailableSlots(response);
+  }
+
+  @override
+  Future<dynamic> onCreateBookingHold({
+    required BookingHoldRequestModel request,
+  }) async {
+    final response = await _apiService.onCreateBookingHold(request: request);
+    return _normalizeBookingHoldResponse(response: response, request: request);
   }
 
   @override
@@ -204,6 +199,26 @@ class BookingSubmissionSlotRepositoryImpl
     return normalized;
   }
 
+  Map<String, dynamic> _normalizeBookingHoldResponse({
+    required dynamic response,
+    required BookingHoldRequestModel request,
+  }) {
+    final fallbackResponse = _buildFallbackBookingHoldResponse(request);
+    if (response is! Map<String, dynamic>) {
+      throw ApiException(message: 'Invalid booking hold response.');
+    }
+
+    final normalized = <String, dynamic>{...fallbackResponse, ...response};
+    final bookingId = normalized['bookingId']?.toString() ?? '';
+    final status = normalized['status']?.toString().toLowerCase() ?? '';
+
+    if (bookingId.trim().isEmpty || status != 'held') {
+      throw ApiException(message: 'Booking hold was not completed.');
+    }
+
+    return normalized;
+  }
+
   Map<String, dynamic> _buildFallbackSubmissionResponse(
     BookingSubmissionRequestModel request,
   ) {
@@ -237,6 +252,35 @@ class BookingSubmissionSlotRepositoryImpl
       'bookingId': bookingId,
       'bookingSlug': bookingSlug,
       'message': 'Fallback booking submission created for testing.',
+    };
+  }
+
+  Map<String, dynamic> _buildFallbackBookingHoldResponse(
+    BookingHoldRequestModel request,
+  ) {
+    final expiresAt = DateTime.now().add(const Duration(minutes: 5));
+
+    return <String, dynamic>{
+      'bookingId': 'booking-${request.slotId}',
+      'bookingRef':
+          'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7).toUpperCase()}',
+      'status': 'held',
+      'holdDurationSeconds': 300,
+      'holdExpiresAt': expiresAt.toIso8601String(),
+      'isPhoneVerified': false,
+      'hostUser': <String, dynamic>{
+        'userId': 'user-${request.slotId}',
+        'name': request.hostName,
+        'phoneNumber': request.hostPhoneNumber,
+      },
+      'bookingSummary': <String, dynamic>{
+        'playerCount': request.playerCount,
+        'normalPlayerCount': request.normalPlayerCount ?? request.playerCount,
+        'seniorPlayerCount': request.seniorPlayerCount,
+        'caddieArrangement': request.caddieArrangement,
+        'buggyType': request.buggyType,
+        'priceBreakdown': const <String, dynamic>{'currency': 'MYR'},
+      },
     };
   }
 
@@ -302,102 +346,5 @@ class BookingSubmissionSlotRepositoryImpl
           .toList(),
       'status': 'Confirmed',
     };
-  }
-
-  List<BookingSlotModel> _buildFallbackSlots({
-    required String clubSlug,
-    required String date,
-  }) {
-    if (clubSlug == 'kinrara-golf-club') {
-      return const <BookingSlotModel>[
-        BookingSlotModel(time: '07:00 AM', price: 145, noOfHoles: 18),
-        BookingSlotModel(time: '07:30 AM', price: 145, noOfHoles: 18),
-        BookingSlotModel(time: '08:15 AM', price: 155, noOfHoles: 18),
-        BookingSlotModel(time: '09:45 AM', price: 165, noOfHoles: 18),
-        BookingSlotModel(time: '01:15 PM', price: 118, noOfHoles: 9),
-      ];
-    }
-
-    if (clubSlug == 'saujana-golf-country-club') {
-      return const <BookingSlotModel>[
-        BookingSlotModel(time: '02:00 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:15 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:30 PM', price: 132, noOfHoles: 18),
-        BookingSlotModel(time: '02:45 PM', price: 125, noOfHoles: 9),
-        BookingSlotModel(time: '03:00 PM', price: 125, noOfHoles: 9),
-      ];
-    }
-
-    if (clubSlug == 'kota-permai-golf-country-club') {
-      return date.endsWith('-01') || date.endsWith('-15')
-          ? const <BookingSlotModel>[]
-          : const <BookingSlotModel>[
-              BookingSlotModel(time: '10:00 AM', price: 188, noOfHoles: 18),
-              BookingSlotModel(time: '12:00 PM', price: 164, noOfHoles: 18),
-              BookingSlotModel(time: '04:15 PM', price: 105, noOfHoles: 9),
-            ];
-    }
-
-    if (clubSlug == 'mines-resort-golf-club') {
-      return const <BookingSlotModel>[];
-    }
-
-    return const <BookingSlotModel>[
-      BookingSlotModel(time: '08:00 AM', price: 150, noOfHoles: 18),
-      BookingSlotModel(time: '11:30 AM', price: 135, noOfHoles: 18),
-      BookingSlotModel(time: '03:15 PM', price: 120, noOfHoles: 9),
-    ];
-  }
-
-  List<GolfClubModel> _parseGolfClubList(dynamic response) {
-    if (response is List) {
-      return response
-          .whereType<Map<String, dynamic>>()
-          .map(GolfClubModel.fromJson)
-          .where((club) => club.slug.isNotEmpty)
-          .toList();
-    }
-
-    if (response is Map<String, dynamic>) {
-      final dynamic nestedList =
-          response['data'] ?? response['items'] ?? response['clubs'];
-      return _parseGolfClubList(nestedList);
-    }
-
-    return const <GolfClubModel>[];
-  }
-
-  List<BookingSlotModel> _parseAvailableSlots(dynamic response) {
-    if (response is List) {
-      return response
-          .map(
-            (slot) => slot is Map<String, dynamic>
-                ? BookingSlotModel.fromJson(slot)
-                : BookingSlotModel(
-                    time: slot.toString(),
-                    price: 0,
-                    noOfHoles: 18,
-                  ),
-          )
-          .where((slot) => slot.time.isNotEmpty)
-          .toList();
-    }
-
-    if (response is Map<String, dynamic>) {
-      final dynamic nestedList =
-          response['data'] ??
-          response['items'] ??
-          response['slots'] ??
-          response['availableSlots'];
-      return _parseAvailableSlots(nestedList);
-    }
-
-    if (response is String && response.isNotEmpty) {
-      return <BookingSlotModel>[
-        BookingSlotModel(time: response, price: 0, noOfHoles: 18),
-      ];
-    }
-
-    return const <BookingSlotModel>[];
   }
 }

@@ -11,6 +11,7 @@ import 'package:golf_kakis/features/foundation/model/booking/booking_submission_
 
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
+    required this.bookingId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -27,6 +28,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     super.key,
   });
 
+  final String bookingId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;

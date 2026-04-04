@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -22,6 +23,8 @@ sealed class BookingSubmissionDetailViewState extends ViewState {
 class BookingSubmissionDetailDataLoaded
     extends BookingSubmissionDetailViewState {
   BookingSubmissionDetailDataLoaded({
+    this.slotId = emptyString,
+    this.playType = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     DateTime? selectedDate,
@@ -29,21 +32,32 @@ class BookingSubmissionDetailDataLoaded
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
     this.guestId,
-    this.hostName = emptyString,
-    this.hostPhoneNumber = emptyString,
+    this.bookingId = emptyString,
+    this.holdDurationSeconds = 0,
+    DateTime? holdExpiresAt,
     this.playerCount = 4,
     this.maxPlayerCount = 4,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
+    this.selectedNine,
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
+    this.remainingHoldSeconds = 0,
+    this.isHoldExpired = false,
     this.canContinue = false,
-  }) : selectedDate = selectedDate ?? DateTime.now(),
+    this.isSubmitting = false,
+  }) : holdExpiresAt = holdExpiresAt ?? DateTime.now(),
+       selectedDate = selectedDate ?? DateTime.now(),
        super();
 
   factory BookingSubmissionDetailDataLoaded.initial() {
     return BookingSubmissionDetailDataLoaded();
   }
 
+  final String slotId;
+  final String playType;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -51,21 +65,39 @@ class BookingSubmissionDetailDataLoaded
   final double pricePerPerson;
   final String currency;
   final String? guestId;
-  final String hostName;
-  final String hostPhoneNumber;
+  final String bookingId;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final int playerCount;
   final int maxPlayerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final int remainingHoldSeconds;
+  final bool isHoldExpired;
   final bool canContinue;
+  final bool isSubmitting;
 
-  String get pricePerPersonLabel => _formatCurrency(pricePerPerson, currency);
+  String get pricePerPersonLabel =>
+      CurrencyUtil.formatPrice(pricePerPerson, currency);
 
   String get totalCostLabel =>
-      _formatCurrency(pricePerPerson * playerCount, currency);
+      CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
+
+  String get holdCountdownLabel {
+    final safeSeconds = remainingHoldSeconds < 0 ? 0 : remainingHoldSeconds;
+    final minutes = (safeSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (safeSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   BookingSubmissionDetailDataLoaded copyWith({
+    String? slotId,
+    String? playType,
     String? golfClubName,
     String? golfClubSlug,
     DateTime? selectedDate,
@@ -73,16 +105,26 @@ class BookingSubmissionDetailDataLoaded
     double? pricePerPerson,
     String? currency,
     String? guestId,
-    String? hostName,
-    String? hostPhoneNumber,
+    String? bookingId,
+    int? holdDurationSeconds,
+    DateTime? holdExpiresAt,
     int? playerCount,
     int? maxPlayerCount,
+    String? caddiePreference,
+    String? buggyType,
+    String? buggySharingPreference,
+    String? selectedNine,
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
+    int? remainingHoldSeconds,
+    bool? isHoldExpired,
     bool? canContinue,
+    bool? isSubmitting,
   }) {
     return BookingSubmissionDetailDataLoaded(
+      slotId: slotId ?? this.slotId,
+      playType: playType ?? this.playType,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -90,14 +132,23 @@ class BookingSubmissionDetailDataLoaded
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
       guestId: guestId ?? this.guestId,
-      hostName: hostName ?? this.hostName,
-      hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
+      bookingId: bookingId ?? this.bookingId,
+      holdDurationSeconds: holdDurationSeconds ?? this.holdDurationSeconds,
+      holdExpiresAt: holdExpiresAt ?? this.holdExpiresAt,
       playerCount: playerCount ?? this.playerCount,
       maxPlayerCount: maxPlayerCount ?? this.maxPlayerCount,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggyType: buggyType ?? this.buggyType,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
+      selectedNine: selectedNine ?? this.selectedNine,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
+      remainingHoldSeconds: remainingHoldSeconds ?? this.remainingHoldSeconds,
+      isHoldExpired: isHoldExpired ?? this.isHoldExpired,
       canContinue: canContinue ?? this.canContinue,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 }
@@ -112,21 +163,45 @@ sealed class BookingSubmissionDetailUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
+    required this.slotId,
+    required this.bookingId,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
+    required this.playType,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    this.initialPlayerCount = 4,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
+    this.selectedNine,
+    this.initialPlayerName = emptyString,
+    this.initialPlayerPhoneNumber = emptyString,
     this.guestId,
   });
 
+  final String slotId;
+  final String bookingId;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
+  final String playType;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final int initialPlayerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
+  final String initialPlayerName;
+  final String initialPlayerPhoneNumber;
   final String? guestId;
 }
 
@@ -197,6 +272,7 @@ class NavigateBack extends BookingSubmissionDetailNavEffect {
 class NavigateToBookingSubmissionConfirmation
     extends BookingSubmissionDetailNavEffect {
   const NavigateToBookingSubmissionConfirmation({
+    required this.bookingId,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -212,6 +288,7 @@ class NavigateToBookingSubmissionConfirmation
     required this.playerDetails,
   });
 
+  final String bookingId;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -227,6 +304,12 @@ class NavigateToBookingSubmissionConfirmation
   final List<BookingSubmissionPlayerModel> playerDetails;
 }
 
-String _formatCurrency(double value, String currency) {
-  return '${currency.toUpperCase()} ${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
+class ShowBookingSessionExpired extends BookingSubmissionDetailNavEffect {
+  const ShowBookingSessionExpired();
+}
+
+class ShowErrorMessage extends BookingSubmissionDetailNavEffect {
+  const ShowErrorMessage(this.message);
+
+  final String message;
 }

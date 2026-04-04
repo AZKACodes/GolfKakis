@@ -6,6 +6,7 @@ import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submi
 import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_view.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
+import 'package:golf_kakis/features/foundation/util/user_util.dart';
 
 class BookingSubmissionSuccessPage extends StatefulWidget {
   const BookingSubmissionSuccessPage({
@@ -52,6 +53,7 @@ class _BookingSubmissionSuccessPageState
   @override
   void initState() {
     super.initState();
+    UserUtil.clearBookingUUID();
     _viewModel = BookingSubmissionSuccessViewModel(
       BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
     );

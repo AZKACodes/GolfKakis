@@ -16,7 +16,7 @@ Future<void> main() async {
       return const <String, String>{};
     }
 
-    return <String, String>{'X-DEVICE-ID': deviceId};
+    return <String, String>{'X-Device-ID': deviceId};
   });
 
   runApp(MyApp(sessionManager: sessionManager));

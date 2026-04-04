@@ -58,7 +58,9 @@ class _BookingSubmissionPeriodHeaderDelegate
             selected: selectedPeriod == TimePeriod.am,
             onSelected: (_) => onPeriodChanged(TimePeriod.am),
           ),
+
           const SizedBox(width: 8),
+          
           ChoiceChip(
             label: const Text('PM'),
             selected: selectedPeriod == TimePeriod.pm,

@@ -62,8 +62,65 @@ class BookingSubmissionSlotViewModel
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
               selectedClubSlug: intent.clubSlug,
+              clearSelectedSupportedNine: true,
               clearSelectedSlot: true,
               clearVisibleSelectedIndex: true,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnSelectSupportedNine():
+        final nextState = _derivePresentationState(
+          getCurrentAsLoaded().copyWith(
+            selectedSupportedNine: intent.value,
+            clearSelectedSlot: true,
+            clearVisibleSelectedIndex: true,
+            clearErrorMessage: true,
+          ),
+        );
+        emitViewState((state) {
+          return nextState;
+        });
+        if (nextState.selectedClubSlug.isNotEmpty) {
+          await onFetchAvailableSlots(
+            clubSlug: nextState.selectedClubSlug,
+            date: nextState.selectedDate,
+          );
+        }
+      case OnPlayerCountChanged():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              playerCount: intent.value.clamp(1, 6),
+              clearSelectedSlot: true,
+              clearVisibleSelectedIndex: true,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnSelectCaddiePreference():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              caddiePreference: intent.value,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnSelectBuggyType():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              buggyType: intent.value,
+              clearErrorMessage: true,
+            ),
+          );
+        });
+      case OnSelectBuggySharingPreference():
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              buggySharingPreference: intent.value,
               clearErrorMessage: true,
             ),
           );
@@ -71,10 +128,15 @@ class BookingSubmissionSlotViewModel
       case OnSelectDate():
         await onSelectDate(intent.date);
       case OnSelectSlot():
+        if (!intent.slot.isAvailable) {
+          return;
+        }
+
         emitViewState((state) {
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
               selectedSlot: intent.slot,
+              buggyType: _buggyTypeForSlot(intent.slot),
               clearErrorMessage: true,
             ),
           );
@@ -101,12 +163,21 @@ class BookingSubmissionSlotViewModel
 
         sendNavEffect(
           () => NavigateToBookingSubmissionDetail(
+            slotId: selectedSlot.slotId,
+            playType: current.playTypeValue,
             golfClubName: current.selectedClubName,
             golfClubSlug: current.selectedClubSlug,
             selectedDate: current.selectedDate,
             teeTimeSlot: selectedSlot.time,
             pricePerPerson: selectedSlot.price,
             currency: selectedSlot.currency,
+            playerCount: current.playerCount,
+            caddiePreference: current.caddiePreference.value,
+            buggyType: current.buggyType.value,
+            buggySharingPreference: current.buggySharingPreference.value,
+            selectedNine: current.selectedSupportedNine.isEmpty
+                ? null
+                : current.selectedSupportedNine,
           ),
         );
     }
@@ -154,18 +225,20 @@ class BookingSubmissionSlotViewModel
             );
           }
         case DataStatus.error:
+          final message = result.apiMessage.isEmpty
+              ? 'Failed to fetch golf club list'
+              : result.apiMessage;
           emitViewState((state) {
             return _derivePresentationState(
               getCurrentAsLoaded().copyWith(
                 golfClubList: const <GolfClubModel>[],
                 selectedClubSlug: emptyString,
                 isLoading: false,
-                errorMessage: result.apiMessage.isEmpty
-                    ? 'Failed to fetch golf club list'
-                    : result.apiMessage,
+                errorMessage: message,
               ),
             );
           });
+          sendNavEffect(() => ShowErrorMessage(message));
         default:
           break;
       }
@@ -196,9 +269,15 @@ class BookingSubmissionSlotViewModel
     required String clubSlug,
     required DateTime date,
   }) async {
+    final requestState = _derivePresentationState(
+      getCurrentAsLoaded().copyWith(
+        selectedClubSlug: clubSlug,
+        selectedDate: date,
+      ),
+    );
     emitViewState((state) {
       return _derivePresentationState(
-        getCurrentAsLoaded().copyWith(
+        requestState.copyWith(
           selectedClubSlug: clubSlug,
           selectedDate: date,
           clearSelectedSlot: true,
@@ -214,6 +293,10 @@ class BookingSubmissionSlotViewModel
         .onFetchAvailableSlots(
           clubSlug: clubSlug,
           date: DateUtil.formatApiDate(date),
+          playType: requestState.playTypeValue,
+          selectedNine: requestState.selectedSupportedNine.isEmpty
+              ? null
+              : requestState.selectedSupportedNine,
         )
         .listen((result) {
           switch (result.status) {
@@ -228,17 +311,19 @@ class BookingSubmissionSlotViewModel
                 );
               });
             case DataStatus.error:
+              final message = result.apiMessage.isEmpty
+                  ? 'Failed to fetch available slots'
+                  : result.apiMessage;
               emitViewState((state) {
                 return _derivePresentationState(
                   getCurrentAsLoaded().copyWith(
                     bookingSlots: const <BookingSlotModel>[],
                     isLoading: false,
-                    errorMessage: result.apiMessage.isEmpty
-                        ? 'Failed to fetch available slots'
-                        : result.apiMessage,
+                    errorMessage: message,
                   ),
                 );
               });
+              sendNavEffect(() => ShowErrorMessage(message));
             default:
               break;
           }
@@ -250,13 +335,13 @@ class BookingSubmissionSlotViewModel
       return emptyString;
     }
 
-    if (clubs.any(
-      (club) => club.slug == getCurrentAsLoaded().selectedClubSlug,
-    )) {
-      return getCurrentAsLoaded().selectedClubSlug;
+    final currentSelectedClubSlug = getCurrentAsLoaded().selectedClubSlug;
+    if (currentSelectedClubSlug.isNotEmpty &&
+        clubs.any((club) => club.slug == currentSelectedClubSlug)) {
+      return currentSelectedClubSlug;
     }
 
-    return clubs.first.slug;
+    return emptyString;
   }
 
   BookingSubmissionSlotDataLoaded _derivePresentationState(
@@ -274,20 +359,62 @@ class BookingSubmissionSlotViewModel
         : visibleSlots.indexWhere(
             (slot) => slot.time == state.selectedSlot!.time,
           );
+    final availableSupportedNines = state.availableSupportedNines;
+    final selectedSupportedNine =
+        availableSupportedNines.contains(state.selectedSupportedNine)
+        ? state.selectedSupportedNine
+        : emptyString;
+    final buggyType = state.selectedSlot == null
+        ? BookingBuggyType.normal
+        : _buggyTypeForSlot(state.selectedSlot!);
+    final overCapacityIndices = visibleSlots.indexed
+        .where((entry) => entry.$2.remainingPlayerCapacity < state.playerCount)
+        .map((entry) => entry.$1)
+        .toSet();
+    final selectedSlotFitsCapacity =
+        (state.selectedSlot?.remainingPlayerCapacity ?? 0) >= state.playerCount;
 
     return state.copyWith(
+      selectedSupportedNine: selectedSupportedNine,
+      buggyType: buggyType,
       selectedDate: DateUtil.dateOnly(state.selectedDate),
       pickerInitialDate: state.selectedDate.isBefore(today)
           ? today
           : DateUtil.dateOnly(state.selectedDate),
       visibleSlots: visibleSlots,
-      visibleUnavailableIndices: const <int>{},
-      visibleSelectedIndex: visibleSelectedIndex == -1
+      visibleUnavailableIndices: <int>{
+        ...visibleSlots.indexed
+            .where((entry) => !entry.$2.isAvailable)
+            .map((entry) => entry.$1),
+        ...overCapacityIndices,
+      },
+      visibleSelectedIndex:
+          visibleSelectedIndex == -1 || !selectedSlotFitsCapacity
           ? null
           : visibleSelectedIndex,
       canContinue:
-          state.selectedClubSlug.isNotEmpty && state.selectedSlot != null,
+          state.selectedClubSlug.isNotEmpty &&
+          state.selectedSlot?.isAvailable == true &&
+          selectedSlotFitsCapacity,
     );
+  }
+
+  BookingBuggyType _buggyTypeForSlot(BookingSlotModel slot) {
+    final teeTime = TeeTimeSlot.fromLabel(slot.time);
+    if (teeTime == null) {
+      return BookingBuggyType.normal;
+    }
+
+    return switch (teeTime) {
+      TeeTimeSlot.twelve30Pm ||
+      TeeTimeSlot.twelve45Pm ||
+      TeeTimeSlot.one00Pm ||
+      TeeTimeSlot.one15Pm ||
+      TeeTimeSlot.one30Pm ||
+      TeeTimeSlot.one45Pm ||
+      TeeTimeSlot.two00Pm => BookingBuggyType.jumbo,
+      _ => BookingBuggyType.normal,
+    };
   }
 
   @override

@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ActivityBookingListViewContract {
   ActivityBookingListViewState get viewState;
@@ -7,7 +8,7 @@ abstract class ActivityBookingListViewContract {
   Future<void> onRefresh(ActivityBookingListTab tab);
 }
 
-class ActivityBookingListViewState {
+class ActivityBookingListViewState extends ViewState {
   const ActivityBookingListViewState({
     required this.upcomingBookings,
     required this.pastBookings,
@@ -19,7 +20,7 @@ class ActivityBookingListViewState {
     required this.isUsingPastFallback,
     this.upcomingErrorMessage,
     this.pastErrorMessage,
-  });
+  }) : super();
 
   static const initial = ActivityBookingListViewState(
     upcomingBookings: <BookingModel>[],
@@ -79,8 +80,8 @@ class ActivityBookingListViewState {
 
 enum ActivityBookingListTab { upcoming, past }
 
-sealed class ActivityBookingListUserIntent {
-  const ActivityBookingListUserIntent();
+sealed class ActivityBookingListUserIntent extends UserIntent {
+  const ActivityBookingListUserIntent() : super();
 }
 
 class OnInit extends ActivityBookingListUserIntent {
@@ -105,16 +106,12 @@ class OnViewBookingDetailClick extends ActivityBookingListUserIntent {
   final BookingModel booking;
 }
 
-sealed class NavEffect {
-  const NavEffect();
-}
-
 sealed class ActivityBookingListNavEffect extends NavEffect {
-  const ActivityBookingListNavEffect();
+  const ActivityBookingListNavEffect() : super();
 }
 
-class NavigateToActivityBookingDetail extends ActivityBookingListNavEffect {
-  const NavigateToActivityBookingDetail(this.booking);
+class NavigateToBookingDetails extends ActivityBookingListNavEffect {
+  const NavigateToBookingDetails(this.booking);
 
   final BookingModel booking;
 }

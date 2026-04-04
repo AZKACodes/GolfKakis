@@ -88,7 +88,10 @@ class BookingSubmissionConfirmationViewModel
             case DataStatus.success:
               final latest = getCurrentAsLoaded();
               emitViewState((state) {
-                return latest.copyWith(isSubmitting: false, clearErrorMessage: true);
+                return latest.copyWith(
+                  isSubmitting: false,
+                  clearErrorMessage: true,
+                );
               });
               sendNavEffect(
                 () => NavigateToBookingSubmissionSuccess(

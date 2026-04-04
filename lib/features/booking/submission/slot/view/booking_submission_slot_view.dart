@@ -7,10 +7,14 @@ import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 class BookingSubmissionSlotView extends StatelessWidget {
   const BookingSubmissionSlotView({
     required this.viewModel,
+    required this.isSubmittingHold,
+    required this.onContinuePressed,
     super.key,
   });
 
   final BookingSubmissionSlotViewModel viewModel;
+  final bool isSubmittingHold;
+  final Future<void> Function() onContinuePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +36,8 @@ class BookingSubmissionSlotView extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: ElevatedButton(
-                onPressed: state.canContinue
-                    ? () => viewModel.performAction(const OnContinueClick())
+                onPressed: state.canContinue && !isSubmittingHold
+                    ? () => onContinuePressed()
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D7A3A),
@@ -45,10 +49,19 @@ class BookingSubmissionSlotView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                child: const Text('Continue'),
+                child: isSubmittingHold
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Continue'),
               ),
             ),
           ),

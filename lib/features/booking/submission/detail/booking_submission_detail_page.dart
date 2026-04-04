@@ -7,22 +7,46 @@ import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
+    required this.slotId,
+    required this.bookingId,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
+    required this.playType,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    this.initialPlayerCount = 4,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
+    this.selectedNine,
+    this.initialPlayerName = '',
+    this.initialPlayerPhoneNumber = '',
     this.guestId,
     super.key,
   });
 
+  final String slotId;
+  final String bookingId;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
+  final String playType;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final int initialPlayerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
+  final String initialPlayerName;
+  final String initialPlayerPhoneNumber;
   final String? guestId;
 
   @override
@@ -45,12 +69,24 @@ class _BookingSubmissionDetailPageState
 
     _viewModel.performAction(
       OnInit(
+        slotId: widget.slotId,
+        bookingId: widget.bookingId,
+        holdDurationSeconds: widget.holdDurationSeconds,
+        holdExpiresAt: widget.holdExpiresAt,
+        playType: widget.playType,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         selectedDate: widget.selectedDate,
         teeTimeSlot: widget.teeTimeSlot,
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
+        initialPlayerCount: widget.initialPlayerCount,
+        caddiePreference: widget.caddiePreference,
+        buggyType: widget.buggyType,
+        buggySharingPreference: widget.buggySharingPreference,
+        selectedNine: widget.selectedNine,
+        initialPlayerName: widget.initialPlayerName,
+        initialPlayerPhoneNumber: widget.initialPlayerPhoneNumber,
         guestId: widget.guestId,
       ),
     );
@@ -71,6 +107,7 @@ class _BookingSubmissionDetailPageState
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionConfirmationPage(
+              bookingId: effect.bookingId,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,
@@ -87,6 +124,35 @@ class _BookingSubmissionDetailPageState
             ),
           ),
         );
+      case ShowBookingSessionExpired():
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Booking Session Expired'),
+              content: const Text('Your booking session has been expired.'),
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).maybePop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      case ShowErrorMessage():
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(effect.message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
     }
   }
 

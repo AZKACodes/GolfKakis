@@ -5,6 +5,7 @@ class GolfClubModel {
     required this.name,
     required this.address,
     required this.noOfHoles,
+    this.supportedNines = const <String>[],
   });
 
   final String id;
@@ -12,6 +13,7 @@ class GolfClubModel {
   final String name;
   final String address;
   final int noOfHoles;
+  final List<String> supportedNines;
 
   factory GolfClubModel.fromJson(Map<String, dynamic> json) {
     return GolfClubModel(
@@ -19,11 +21,8 @@ class GolfClubModel {
       slug: json['slug']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
-      noOfHoles:
-          (json['noOfHoles'] as num?)?.toInt() ??
-          (json['no_of_holes'] as num?)?.toInt() ??
-          (json['holes'] as num?)?.toInt() ??
-          0,
+      noOfHoles: _parseHoleCount(json),
+      supportedNines: _parseSupportedNines(json),
     );
   }
 
@@ -34,6 +33,7 @@ class GolfClubModel {
       'name': name,
       'address': address,
       'noOfHoles': noOfHoles,
+      'supportedNines': supportedNines,
     };
   }
 
@@ -43,6 +43,7 @@ class GolfClubModel {
     String? name,
     String? address,
     int? noOfHoles,
+    List<String>? supportedNines,
   }) {
     return GolfClubModel(
       id: id ?? this.id,
@@ -50,6 +51,31 @@ class GolfClubModel {
       name: name ?? this.name,
       address: address ?? this.address,
       noOfHoles: noOfHoles ?? this.noOfHoles,
+      supportedNines: supportedNines ?? this.supportedNines,
     );
+  }
+
+  static int _parseHoleCount(Map<String, dynamic> json) {
+    final dynamic value =
+        json['noOfHoles'] ?? json['no_of_holes'] ?? json['holes'];
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static List<String> _parseSupportedNines(Map<String, dynamic> json) {
+    final dynamic value = json['supportedNines'] ?? json['supported_nines'];
+
+    if (value is List) {
+      return value
+          .map((item) => item?.toString() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+
+    return const <String>[];
   }
 }

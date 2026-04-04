@@ -29,7 +29,7 @@ class BookingSubmissionDetailView extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: ElevatedButton(
-                onPressed: state.canContinue
+                onPressed: state.canContinue && !state.isSubmitting
                     ? () => viewModel.performAction(const OnContinueClick())
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -45,7 +45,16 @@ class BookingSubmissionDetailView extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                child: Text('Continue • ${state.totalCostLabel}'),
+                child: state.isSubmitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text('Continue • ${state.totalCostLabel}'),
               ),
             ),
           ),
