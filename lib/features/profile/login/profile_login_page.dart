@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/register/method/profile_register_method_page.dart';
 
@@ -36,13 +35,9 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
         if (!mounted) {
           return;
         }
-        if (effect.role == UserRole.guest) {
-          SessionScope.of(context).logout();
-        } else {
-          SessionScope.of(
-            context,
-          ).login(username: effect.username, role: effect.role);
-        }
+        SessionScope.of(
+          context,
+        ).login(username: effect.username, role: effect.role);
         Navigator.of(context).maybePop();
       }
 
@@ -93,7 +88,7 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
                 _viewModel.onUserIntent(OnPhoneChanged(value)),
             onPasswordChanged: (value) =>
                 _viewModel.onUserIntent(OnPasswordChanged(value)),
-            onLoginClick: (role) => _viewModel.onUserIntent(OnLoginClick(role)),
+            onLoginClick: () => _viewModel.onUserIntent(const OnLoginClick()),
             onRegisterClick: () =>
                 _viewModel.onUserIntent(const OnRegisterClick()),
           ),

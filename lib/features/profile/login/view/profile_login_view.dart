@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 
 import '../viewmodel/profile_login_view_contract.dart';
@@ -25,7 +24,7 @@ class ProfileLoginView extends StatefulWidget {
   final ValueChanged<PhoneCountryCodeOption> onCountryCodeChanged;
   final ValueChanged<String> onPhoneChanged;
   final ValueChanged<String> onPasswordChanged;
-  final ValueChanged<UserRole> onLoginClick;
+  final VoidCallback onLoginClick;
   final VoidCallback onRegisterClick;
 
   @override
@@ -117,14 +116,14 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Test login roles',
+                    'Welcome back',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Pick any role below to test the profile flow. Guest keeps the current guest experience, while User and Admin switch the profile layout.',
+                    'Sign in to continue with your account.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.black54,
                     ),
@@ -164,36 +163,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                             onCountryCodeChanged: widget.onCountryCodeChanged,
                             onPhoneChanged: widget.onPhoneChanged,
                           )
-                        : Container(
-                            key: const ValueKey('email-coming-soon'),
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F7F7),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFE3E3E3),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Email login',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Coming soon. The phone-first path is the main login route in this proof of concept.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        : const SizedBox.shrink(key: ValueKey('email-empty')),
                   ),
                   if (isPhoneLogin) ...[
                     const SizedBox(height: 14),
@@ -233,9 +203,28 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     ),
                   ],
                   const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: widget.state.isSubmitting || !isPhoneLogin
+                          ? null
+                          : widget.onLoginClick,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const Text('Login'),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F8FF),
                       borderRadius: BorderRadius.circular(18),
@@ -253,14 +242,14 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'New here?',
+                                'Need an account?',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Try the phone-first registration proof of concept.',
+                                'Register to get started.',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.black54,
                                 ),
@@ -269,44 +258,12 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        FilledButton(
+                        TextButton(
                           onPressed: widget.onRegisterClick,
                           child: const Text('Register'),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 1.22,
-                    children: [
-                      _RoleButton(
-                        label: 'Guest',
-                        subtitle: 'Keep current guest flow',
-                        color: const Color(0xFFFF9F1C),
-                        icon: Icons.person_outline,
-                        onTap: () => widget.onLoginClick(UserRole.guest),
-                      ),
-                      _RoleButton(
-                        label: 'User',
-                        subtitle: 'Profile + logout',
-                        color: const Color(0xFF2F7BFF),
-                        icon: Icons.badge_outlined,
-                        onTap: () => widget.onLoginClick(UserRole.user),
-                      ),
-                      _RoleButton(
-                        label: 'Admin',
-                        subtitle: 'Account + dashboard',
-                        color: const Color(0xFF9C4DFF),
-                        icon: Icons.admin_panel_settings_outlined,
-                        onTap: () => widget.onLoginClick(UserRole.admin),
-                      ),
-                    ],
                   ),
                   if (widget.state.isSubmitting) ...[
                     const SizedBox(height: 18),
@@ -615,76 +572,6 @@ class _LoginCountryCodePickerButton extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleButton extends StatelessWidget {
-  const _RoleButton({
-    required this.label,
-    required this.subtitle,
-    required this.color,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final String subtitle;
-  final Color color;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.28)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
         ),
       ),
