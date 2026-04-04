@@ -1,5 +1,6 @@
 import '../enums/session/session_status.dart';
 import '../enums/session/user_role.dart';
+import 'session_visitor.dart';
 
 class SessionState {
   const SessionState({
@@ -13,6 +14,7 @@ class SessionState {
     this.profileEmail,
     this.profilePhoneNumber,
     this.profileAvatarIndex,
+    this.visitor,
   });
 
   final SessionStatus status;
@@ -25,6 +27,7 @@ class SessionState {
   final String? profileEmail;
   final String? profilePhoneNumber;
   final int? profileAvatarIndex;
+  final SessionVisitor? visitor;
 
   String get effectiveUsername {
     if (status == SessionStatus.loggedIn && profileFullName != null) {
@@ -54,9 +57,11 @@ class SessionState {
     String? profileEmail,
     String? profilePhoneNumber,
     int? profileAvatarIndex,
+    SessionVisitor? visitor,
     bool clearAuthenticatedUsername = false,
     bool clearAuthenticatedUserRole = false,
     bool clearProfileDetails = false,
+    bool clearVisitor = false,
   }) {
     return SessionState(
       status: status ?? this.status,
@@ -85,7 +90,77 @@ class SessionState {
       profileAvatarIndex: clearProfileDetails
           ? null
           : (profileAvatarIndex ?? this.profileAvatarIndex),
+      visitor: clearVisitor ? null : (visitor ?? this.visitor),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'status': status.name,
+      'deviceId': deviceId,
+      'authenticatedUsername': authenticatedUsername,
+      'authenticatedUserRole': authenticatedUserRole?.name,
+      'profileFullName': profileFullName,
+      'profileNickname': profileNickname,
+      'profileOccupation': profileOccupation,
+      'profileEmail': profileEmail,
+      'profilePhoneNumber': profilePhoneNumber,
+      'profileAvatarIndex': profileAvatarIndex,
+      'visitor': visitor?.toJson(),
+    };
+  }
+
+  factory SessionState.fromJson(Map<String, dynamic> json) {
+    return SessionState(
+      status: _sessionStatusFromName(json['status'] as String?),
+      deviceId: json['deviceId'] as String? ?? SessionState.initial.deviceId,
+      authenticatedUsername: json['authenticatedUsername'] as String?,
+      authenticatedUserRole: _userRoleFromName(
+        json['authenticatedUserRole'] as String?,
+      ),
+      profileFullName: json['profileFullName'] as String?,
+      profileNickname: json['profileNickname'] as String?,
+      profileOccupation: json['profileOccupation'] as String?,
+      profileEmail: json['profileEmail'] as String?,
+      profilePhoneNumber: json['profilePhoneNumber'] as String?,
+      profileAvatarIndex: json['profileAvatarIndex'] as int?,
+      visitor: _visitorFromJson(json['visitor']),
+    );
+  }
+
+  static SessionStatus _sessionStatusFromName(String? name) {
+    if (name == null || name.isEmpty) {
+      return SessionStatus.loggedOut;
+    }
+
+    for (final status in SessionStatus.values) {
+      if (status.name == name) {
+        return status;
+      }
+    }
+
+    return SessionStatus.loggedOut;
+  }
+
+  static UserRole? _userRoleFromName(String? name) {
+    if (name == null || name.isEmpty) {
+      return null;
+    }
+
+    for (final role in UserRole.values) {
+      if (role.name == name) {
+        return role;
+      }
+    }
+
+    return null;
+  }
+
+  static SessionVisitor? _visitorFromJson(dynamic value) {
+    if (value is Map) {
+      return SessionVisitor.fromJson(Map<String, dynamic>.from(value));
+    }
+    return null;
   }
 
   static const SessionState initial = SessionState(

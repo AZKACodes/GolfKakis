@@ -121,9 +121,7 @@ class OnPasswordChanged extends ProfileLoginUserIntent {
 }
 
 class OnLoginClick extends ProfileLoginUserIntent {
-  const OnLoginClick(this.role);
-
-  final UserRole role;
+  const OnLoginClick();
 }
 
 class OnBackClick extends ProfileLoginUserIntent {
