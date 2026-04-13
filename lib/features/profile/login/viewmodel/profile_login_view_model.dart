@@ -1,4 +1,5 @@
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
+import 'package:golf_kakis/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'profile_login_view_contract.dart';
@@ -11,27 +12,21 @@ class ProfileLoginViewModel
           ProfileLoginNavEffect
         >
     implements ProfileLoginViewContract {
+  ProfileLoginViewModel({ProfileApiService? profileApiService})
+    : _profileApiService = profileApiService ?? ProfileApiService();
+
+  final ProfileApiService _profileApiService;
+
   @override
   ProfileLoginViewState createInitialState() => ProfileLoginViewState.initial;
 
   @override
   Future<void> handleIntent(ProfileLoginUserIntent intent) async {
     switch (intent) {
-      case OnLoginMethodChanged():
-        emitViewState(
-          (state) => state.copyWith(
-            loginMethod: intent.value,
-            infoMessage: intent.value == LoginMethod.email
-                ? 'Email login is coming soon. Use phone to continue for now.'
-                : null,
-            clearErrorMessage: true,
-            clearInfoMessage: intent.value == LoginMethod.phone,
-          ),
-        );
-      case OnEmailChanged():
+      case OnNameChanged():
         emitViewState(
           (state) =>
-              state.copyWith(email: intent.value, clearErrorMessage: true),
+              state.copyWith(name: intent.value, clearErrorMessage: true),
         );
       case OnCountryCodeChanged():
         emitViewState(
@@ -47,13 +42,8 @@ class ProfileLoginViewModel
             clearErrorMessage: true,
           ),
         );
-      case OnPasswordChanged():
-        emitViewState(
-          (state) =>
-              state.copyWith(password: intent.value, clearErrorMessage: true),
-        );
       case OnLoginClick():
-        await _login();
+        await _requestOtp(visitorId: intent.visitorId);
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnRegisterClick():
@@ -61,24 +51,11 @@ class ProfileLoginViewModel
     }
   }
 
-  Future<void> _login() async {
-    if (currentState.loginMethod == LoginMethod.email) {
-      emitViewState(
-        (state) => state.copyWith(
-          infoMessage:
-              'Email login is coming soon. Use phone to continue for now.',
-          clearErrorMessage: true,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _requestOtp({required String visitorId}) async {
     if (!currentState.canSubmit) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage: currentState.loginMethod == LoginMethod.phone
-              ? 'Enter phone number and password to continue.'
-              : 'Enter email and password to continue.',
+          errorMessage: 'Enter your name and phone number to continue.',
           clearInfoMessage: true,
         ),
       );
@@ -93,16 +70,31 @@ class ProfileLoginViewModel
       ),
     );
 
-    await Future<void>.delayed(const Duration(milliseconds: 500));
+    try {
+      final response = await _profileApiService.onRequestOtp(
+        name: currentState.name.trim(),
+        phoneNumber: currentState.fullPhoneNumber.replaceAll(' ', ''),
+        visitorId: visitorId,
+      );
 
-    final loginIdentifier = currentState.loginIdentifier;
-    final username = loginIdentifier.contains('@')
-        ? loginIdentifier.split('@').first
-        : loginIdentifier;
-
-    emitViewState((state) => state.copyWith(isSubmitting: false));
-    sendNavEffect(
-      () => LoginSucceeded(username: username, role: UserRole.user),
-    );
+      emitViewState((state) => state.copyWith(isSubmitting: false));
+      sendNavEffect(() => RequestOtpSucceeded(response: response));
+    } on ApiException catch (error) {
+      emitViewState(
+        (state) => state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+          clearInfoMessage: true,
+        ),
+      );
+    } catch (_) {
+      emitViewState(
+        (state) => state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to request OTP right now.',
+          clearInfoMessage: true,
+        ),
+      );
+    }
   }
 }

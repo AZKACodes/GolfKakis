@@ -1,7 +1,6 @@
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-
-enum RegisterMethod { phone, email }
+import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileRegisterMethodViewContract {
   ProfileRegisterMethodViewState get viewState;
@@ -11,34 +10,31 @@ abstract class ProfileRegisterMethodViewContract {
 
 class ProfileRegisterMethodViewState extends ViewState {
   const ProfileRegisterMethodViewState({
-    required this.selectedMethod,
+    required this.name,
     required this.countryCode,
     required this.phoneNumber,
-    required this.password,
     required this.isSubmitting,
     this.errorMessage,
     this.infoMessage,
   }) : super();
 
   static const initial = ProfileRegisterMethodViewState(
-    selectedMethod: RegisterMethod.phone,
+    name: '',
     countryCode: PhoneUtil.defaultCountryCodeOption,
     phoneNumber: '',
-    password: '',
     isSubmitting: false,
   );
 
-  final RegisterMethod selectedMethod;
+  final String name;
   final PhoneCountryCodeOption countryCode;
   final String phoneNumber;
-  final String password;
   final bool isSubmitting;
   final String? errorMessage;
   final String? infoMessage;
 
   bool get canContinuePhone =>
+      name.trim().isNotEmpty &&
       phoneNumber.trim().isNotEmpty &&
-      password.trim().isNotEmpty &&
       !isSubmitting;
 
   String get fullPhoneNumber {
@@ -51,10 +47,9 @@ class ProfileRegisterMethodViewState extends ViewState {
   }
 
   ProfileRegisterMethodViewState copyWith({
-    RegisterMethod? selectedMethod,
+    String? name,
     PhoneCountryCodeOption? countryCode,
     String? phoneNumber,
-    String? password,
     bool? isSubmitting,
     String? errorMessage,
     String? infoMessage,
@@ -62,10 +57,9 @@ class ProfileRegisterMethodViewState extends ViewState {
     bool clearInfoMessage = false,
   }) {
     return ProfileRegisterMethodViewState(
-      selectedMethod: selectedMethod ?? this.selectedMethod,
+      name: name ?? this.name,
       countryCode: countryCode ?? this.countryCode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? null
@@ -79,20 +73,14 @@ sealed class ProfileRegisterMethodUserIntent extends UserIntent {
   const ProfileRegisterMethodUserIntent() : super();
 }
 
-class OnRegisterMethodSelected extends ProfileRegisterMethodUserIntent {
-  const OnRegisterMethodSelected(this.method);
-
-  final RegisterMethod method;
-}
-
-class OnRegisterPhoneChanged extends ProfileRegisterMethodUserIntent {
-  const OnRegisterPhoneChanged(this.value);
+class OnRegisterNameChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterNameChanged(this.value);
 
   final String value;
 }
 
-class OnRegisterPasswordChanged extends ProfileRegisterMethodUserIntent {
-  const OnRegisterPasswordChanged(this.value);
+class OnRegisterPhoneChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterPhoneChanged(this.value);
 
   final String value;
 }
@@ -104,7 +92,9 @@ class OnRegisterCountryCodeSelected extends ProfileRegisterMethodUserIntent {
 }
 
 class OnRegisterMethodContinueClick extends ProfileRegisterMethodUserIntent {
-  const OnRegisterMethodContinueClick();
+  const OnRegisterMethodContinueClick({required this.visitorId});
+
+  final String visitorId;
 }
 
 class OnRegisterMethodBackClick extends ProfileRegisterMethodUserIntent {
@@ -121,10 +111,10 @@ class RegisterMethodNavigateBack extends ProfileRegisterMethodNavEffect {
 
 class RegisterMethodNavigateToOtp extends ProfileRegisterMethodNavEffect {
   const RegisterMethodNavigateToOtp({
-    required this.phoneNumber,
+    required this.response,
     required this.password,
   });
 
-  final String phoneNumber;
+  final RequestOtpResponse response;
   final String password;
 }

@@ -8,19 +8,17 @@ const double _compactPhoneInputHeight = 54;
 class ProfileRegisterMethodView extends StatefulWidget {
   const ProfileRegisterMethodView({
     required this.state,
-    required this.onMethodSelected,
+    required this.onNameChanged,
     required this.onCountryCodeSelected,
     required this.onPhoneChanged,
-    required this.onPasswordChanged,
     required this.onContinueClick,
     super.key,
   });
 
   final ProfileRegisterMethodViewState state;
-  final ValueChanged<RegisterMethod> onMethodSelected;
+  final ValueChanged<String> onNameChanged;
   final ValueChanged<PhoneCountryCodeOption> onCountryCodeSelected;
   final ValueChanged<String> onPhoneChanged;
-  final ValueChanged<String> onPasswordChanged;
   final VoidCallback onContinueClick;
 
   @override
@@ -29,38 +27,37 @@ class ProfileRegisterMethodView extends StatefulWidget {
 }
 
 class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
+  late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(text: widget.state.name);
     _phoneController = TextEditingController(text: widget.state.phoneNumber);
-    _passwordController = TextEditingController(text: widget.state.password);
   }
 
   @override
   void didUpdateWidget(covariant ProfileRegisterMethodView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_nameController.text != widget.state.name) {
+      _nameController.text = widget.state.name;
+    }
     if (_phoneController.text != widget.state.phoneNumber) {
       _phoneController.text = widget.state.phoneNumber;
-    }
-    if (_passwordController.text != widget.state.password) {
-      _passwordController.text = widget.state.password;
     }
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isPhoneSelected = widget.state.selectedMethod == RegisterMethod.phone;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -71,9 +68,9 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
         ),
       ),
       child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Center(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: Container(
@@ -92,6 +89,24 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     Text(
                       'Create your account',
                       style: theme.textTheme.headlineSmall?.copyWith(
@@ -100,15 +115,10 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Phone registration is the main proof of concept for now. Email is parked as a future step.',
+                      'Phone registration is the main proof of concept for now.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.black54,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    _MethodTabs(
-                      selectedMethod: widget.state.selectedMethod,
-                      onMethodSelected: widget.onMethodSelected,
                     ),
                     const SizedBox(height: 16),
                     if (widget.state.infoMessage != null) ...[
@@ -129,95 +139,27 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                       ),
                       const SizedBox(height: 14),
                     ],
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: isPhoneSelected
-                          ? Column(
-                              key: const ValueKey('phone-form'),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _PhoneNumberInputRow(
-                                  selectedCountryCode: widget.state.countryCode,
-                                  controller: _phoneController,
-                                  onCountryCodeSelected:
-                                      widget.onCountryCodeSelected,
-                                  onPhoneChanged: widget.onPhoneChanged,
-                                ),
-                                const SizedBox(height: 14),
-                                TextField(
-                                  controller: _passwordController,
-                                  obscureText: true,
-                                  textInputAction: TextInputAction.done,
-                                  onChanged: widget.onPasswordChanged,
-                                  decoration: InputDecoration(
-                                    hintText: 'Password',
-                                    prefixIcon: const Icon(
-                                      Icons.lock_outline,
-                                      size: 20,
-                                    ),
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 16,
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFFF6F8FC),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5F8FF),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: const Color(0xFFD8E4FF),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'We will take you to a dummy OTP screen next so the whole registration path can be demoed.',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: const Color(0xFF34528D),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Container(
-                              key: const ValueKey('email-coming-soon'),
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF7F7F7),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFE3E3E3),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Email registration',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Coming soon. The phone-first path is the main registration route in this proof of concept.',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    TextField(
+                      controller: _nameController,
+                      textInputAction: TextInputAction.next,
+                      onChanged: widget.onNameChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Name',
+                        prefixIcon: const Icon(Icons.person_outline),
+                        filled: true,
+                        fillColor: const Color(0xFFF6F8FC),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _PhoneNumberInputRow(
+                      selectedCountryCode: widget.state.countryCode,
+                      controller: _phoneController,
+                      onCountryCodeSelected: widget.onCountryCodeSelected,
+                      onPhoneChanged: widget.onPhoneChanged,
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
@@ -226,11 +168,7 @@ class _ProfileRegisterMethodViewState extends State<ProfileRegisterMethodView> {
                         onPressed: widget.state.isSubmitting
                             ? null
                             : widget.onContinueClick,
-                        child: Text(
-                          isPhoneSelected
-                              ? 'Continue With Phone'
-                              : 'Email Coming Soon',
-                        ),
+                        child: const Text('Register'),
                       ),
                     ),
                     if (widget.state.isSubmitting) ...[
@@ -423,7 +361,7 @@ class _CountryCodePickerButton extends StatelessWidget {
                               ),
                               if (isSelected)
                                 const Icon(
-                                  Icons.check_circle_rounded,
+                                  Icons.check_circle,
                                   color: Color(0xFF0D7A3A),
                                 ),
                             ],
@@ -434,103 +372,6 @@ class _CountryCodePickerButton extends StatelessWidget {
                   },
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MethodTabs extends StatelessWidget {
-  const _MethodTabs({
-    required this.selectedMethod,
-    required this.onMethodSelected,
-  });
-
-  final RegisterMethod selectedMethod;
-  final ValueChanged<RegisterMethod> onMethodSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F5F8),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _MethodTabButton(
-              label: 'Phone',
-              isSelected: selectedMethod == RegisterMethod.phone,
-              onTap: () => onMethodSelected(RegisterMethod.phone),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _MethodTabButton(
-              label: 'Email',
-              badge: 'Coming soon',
-              isSelected: selectedMethod == RegisterMethod.email,
-              onTap: () => onMethodSelected(RegisterMethod.email),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MethodTabButton extends StatelessWidget {
-  const _MethodTabButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.badge,
-  });
-
-  final String label;
-  final String? badge;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? const Color(0xFFD7E4FF) : Colors.transparent,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? const Color(0xFF20458D) : Colors.black87,
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  badge!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                ),
-              ],
             ],
           ),
         ),
