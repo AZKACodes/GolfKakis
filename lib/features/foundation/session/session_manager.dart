@@ -25,6 +25,7 @@ class SessionManager extends ChangeNotifier {
   SessionState _state = SessionState.initial;
   SessionState get state => _state;
   String get deviceId => _state.deviceId;
+  bool get isLoggedIn => _state.isLoggedIn;
 
   bool _initialized = false;
   bool get isInitialized => _initialized;
@@ -54,6 +55,12 @@ class SessionManager extends ChangeNotifier {
   void login({
     required String username,
     required UserRole role,
+    String? accessToken,
+    String? authUserId,
+    String? authId,
+    bool? isPhoneVerified,
+    String? authCreatedAt,
+    String? authUpdatedAt,
     String? profileFullName,
     String? profileNickname,
     String? profileOccupation,
@@ -63,6 +70,12 @@ class SessionManager extends ChangeNotifier {
   }) {
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
+      accessToken: accessToken,
+      authUserId: authUserId,
+      authId: authId,
+      isPhoneVerified: isPhoneVerified,
+      authCreatedAt: authCreatedAt,
+      authUpdatedAt: authUpdatedAt,
       authenticatedUsername: username,
       authenticatedUserRole: role,
       profileFullName: profileFullName,
@@ -100,6 +113,7 @@ class SessionManager extends ChangeNotifier {
   void logout() {
     _state = _state.copyWith(
       status: SessionStatus.loggedOut,
+      clearAuthSession: true,
       clearAuthenticatedUsername: true,
       clearAuthenticatedUserRole: true,
       clearProfileDetails: true,

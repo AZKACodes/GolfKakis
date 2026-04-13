@@ -1,4 +1,3 @@
-import 'package:golf_kakis/features/foundation/enums/session/session_status.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
@@ -10,20 +9,58 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
   ProfileOverviewRepositoryImpl({
     ApiClient? apiClient,
     ProfileApiService? apiService,
-  });
+  }) : _apiService = apiService ?? ProfileApiService(apiClient: apiClient);
+
+  final ProfileApiService _apiService;
 
   @override
   Future<ProfileOverviewResult> onFetchUserProfile({
     required SessionState session,
   }) async {
+    if (session.isLoggedIn &&
+        session.accessToken != null &&
+        session.accessToken!.trim().isNotEmpty) {
+      try {
+        final user = await _apiService.onFetchUserDetails(
+          accessToken: session.accessToken!.trim(),
+        );
+        return ProfileOverviewResult(
+          profile: _buildAuthenticatedProfile(session, user),
+          isFallback: false,
+        );
+      } catch (_) {
+        // Fall back to session-backed profile below.
+      }
+    }
+
     return ProfileOverviewResult(
       profile: _buildFallbackProfile(session),
       isFallback: true,
     );
   }
 
+  UserProfileModel _buildAuthenticatedProfile(
+    SessionState session,
+    AuthUser user,
+  ) {
+    final role = session.effectiveUserRole;
+    return UserProfileModel(
+      userId: user.userId,
+      userSlug: user.userId,
+      displayName: user.name,
+      nickname: session.profileNickname ?? user.name.split(' ').first,
+      occupation: session.profileOccupation ?? 'Golfer',
+      email: session.profileEmail ?? '-',
+      phoneNumber: user.phoneNumber,
+      avatarIndex: session.profileAvatarIndex ?? 0,
+      role: role,
+      membershipLabel: _defaultMembershipLabel(role),
+      isLoggedIn: true,
+    );
+  }
+
   UserProfileModel _buildFallbackProfile(SessionState session) {
-    final isLoggedIn = session.status == SessionStatus.loggedIn;
+    final isLoggedIn = session.isLoggedIn;
     final role = session.effectiveUserRole;
     return UserProfileModel(
       userId: isLoggedIn ? 'USR-1001' : 'guest-${session.deviceId}',

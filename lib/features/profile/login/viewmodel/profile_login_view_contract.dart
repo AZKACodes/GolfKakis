@@ -1,8 +1,7 @@
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
-
-enum LoginMethod { email, phone }
+import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileLoginViewContract {
   ProfileLoginViewState get viewState;
@@ -12,37 +11,31 @@ abstract class ProfileLoginViewContract {
 
 class ProfileLoginViewState extends ViewState {
   const ProfileLoginViewState({
-    required this.loginMethod,
-    required this.email,
+    required this.name,
     required this.countryCode,
     required this.phoneNumber,
-    required this.password,
     required this.isSubmitting,
     this.errorMessage,
     this.infoMessage,
   }) : super();
 
   static const initial = ProfileLoginViewState(
-    loginMethod: LoginMethod.phone,
-    email: '',
+    name: '',
     countryCode: PhoneUtil.defaultCountryCodeOption,
     phoneNumber: '',
-    password: '',
     isSubmitting: false,
   );
 
-  final LoginMethod loginMethod;
-  final String email;
+  final String name;
   final PhoneCountryCodeOption countryCode;
   final String phoneNumber;
-  final String password;
   final bool isSubmitting;
   final String? errorMessage;
   final String? infoMessage;
 
   bool get canSubmit =>
-      loginIdentifier.trim().isNotEmpty &&
-      password.trim().isNotEmpty &&
+      name.trim().isNotEmpty &&
+      phoneNumber.trim().isNotEmpty &&
       !isSubmitting;
 
   String get fullPhoneNumber {
@@ -54,17 +47,10 @@ class ProfileLoginViewState extends ViewState {
     return '${countryCode.dialCode} $normalized';
   }
 
-  String get loginIdentifier => switch (loginMethod) {
-    LoginMethod.email => email.trim(),
-    LoginMethod.phone => fullPhoneNumber.trim(),
-  };
-
   ProfileLoginViewState copyWith({
-    LoginMethod? loginMethod,
-    String? email,
+    String? name,
     PhoneCountryCodeOption? countryCode,
     String? phoneNumber,
-    String? password,
     bool? isSubmitting,
     String? errorMessage,
     String? infoMessage,
@@ -72,11 +58,9 @@ class ProfileLoginViewState extends ViewState {
     bool clearInfoMessage = false,
   }) {
     return ProfileLoginViewState(
-      loginMethod: loginMethod ?? this.loginMethod,
-      email: email ?? this.email,
+      name: name ?? this.name,
       countryCode: countryCode ?? this.countryCode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? null
@@ -90,14 +74,8 @@ sealed class ProfileLoginUserIntent extends UserIntent {
   const ProfileLoginUserIntent() : super();
 }
 
-class OnLoginMethodChanged extends ProfileLoginUserIntent {
-  const OnLoginMethodChanged(this.value);
-
-  final LoginMethod value;
-}
-
-class OnEmailChanged extends ProfileLoginUserIntent {
-  const OnEmailChanged(this.value);
+class OnNameChanged extends ProfileLoginUserIntent {
+  const OnNameChanged(this.value);
 
   final String value;
 }
@@ -114,14 +92,10 @@ class OnPhoneChanged extends ProfileLoginUserIntent {
   final String value;
 }
 
-class OnPasswordChanged extends ProfileLoginUserIntent {
-  const OnPasswordChanged(this.value);
-
-  final String value;
-}
-
 class OnLoginClick extends ProfileLoginUserIntent {
-  const OnLoginClick();
+  const OnLoginClick({required this.visitorId});
+
+  final String visitorId;
 }
 
 class OnBackClick extends ProfileLoginUserIntent {
@@ -145,6 +119,12 @@ class LoginSucceeded extends ProfileLoginNavEffect {
 
   final String username;
   final UserRole role;
+}
+
+class RequestOtpSucceeded extends ProfileLoginNavEffect {
+  const RequestOtpSucceeded({required this.response});
+
+  final RequestOtpResponse response;
 }
 
 class RegisterRequested extends ProfileLoginNavEffect {

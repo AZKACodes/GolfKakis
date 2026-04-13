@@ -1,3 +1,5 @@
+import 'package:golf_kakis/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'profile_register_method_view_contract.dart';
@@ -10,6 +12,11 @@ class ProfileRegisterMethodViewModel
           ProfileRegisterMethodNavEffect
         >
     implements ProfileRegisterMethodViewContract {
+  ProfileRegisterMethodViewModel({ProfileApiService? profileApiService})
+    : _profileApiService = profileApiService ?? ProfileApiService();
+
+  final ProfileApiService _profileApiService;
+
   @override
   ProfileRegisterMethodViewState createInitialState() {
     return ProfileRegisterMethodViewState.initial;
@@ -18,29 +25,18 @@ class ProfileRegisterMethodViewModel
   @override
   Future<void> handleIntent(ProfileRegisterMethodUserIntent intent) async {
     switch (intent) {
-      case OnRegisterMethodSelected():
+      case OnRegisterNameChanged():
         emitViewState(
           (state) => state.copyWith(
-            selectedMethod: intent.method,
-            infoMessage: intent.method == RegisterMethod.email
-                ? 'Email registration is coming soon. Use phone to continue for now.'
-                : null,
+            name: intent.value,
             clearErrorMessage: true,
-            clearInfoMessage: intent.method == RegisterMethod.phone,
+            clearInfoMessage: true,
           ),
         );
       case OnRegisterPhoneChanged():
         emitViewState(
           (state) => state.copyWith(
             phoneNumber: intent.value,
-            clearErrorMessage: true,
-            clearInfoMessage: true,
-          ),
-        );
-      case OnRegisterPasswordChanged():
-        emitViewState(
-          (state) => state.copyWith(
-            password: intent.value,
             clearErrorMessage: true,
             clearInfoMessage: true,
           ),
@@ -54,28 +50,17 @@ class ProfileRegisterMethodViewModel
           ),
         );
       case OnRegisterMethodContinueClick():
-        await _continueRegistration();
+        await _continueRegistration(visitorId: intent.visitorId);
       case OnRegisterMethodBackClick():
         sendNavEffect(() => const RegisterMethodNavigateBack());
     }
   }
 
-  Future<void> _continueRegistration() async {
-    if (currentState.selectedMethod == RegisterMethod.email) {
-      emitViewState(
-        (state) => state.copyWith(
-          infoMessage:
-              'Email registration is coming soon. Use phone to continue for now.',
-          clearErrorMessage: true,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _continueRegistration({required String visitorId}) async {
     if (!currentState.canContinuePhone) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage: 'Enter your phone number and password to continue.',
+          errorMessage: 'Enter your name and phone number to continue.',
           clearInfoMessage: true,
         ),
       );
@@ -89,13 +74,37 @@ class ProfileRegisterMethodViewModel
         clearInfoMessage: true,
       ),
     );
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    emitViewState((state) => state.copyWith(isSubmitting: false));
-    sendNavEffect(
-      () => RegisterMethodNavigateToOtp(
-        phoneNumber: currentState.fullPhoneNumber,
-        password: currentState.password.trim(),
-      ),
-    );
+
+    try {
+      final response = await _profileApiService.onRequestOtp(
+        name: currentState.name.trim(),
+        phoneNumber: currentState.fullPhoneNumber.replaceAll(' ', ''),
+        visitorId: visitorId,
+      );
+
+      emitViewState((state) => state.copyWith(isSubmitting: false));
+      sendNavEffect(
+        () => RegisterMethodNavigateToOtp(
+          response: response,
+          password: '',
+        ),
+      );
+    } on ApiException catch (error) {
+      emitViewState(
+        (state) => state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+          clearInfoMessage: true,
+        ),
+      );
+    } catch (_) {
+      emitViewState(
+        (state) => state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to request OTP right now.',
+          clearInfoMessage: true,
+        ),
+      );
+    }
   }
 }

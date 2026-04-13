@@ -8,22 +8,18 @@ const double _compactLoginPhoneInputHeight = 54;
 class ProfileLoginView extends StatefulWidget {
   const ProfileLoginView({
     required this.state,
-    required this.onLoginMethodChanged,
-    required this.onEmailChanged,
+    required this.onNameChanged,
     required this.onCountryCodeChanged,
     required this.onPhoneChanged,
-    required this.onPasswordChanged,
     required this.onLoginClick,
     required this.onRegisterClick,
     super.key,
   });
 
   final ProfileLoginViewState state;
-  final ValueChanged<LoginMethod> onLoginMethodChanged;
-  final ValueChanged<String> onEmailChanged;
+  final ValueChanged<String> onNameChanged;
   final ValueChanged<PhoneCountryCodeOption> onCountryCodeChanged;
   final ValueChanged<String> onPhoneChanged;
-  final ValueChanged<String> onPasswordChanged;
   final VoidCallback onLoginClick;
   final VoidCallback onRegisterClick;
 
@@ -32,44 +28,37 @@ class ProfileLoginView extends StatefulWidget {
 }
 
 class _ProfileLoginViewState extends State<ProfileLoginView> {
-  late final TextEditingController _emailController;
+  late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController(text: widget.state.email);
+    _nameController = TextEditingController(text: widget.state.name);
     _phoneController = TextEditingController(text: widget.state.phoneNumber);
-    _passwordController = TextEditingController(text: widget.state.password);
   }
 
   @override
   void didUpdateWidget(covariant ProfileLoginView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_emailController.text != widget.state.email) {
-      _emailController.text = widget.state.email;
+    if (_nameController.text != widget.state.name) {
+      _nameController.text = widget.state.name;
     }
     if (_phoneController.text != widget.state.phoneNumber) {
       _phoneController.text = widget.state.phoneNumber;
-    }
-    if (_passwordController.text != widget.state.password) {
-      _passwordController.text = widget.state.password;
     }
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _nameController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isPhoneLogin = widget.state.loginMethod == LoginMethod.phone;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -97,25 +86,28 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(
-                      Icons.person_outline,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
+                    const SizedBox(height: 18),
+                    Text(
                     'Welcome back',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -127,11 +119,6 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.black54,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  _LoginMethodTabs(
-                    selectedMethod: widget.state.loginMethod,
-                    onChanged: widget.onLoginMethodChanged,
                   ),
                   const SizedBox(height: 14),
                   if (widget.state.infoMessage != null) ...[
@@ -153,36 +140,28 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: isPhoneLogin
-                        ? _LoginPhoneInputRow(
-                            key: const ValueKey('phone-login'),
-                            selectedCountryCode: widget.state.countryCode,
-                            phoneController: _phoneController,
-                            onCountryCodeChanged: widget.onCountryCodeChanged,
-                            onPhoneChanged: widget.onPhoneChanged,
-                          )
-                        : const SizedBox.shrink(key: ValueKey('email-empty')),
-                  ),
-                  if (isPhoneLogin) ...[
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      onChanged: widget.onPasswordChanged,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        filled: true,
-                        fillColor: const Color(0xFFF6F8FC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
+                  TextField(
+                    controller: _nameController,
+                    textInputAction: TextInputAction.next,
+                    onChanged: widget.onNameChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Name',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F8FC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 14),
+                  _LoginPhoneInputRow(
+                    selectedCountryCode: widget.state.countryCode,
+                    phoneController: _phoneController,
+                    onCountryCodeChanged: widget.onCountryCodeChanged,
+                    onPhoneChanged: widget.onPhoneChanged,
+                  ),
                   if (widget.state.errorMessage != null) ...[
                     const SizedBox(height: 14),
                     Container(
@@ -206,7 +185,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: widget.state.isSubmitting || !isPhoneLogin
+                      onPressed: widget.state.isSubmitting
                           ? null
                           : widget.onLoginClick,
                       style: FilledButton.styleFrom(
@@ -215,7 +194,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
-                      child: const Text('Login'),
+                      child: const Text('Request OTP'),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -279,119 +258,12 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
   }
 }
 
-class _LoginMethodTabs extends StatelessWidget {
-  const _LoginMethodTabs({
-    required this.selectedMethod,
-    required this.onChanged,
-  });
-
-  final LoginMethod selectedMethod;
-  final ValueChanged<LoginMethod> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F5F8),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _LoginMethodTabButton(
-              label: 'Email',
-              badge: 'Coming soon',
-              isSelected: selectedMethod == LoginMethod.email,
-              onTap: () => onChanged(LoginMethod.email),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _LoginMethodTabButton(
-              label: 'Phone',
-              isSelected: selectedMethod == LoginMethod.phone,
-              onTap: () => onChanged(LoginMethod.phone),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LoginMethodTabButton extends StatelessWidget {
-  const _LoginMethodTabButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.badge,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: isSelected
-                ? const [
-                    BoxShadow(
-                      color: Color(0x12224A8B),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? const Color(0xFF1A2A44) : Colors.black54,
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  badge!,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _LoginPhoneInputRow extends StatelessWidget {
   const _LoginPhoneInputRow({
     required this.selectedCountryCode,
     required this.phoneController,
     required this.onCountryCodeChanged,
     required this.onPhoneChanged,
-    super.key,
   });
 
   final PhoneCountryCodeOption selectedCountryCode;
