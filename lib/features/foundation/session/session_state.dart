@@ -6,6 +6,12 @@ class SessionState {
   const SessionState({
     required this.status,
     required this.deviceId,
+    this.accessToken,
+    this.authUserId,
+    this.authId,
+    this.isPhoneVerified,
+    this.authCreatedAt,
+    this.authUpdatedAt,
     this.authenticatedUsername,
     this.authenticatedUserRole,
     this.profileFullName,
@@ -19,6 +25,12 @@ class SessionState {
 
   final SessionStatus status;
   final String deviceId;
+  final String? accessToken;
+  final String? authUserId;
+  final String? authId;
+  final bool? isPhoneVerified;
+  final String? authCreatedAt;
+  final String? authUpdatedAt;
   final String? authenticatedUsername;
   final UserRole? authenticatedUserRole;
   final String? profileFullName;
@@ -28,6 +40,8 @@ class SessionState {
   final String? profilePhoneNumber;
   final int? profileAvatarIndex;
   final SessionVisitor? visitor;
+
+  bool get isLoggedIn => status == SessionStatus.loggedIn;
 
   String get effectiveUsername {
     if (status == SessionStatus.loggedIn && profileFullName != null) {
@@ -49,6 +63,12 @@ class SessionState {
   SessionState copyWith({
     SessionStatus? status,
     String? deviceId,
+    String? accessToken,
+    String? authUserId,
+    String? authId,
+    bool? isPhoneVerified,
+    String? authCreatedAt,
+    String? authUpdatedAt,
     String? authenticatedUsername,
     UserRole? authenticatedUserRole,
     String? profileFullName,
@@ -60,12 +80,25 @@ class SessionState {
     SessionVisitor? visitor,
     bool clearAuthenticatedUsername = false,
     bool clearAuthenticatedUserRole = false,
+    bool clearAuthSession = false,
     bool clearProfileDetails = false,
     bool clearVisitor = false,
   }) {
     return SessionState(
       status: status ?? this.status,
       deviceId: deviceId ?? this.deviceId,
+      accessToken: clearAuthSession ? null : (accessToken ?? this.accessToken),
+      authUserId: clearAuthSession ? null : (authUserId ?? this.authUserId),
+      authId: clearAuthSession ? null : (authId ?? this.authId),
+      isPhoneVerified: clearAuthSession
+          ? null
+          : (isPhoneVerified ?? this.isPhoneVerified),
+      authCreatedAt: clearAuthSession
+          ? null
+          : (authCreatedAt ?? this.authCreatedAt),
+      authUpdatedAt: clearAuthSession
+          ? null
+          : (authUpdatedAt ?? this.authUpdatedAt),
       authenticatedUsername: clearAuthenticatedUsername
           ? null
           : (authenticatedUsername ?? this.authenticatedUsername),
@@ -98,6 +131,12 @@ class SessionState {
     return <String, dynamic>{
       'status': status.name,
       'deviceId': deviceId,
+      'accessToken': accessToken,
+      'authUserId': authUserId,
+      'authId': authId,
+      'isPhoneVerified': isPhoneVerified,
+      'authCreatedAt': authCreatedAt,
+      'authUpdatedAt': authUpdatedAt,
       'authenticatedUsername': authenticatedUsername,
       'authenticatedUserRole': authenticatedUserRole?.name,
       'profileFullName': profileFullName,
@@ -114,6 +153,12 @@ class SessionState {
     return SessionState(
       status: _sessionStatusFromName(json['status'] as String?),
       deviceId: json['deviceId'] as String? ?? SessionState.initial.deviceId,
+      accessToken: json['accessToken'] as String?,
+      authUserId: json['authUserId'] as String?,
+      authId: json['authId'] as String?,
+      isPhoneVerified: json['isPhoneVerified'] as bool?,
+      authCreatedAt: json['authCreatedAt'] as String?,
+      authUpdatedAt: json['authUpdatedAt'] as String?,
       authenticatedUsername: json['authenticatedUsername'] as String?,
       authenticatedUserRole: _userRoleFromName(
         json['authenticatedUserRole'] as String?,

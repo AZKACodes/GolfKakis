@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileRegisterOtpViewContract {
   ProfileRegisterOtpViewState get viewState;
@@ -17,7 +18,7 @@ class ProfileRegisterOtpViewState extends ViewState {
   factory ProfileRegisterOtpViewState.initial({required String phoneNumber}) {
     return ProfileRegisterOtpViewState(
       phoneNumber: phoneNumber,
-      otpDigits: const ['', '', '', ''],
+      otpDigits: const ['', '', '', '', '', ''],
       isSubmitting: false,
     );
   }
@@ -27,7 +28,8 @@ class ProfileRegisterOtpViewState extends ViewState {
   final bool isSubmitting;
   final String? errorMessage;
 
-  bool get canContinue => otpDigits.every((digit) => digit.trim().isNotEmpty);
+  bool get canContinue =>
+      otpDigits.every((digit) => digit.trim().isNotEmpty) && !isSubmitting;
   String get otpValue => otpDigits.join();
 
   ProfileRegisterOtpViewState copyWith({
@@ -60,7 +62,9 @@ class OnRegisterOtpDigitChanged extends ProfileRegisterOtpUserIntent {
 }
 
 class OnRegisterOtpContinueClick extends ProfileRegisterOtpUserIntent {
-  const OnRegisterOtpContinueClick();
+  const OnRegisterOtpContinueClick({required this.visitorId});
+
+  final String visitorId;
 }
 
 class OnRegisterOtpBackClick extends ProfileRegisterOtpUserIntent {
@@ -77,12 +81,12 @@ class RegisterOtpNavigateBack extends ProfileRegisterOtpNavEffect {
 
 class RegisterOtpNavigateToAbout extends ProfileRegisterOtpNavEffect {
   const RegisterOtpNavigateToAbout({
-    required this.phoneNumber,
+    required this.response,
     required this.password,
     required this.requiresOccupation,
   });
 
-  final String phoneNumber;
+  final VerifyOtpResponse response;
   final String password;
   final bool requiresOccupation;
 }

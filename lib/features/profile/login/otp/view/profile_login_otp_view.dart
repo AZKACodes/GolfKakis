@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../viewmodel/profile_register_otp_view_contract.dart';
+import '../viewmodel/profile_login_otp_view_contract.dart';
 
-class ProfileRegisterOtpView extends StatefulWidget {
-  const ProfileRegisterOtpView({
+class ProfileLoginOtpView extends StatefulWidget {
+  const ProfileLoginOtpView({
     required this.state,
     required this.onOtpChanged,
-    required this.onContinueClick,
+    required this.onVerifyClick,
     super.key,
   });
 
-  final ProfileRegisterOtpViewState state;
+  final ProfileLoginOtpViewState state;
   final void Function(int index, String value) onOtpChanged;
-  final VoidCallback onContinueClick;
+  final VoidCallback onVerifyClick;
 
   @override
-  State<ProfileRegisterOtpView> createState() => _ProfileRegisterOtpViewState();
+  State<ProfileLoginOtpView> createState() => _ProfileLoginOtpViewState();
 }
 
-class _ProfileRegisterOtpViewState extends State<ProfileRegisterOtpView> {
+class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
@@ -33,7 +33,7 @@ class _ProfileRegisterOtpViewState extends State<ProfileRegisterOtpView> {
   }
 
   @override
-  void didUpdateWidget(covariant ProfileRegisterOtpView oldWidget) {
+  void didUpdateWidget(covariant ProfileLoginOtpView oldWidget) {
     super.didUpdateWidget(oldWidget);
     for (var i = 0; i < _controllers.length; i++) {
       if (_controllers[i].text != widget.state.otpDigits[i]) {
@@ -95,7 +95,7 @@ class _ProfileRegisterOtpViewState extends State<ProfileRegisterOtpView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Verify your phone',
+                      'Enter verification code',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -163,8 +163,8 @@ class _ProfileRegisterOtpViewState extends State<ProfileRegisterOtpView> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: widget.state.canContinue
-                            ? widget.onContinueClick
+                        onPressed: widget.state.canVerify
+                            ? widget.onVerifyClick
                             : null,
                         child: const Text('Verify OTP'),
                       ),

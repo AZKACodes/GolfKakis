@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/register/method/view/profile_register_method_view.dart';
 import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_register_method_view_contract.dart';
 import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_register_method_view_model.dart';
@@ -24,7 +25,7 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileRegisterMethodViewModel();
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
+    _navEffectSubscription = _viewModel.navEffects.listen((effect) async {
       if (effect is RegisterMethodNavigateBack) {
         if (!mounted) {
           return;
@@ -40,8 +41,12 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: _registerOtpRouteName),
             builder: (_) => ProfileRegisterOtpPage(
-              phoneNumber: effect.phoneNumber,
+              name: effect.response.name,
+              phoneNumber: effect.response.normalizedPhoneNumber.isNotEmpty
+                  ? effect.response.normalizedPhoneNumber
+                  : effect.response.phoneNumber,
               password: effect.password,
+              requestMessage: effect.response.message,
               requiresOccupation: widget.requiresOccupation,
             ),
           ),
@@ -73,16 +78,17 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
           ),
           body: ProfileRegisterMethodView(
             state: _viewModel.viewState,
-            onMethodSelected: (method) =>
-                _viewModel.onUserIntent(OnRegisterMethodSelected(method)),
+            onNameChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterNameChanged(value)),
             onCountryCodeSelected: (value) =>
                 _viewModel.onUserIntent(OnRegisterCountryCodeSelected(value)),
             onPhoneChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterPhoneChanged(value)),
-            onPasswordChanged: (value) =>
-                _viewModel.onUserIntent(OnRegisterPasswordChanged(value)),
-            onContinueClick: () =>
-                _viewModel.onUserIntent(const OnRegisterMethodContinueClick()),
+            onContinueClick: () => _viewModel.onUserIntent(
+              OnRegisterMethodContinueClick(
+                visitorId: SessionScope.of(context).deviceId,
+              ),
+            ),
           ),
         );
       },
