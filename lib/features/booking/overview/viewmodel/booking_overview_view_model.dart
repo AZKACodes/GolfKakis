@@ -10,6 +10,7 @@ class BookingOverviewViewModel extends ChangeNotifier
     implements BookingOverviewViewContract {
   static const BookingModel _upcomingBooking = BookingModel(
     bookingId: 'BK-10431',
+    bookingSlug: 'bk-10431-kinrara-golf-club',
     courseName: 'Kinrara Golf Club',
     dateLabel: 'Fri, Mar 6',
     timeLabel: '07:30 AM',
@@ -36,6 +37,7 @@ class BookingOverviewViewModel extends ChangeNotifier
 
   static const BookingModel _recentRoundOne = BookingModel(
     bookingId: 'BK-10307',
+    bookingSlug: 'bk-10307-saujana-golf-country-club',
     courseName: 'Saujana G&CC',
     dateLabel: 'Tue, Feb 25',
     timeLabel: '08:00 AM',
@@ -66,6 +68,7 @@ class BookingOverviewViewModel extends ChangeNotifier
 
   static const BookingModel _recentRoundTwo = BookingModel(
     bookingId: 'BK-10321',
+    bookingSlug: 'bk-10321-kota-permai-golf-country-club',
     courseName: 'Kota Permai',
     dateLabel: 'Sat, Mar 1',
     timeLabel: '07:20 AM',
