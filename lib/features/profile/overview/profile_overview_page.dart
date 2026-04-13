@@ -41,6 +41,7 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
         }
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
+            settings: const RouteSettings(name: _profileLoginRouteName),
             builder: (_) => const ProfileLoginPage(),
             fullscreenDialog: true,
           ),
@@ -97,3 +98,5 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
     );
   }
 }
+
+const String _profileLoginRouteName = 'profile_login';

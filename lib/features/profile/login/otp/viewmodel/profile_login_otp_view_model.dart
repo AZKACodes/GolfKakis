@@ -2,43 +2,40 @@ import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
-import 'profile_register_otp_view_contract.dart';
+import 'profile_login_otp_view_contract.dart';
 
-class ProfileRegisterOtpViewModel
+class ProfileLoginOtpViewModel
     extends
         MviViewModel<
-          ProfileRegisterOtpUserIntent,
-          ProfileRegisterOtpViewState,
-          ProfileRegisterOtpNavEffect
+          ProfileLoginOtpUserIntent,
+          ProfileLoginOtpViewState,
+          ProfileLoginOtpNavEffect
         >
-    implements ProfileRegisterOtpViewContract {
-  ProfileRegisterOtpViewModel({
+    implements ProfileLoginOtpViewContract {
+  ProfileLoginOtpViewModel({
     required String name,
     required String phoneNumber,
-    required String password,
-    bool requiresOccupation = true,
     ProfileApiService? profileApiService,
   }) : _name = name,
        _phoneNumber = phoneNumber,
-       _password = password,
-       _requiresOccupation = requiresOccupation,
        _profileApiService = profileApiService ?? ProfileApiService();
 
   final String _name;
   final String _phoneNumber;
-  final String _password;
-  final bool _requiresOccupation;
   final ProfileApiService _profileApiService;
 
   @override
-  ProfileRegisterOtpViewState createInitialState() {
-    return ProfileRegisterOtpViewState.initial(phoneNumber: _phoneNumber);
+  ProfileLoginOtpViewState createInitialState() {
+    return ProfileLoginOtpViewState.initial(
+      name: _name,
+      phoneNumber: _phoneNumber,
+    );
   }
 
   @override
-  Future<void> handleIntent(ProfileRegisterOtpUserIntent intent) async {
+  Future<void> handleIntent(ProfileLoginOtpUserIntent intent) async {
     switch (intent) {
-      case OnRegisterOtpDigitChanged():
+      case OnLoginOtpDigitChanged():
         final sanitized = intent.value.replaceAll(RegExp(r'[^0-9]'), '');
         final nextDigits = List<String>.from(currentState.otpDigits);
         nextDigits[intent.index] = sanitized.isEmpty ? '' : sanitized[0];
@@ -46,20 +43,15 @@ class ProfileRegisterOtpViewModel
           (state) =>
               state.copyWith(otpDigits: nextDigits, clearErrorMessage: true),
         );
-      case OnRegisterOtpContinueClick():
-        await _continueFlow(visitorId: intent.visitorId);
-      case OnRegisterOtpBackClick():
-        sendNavEffect(() => const RegisterOtpNavigateBack());
+      case OnLoginOtpVerifyClick():
+        await _verifyOtp(visitorId: intent.visitorId);
+      case OnLoginOtpBackClick():
+        sendNavEffect(() => const LoginOtpNavigateBack());
     }
   }
 
-  Future<void> _continueFlow({required String visitorId}) async {
-    if (!currentState.canContinue) {
-      emitViewState(
-        (state) => state.copyWith(
-          errorMessage: 'Enter the 6-digit OTP to continue the demo flow.',
-        ),
-      );
+  Future<void> _verifyOtp({required String visitorId}) async {
+    if (!currentState.canVerify) {
       return;
     }
 
@@ -68,20 +60,14 @@ class ProfileRegisterOtpViewModel
     );
     try {
       final response = await _profileApiService.onVerifyOtp(
-        name: _name.trim(),
+        name: currentState.name.trim(),
         phoneNumber: currentState.phoneNumber.trim(),
         otp: currentState.otpDigits.join(),
         visitorId: visitorId,
       );
 
       emitViewState((state) => state.copyWith(isSubmitting: false));
-      sendNavEffect(
-        () => RegisterOtpNavigateToAbout(
-          response: response,
-          password: _password,
-          requiresOccupation: _requiresOccupation,
-        ),
-      );
+      sendNavEffect(() => LoginOtpVerified(response: response));
     } on ApiException catch (error) {
       emitViewState(
         (state) => state.copyWith(
