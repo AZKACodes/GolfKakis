@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/activity/booking/list/activity_booking_list_page.dart';
+import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/home/golf_club_list/home_golf_club_list_page.dart';
 
@@ -25,9 +25,7 @@ class HomeOverviewPage extends StatelessWidget {
       },
       onMyTeeTimesTap: () {
         Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const ActivityBookingListPage(),
-          ),
+          MaterialPageRoute<void>(builder: (_) => const BookingListPage()),
         );
       },
     );

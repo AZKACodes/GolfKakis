@@ -5,6 +5,7 @@ import 'booking_submission_player_model.dart';
 class BookingModel {
   const BookingModel({
     required this.bookingId,
+    this.bookingSlug,
     required this.courseName,
     required this.dateLabel,
     required this.timeLabel,
@@ -22,6 +23,7 @@ class BookingModel {
   });
 
   final String bookingId;
+  final String? bookingSlug;
   final String courseName;
   final String dateLabel;
   final String timeLabel;
@@ -43,6 +45,7 @@ class BookingModel {
 
   BookingModel copyWith({
     String? bookingId,
+    String? bookingSlug,
     String? courseName,
     String? dateLabel,
     String? timeLabel,
@@ -60,6 +63,7 @@ class BookingModel {
   }) {
     return BookingModel(
       bookingId: bookingId ?? this.bookingId,
+      bookingSlug: bookingSlug ?? this.bookingSlug,
       courseName: courseName ?? this.courseName,
       dateLabel: dateLabel ?? this.dateLabel,
       timeLabel: timeLabel ?? this.timeLabel,
