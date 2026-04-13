@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/activity/booking/detail/activity_booking_detail_page.dart';
-import 'package:golf_kakis/features/activity/booking/list/activity_booking_list_page.dart';
+import 'package:golf_kakis/features/booking/detail/booking_detail_page.dart';
+import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
 
 import 'view/booking_overview_view.dart';
 import 'viewmodel/booking_overview_view_contract.dart';
@@ -52,9 +54,14 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
         if (!mounted) {
           return;
         }
+        final session = SessionScope.of(context).state;
+        final isLoggedIn =
+            session.isLoggedIn &&
+            (session.accessToken?.trim().isNotEmpty ?? false);
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) => const ActivityBookingListPage(),
+            builder: (_) =>
+                isLoggedIn ? const BookingListPage() : const ProfileLoginPage(),
           ),
         );
       }
@@ -65,7 +72,7 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
         }
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) => ActivityBookingDetailPage(booking: effect.booking),
+            builder: (_) => BookingDetailPage(booking: effect.booking),
           ),
         );
       }

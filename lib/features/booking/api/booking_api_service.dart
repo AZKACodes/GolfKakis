@@ -26,12 +26,20 @@ class BookingApiService {
     ]);
   }
 
-  Future<dynamic> onFetchBookingUpcomingList() {
-    return _apiClient.getJson('/booking/list/upcoming');
+  Future<dynamic> onFetchBookingUpcomingList({required String accessToken}) {
+    return _apiClient.getJson(
+      '/booking/list/upcoming',
+      queryParameters: const <String, dynamic>{'page': 1, 'pageSize': 20},
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
   }
 
-  Future<dynamic> onFetchBookingPastList() {
-    return _apiClient.getJson('/booking/list/past');
+  Future<dynamic> onFetchBookingPastList({required String accessToken}) {
+    return _apiClient.getJson(
+      '/booking/list/past',
+      queryParameters: const <String, dynamic>{'page': 1, 'pageSize': 20},
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
   }
 
   Future<dynamic> onFetchAvailableSlots({

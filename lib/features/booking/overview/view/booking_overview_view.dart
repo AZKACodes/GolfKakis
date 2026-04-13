@@ -23,8 +23,6 @@ class BookingOverviewDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
@@ -214,7 +212,7 @@ class _BookingListTouchpoint extends StatelessWidget {
           const Icon(Icons.list_alt_outlined, color: Color(0xFF0A1F1A)),
 
           const SizedBox(width: 10),
-          
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +329,7 @@ class _PopularClubCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 10),
-          
+
           SizedBox(
             width: double.infinity,
             child: FilledButton(
