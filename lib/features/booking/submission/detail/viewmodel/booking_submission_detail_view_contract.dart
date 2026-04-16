@@ -33,6 +33,7 @@ class BookingSubmissionDetailDataLoaded
     this.currency = DefaultConstantUtil.defaultCurrency,
     this.guestId,
     this.bookingId = emptyString,
+    this.bookingRef = emptyString,
     this.holdDurationSeconds = 0,
     DateTime? holdExpiresAt,
     this.playerCount = 4,
@@ -66,6 +67,7 @@ class BookingSubmissionDetailDataLoaded
   final String currency;
   final String? guestId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final int playerCount;
@@ -106,6 +108,7 @@ class BookingSubmissionDetailDataLoaded
     String? currency,
     String? guestId,
     String? bookingId,
+    String? bookingRef,
     int? holdDurationSeconds,
     DateTime? holdExpiresAt,
     int? playerCount,
@@ -133,6 +136,7 @@ class BookingSubmissionDetailDataLoaded
       currency: currency ?? this.currency,
       guestId: guestId ?? this.guestId,
       bookingId: bookingId ?? this.bookingId,
+      bookingRef: bookingRef ?? this.bookingRef,
       holdDurationSeconds: holdDurationSeconds ?? this.holdDurationSeconds,
       holdExpiresAt: holdExpiresAt ?? this.holdExpiresAt,
       playerCount: playerCount ?? this.playerCount,
@@ -165,6 +169,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
     required this.slotId,
     required this.bookingId,
+    required this.bookingRef,
     required this.holdDurationSeconds,
     required this.holdExpiresAt,
     required this.playType,
@@ -186,6 +191,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
 
   final String slotId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final String playType;
@@ -273,6 +279,7 @@ class NavigateToBookingSubmissionConfirmation
     extends BookingSubmissionDetailNavEffect {
   const NavigateToBookingSubmissionConfirmation({
     required this.bookingId,
+    required this.bookingRef,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -283,12 +290,16 @@ class NavigateToBookingSubmissionConfirmation
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
   });
 
   final String bookingId;
+  final String bookingRef;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -299,6 +310,9 @@ class NavigateToBookingSubmissionConfirmation
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;

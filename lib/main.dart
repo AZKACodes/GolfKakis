@@ -12,11 +12,13 @@ Future<void> main() async {
   await sessionManager.initialize();
   ApiClient.configureSharedHeaders(() {
     final deviceId = sessionManager.deviceId.trim();
-    if (deviceId.isEmpty) {
-      return const <String, String>{};
-    }
+    final accessToken = sessionManager.state.accessToken?.trim();
 
-    return <String, String>{'X-Device-ID': deviceId};
+    return <String, String>{
+      if (deviceId.isNotEmpty) 'X-Device-ID': deviceId,
+      if (accessToken != null && accessToken.isNotEmpty)
+        'Authorization': 'Bearer $accessToken',
+    };
   });
 
   runApp(MyApp(sessionManager: sessionManager));

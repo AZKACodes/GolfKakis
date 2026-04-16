@@ -41,6 +41,7 @@ class BookingSubmissionDetailViewModel
             getCurrentAsLoaded().copyWith(
               slotId: intent.slotId,
               bookingId: intent.bookingId,
+              bookingRef: intent.bookingRef,
               holdDurationSeconds: intent.holdDurationSeconds,
               holdExpiresAt: intent.holdExpiresAt,
               playType: intent.playType,
@@ -159,6 +160,7 @@ class BookingSubmissionDetailViewModel
         sendNavEffect(
           () => NavigateToBookingSubmissionConfirmation(
             bookingId: current.bookingId,
+            bookingRef: current.bookingRef,
             golfClubName: current.golfClubName,
             golfClubSlug: current.golfClubSlug,
             selectedDate: current.selectedDate,
@@ -169,6 +171,9 @@ class BookingSubmissionDetailViewModel
             hostName: _primaryPlayer(current).name,
             hostPhoneNumber: _primaryPlayer(current).phoneNumber,
             playerCount: current.playerCount,
+            caddiePreference: current.caddiePreference,
+            buggyType: current.buggyType,
+            buggySharingPreference: current.buggySharingPreference,
             caddieCount: current.caddieCount,
             golfCartCount: current.golfCartCount,
             playerDetails: current.playerDetails,

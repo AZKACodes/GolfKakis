@@ -18,7 +18,7 @@ class BookingDetailViewState extends ViewState {
   factory BookingDetailViewState.initial(BookingModel booking) {
     return BookingDetailViewState(
       booking: booking,
-      isLoading: false,
+      isLoading: true,
       isDeleting: false,
     );
   }

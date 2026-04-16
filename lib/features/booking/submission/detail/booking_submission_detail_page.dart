@@ -9,6 +9,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
     required this.slotId,
     required this.bookingId,
+    required this.bookingRef,
     required this.holdDurationSeconds,
     required this.holdExpiresAt,
     required this.playType,
@@ -31,6 +32,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
 
   final String slotId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final String playType;
@@ -71,6 +73,7 @@ class _BookingSubmissionDetailPageState
       OnInit(
         slotId: widget.slotId,
         bookingId: widget.bookingId,
+        bookingRef: widget.bookingRef,
         holdDurationSeconds: widget.holdDurationSeconds,
         holdExpiresAt: widget.holdExpiresAt,
         playType: widget.playType,
@@ -108,6 +111,7 @@ class _BookingSubmissionDetailPageState
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionConfirmationPage(
               bookingId: effect.bookingId,
+              bookingRef: effect.bookingRef,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,
@@ -118,6 +122,9 @@ class _BookingSubmissionDetailPageState
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,
               playerCount: effect.playerCount,
+              caddiePreference: effect.caddiePreference,
+              buggyType: effect.buggyType,
+              buggySharingPreference: effect.buggySharingPreference,
               caddieCount: effect.caddieCount,
               golfCartCount: effect.golfCartCount,
               playerDetails: effect.playerDetails,

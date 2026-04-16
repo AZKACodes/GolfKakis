@@ -130,11 +130,11 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
 
   @override
   Stream<DataStatusModel<dynamic>> onFetchBookingDetails({
-    required String bookingSlug,
+    required String bookingRef,
   }) async* {
     try {
       final response = await _repository.onFetchBookingDetails(
-        bookingSlug: bookingSlug,
+        bookingRef: bookingRef,
       );
 
       yield DataStatusModel<dynamic>(

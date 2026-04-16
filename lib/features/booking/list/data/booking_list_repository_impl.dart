@@ -68,18 +68,29 @@ class BookingListRepositoryImpl implements BookingListRepository {
     Map<String, dynamic> data, {
     required String fallbackStatus,
   }) {
-    final bookingDate = _readString(data, <String>[
-      'bookingDate',
-      'date',
-      'teeDate',
-      'playDate',
-    ]);
-    final teeTimeSlot = _readString(data, <String>[
-      'teeTimeSlot',
-      'tee_time_slot',
-      'time',
-      'teeTime',
-    ]);
+    final bookingSummary = data['bookingSummary'] is Map<String, dynamic>
+        ? data['bookingSummary'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final bookingDate = _readString(
+      data,
+      <String>['bookingDate', 'date', 'teeDate', 'playDate'],
+      fallback: _readString(bookingSummary, <String>[
+        'bookingDate',
+        'date',
+        'teeDate',
+        'playDate',
+      ]),
+    );
+    final teeTimeSlot = _readString(
+      data,
+      <String>['teeTimeSlot', 'tee_time_slot', 'time', 'teeTime'],
+      fallback: _readString(bookingSummary, <String>[
+        'teeTimeSlot',
+        'tee_time_slot',
+        'time',
+        'teeTime',
+      ]),
+    );
     final statusLabel = _readString(data, <String>[
       'status',
       'statusLabel',
@@ -123,18 +134,39 @@ class BookingListRepositoryImpl implements BookingListRepository {
         'bookingCode',
         'referenceNo',
       ], fallback: 'BOOKING-${DateTime.now().millisecondsSinceEpoch}'),
+      bookingRef: _readNullableString(data, <String>[
+        'bookingRef',
+        'bookingReference',
+      ]),
       bookingSlug: _readNullableString(data, <String>[
         'bookingSlug',
         'booking_slug',
         'slug',
       ]),
-      courseName: _readString(data, <String>[
-        'golfClubName',
-        'courseName',
-        'clubName',
-        'name',
-      ], fallback: 'Golf Club'),
+      courseName: _readString(
+        data,
+        <String>['golfClubName', 'courseName', 'clubName'],
+        fallback: _readString(bookingSummary, <String>[
+          'golfClubName',
+          'courseName',
+          'clubName',
+        ], fallback: 'Golf Club'),
+      ),
+      courseSlug:
+          _readNullableString(data, <String>[
+            'golfClubSlug',
+            'golf_club_slug',
+            'courseSlug',
+            'clubSlug',
+          ]) ??
+          _readNullableString(bookingSummary, <String>[
+            'golfClubSlug',
+            'golf_club_slug',
+            'courseSlug',
+            'clubSlug',
+          ]),
       dateLabel: _formatDateLabel(bookingDate),
+      bookingDate: bookingDate.isEmpty ? null : bookingDate,
       timeLabel: _formatTimeLabel(teeTimeSlot),
       teeTimeSlot: teeTimeSlot.isEmpty ? '-' : teeTimeSlot,
       feeLabel: total == null
@@ -149,12 +181,45 @@ class BookingListRepositoryImpl implements BookingListRepository {
         'playerCount',
         'players',
       ], fallback: 1),
+      normalPlayerCount: _readInt(data, <String>[
+        'normalPlayerCount',
+        'normal_player_count',
+      ]),
+      seniorPlayerCount: _readInt(data, <String>[
+        'seniorPlayerCount',
+        'senior_player_count',
+      ]),
       caddieCount: _readInt(data, <String>['caddieCount', 'caddies']),
       golfCartCount: _readInt(data, <String>[
         'golfCartCount',
         'cartCount',
         'buggyCount',
       ]),
+      playType: _readNullableString(data, <String>['playType', 'play_type']),
+      selectedNine:
+          _readNullableString(data, <String>[
+            'selectedNine',
+            'selected_nine',
+          ]) ??
+          _readNullableString(bookingSummary, <String>[
+            'selectedNine',
+            'selected_nine',
+          ]),
+      caddieArrangement: _readNullableString(data, <String>[
+        'caddieArrangement',
+        'caddie_arrangement',
+      ]),
+      buggyType: _readNullableString(data, <String>['buggyType', 'buggy_type']),
+      buggySharingPreference: _readNullableString(data, <String>[
+        'buggySharingPreference',
+        'buggy_sharing_preference',
+      ]),
+      paymentMethod: _readNullableString(data, <String>[
+        'paymentMethod',
+        'payment_method',
+      ]),
+      currency: currency,
+      grandTotal: total?.toDouble(),
       playerDetails: playerDetails.isEmpty
           ? <BookingSubmissionPlayerModel>[
               BookingSubmissionPlayerModel(

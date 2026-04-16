@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
-import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile.dart';
 
@@ -71,13 +70,6 @@ class ProfileOverviewView extends StatelessWidget {
             _bottomNavScrollClearance,
           ),
           children: [
-            if (state.isUsingFallback) ...[
-              const InfoBanner(
-                message:
-                    'Showing temporary fallback profile until the user profile endpoint is ready.',
-              ),
-              const SizedBox(height: 12),
-            ],
             if (state.errorMessage != null) ...[
               ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
