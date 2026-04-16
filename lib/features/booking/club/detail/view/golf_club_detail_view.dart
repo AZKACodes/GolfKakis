@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
-import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
 
 import '../viewmodel/golf_club_detail_view_contract.dart';
 
@@ -28,13 +27,6 @@ class GolfClubDetailView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          if (state.isUsingFallback) ...[
-            const InfoBanner(
-              message:
-                  'Showing fallback golf club detail until the club detail endpoint is ready.',
-            ),
-            const SizedBox(height: 12),
-          ],
           if (state.errorMessage != null) ...[
             ErrorBanner(message: state.errorMessage!),
             const SizedBox(height: 12),

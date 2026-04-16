@@ -12,6 +12,7 @@ import 'package:golf_kakis/features/foundation/model/booking/booking_submission_
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
     required this.bookingId,
+    required this.bookingRef,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -22,6 +23,9 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
@@ -29,6 +33,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   });
 
   final String bookingId;
+  final String bookingRef;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -39,6 +44,9 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -63,6 +71,7 @@ class _BookingSubmissionConfirmationPageState
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
       OnInit(
+        bookingRef: widget.bookingRef,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         selectedDate: widget.selectedDate,
@@ -73,6 +82,9 @@ class _BookingSubmissionConfirmationPageState
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
         playerCount: widget.playerCount,
+        caddiePreference: widget.caddiePreference,
+        buggyType: widget.buggyType,
+        buggySharingPreference: widget.buggySharingPreference,
         caddieCount: widget.caddieCount,
         golfCartCount: widget.golfCartCount,
         playerDetails: widget.playerDetails,
@@ -96,7 +108,7 @@ class _BookingSubmissionConfirmationPageState
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionSuccessPage(
               bookingId: effect.bookingId,
-              bookingSlug: effect.bookingSlug,
+              bookingRef: effect.bookingRef,
               bookingDate: effect.bookingDate,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,

@@ -20,6 +20,7 @@ sealed class BookingSubmissionConfirmationViewState extends ViewState {
 class BookingSubmissionConfirmationDataLoaded
     extends BookingSubmissionConfirmationViewState {
   BookingSubmissionConfirmationDataLoaded({
+    this.bookingRef = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     DateTime? selectedDate,
@@ -30,6 +31,9 @@ class BookingSubmissionConfirmationDataLoaded
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
@@ -42,6 +46,7 @@ class BookingSubmissionConfirmationDataLoaded
     return BookingSubmissionConfirmationDataLoaded();
   }
 
+  final String bookingRef;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -52,6 +57,9 @@ class BookingSubmissionConfirmationDataLoaded
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -65,6 +73,7 @@ class BookingSubmissionConfirmationDataLoaded
       CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
   BookingSubmissionConfirmationDataLoaded copyWith({
+    String? bookingRef,
     String? golfClubName,
     String? golfClubSlug,
     DateTime? selectedDate,
@@ -75,6 +84,9 @@ class BookingSubmissionConfirmationDataLoaded
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
+    String? caddiePreference,
+    String? buggyType,
+    String? buggySharingPreference,
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
@@ -83,6 +95,7 @@ class BookingSubmissionConfirmationDataLoaded
     bool clearErrorMessage = false,
   }) {
     return BookingSubmissionConfirmationDataLoaded(
+      bookingRef: bookingRef ?? this.bookingRef,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -93,6 +106,10 @@ class BookingSubmissionConfirmationDataLoaded
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggyType: buggyType ?? this.buggyType,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
@@ -110,6 +127,7 @@ sealed class BookingSubmissionConfirmationUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionConfirmationUserIntent {
   const OnInit({
+    required this.bookingRef,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -120,11 +138,15 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
   });
 
+  final String bookingRef;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -135,6 +157,9 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -160,7 +185,7 @@ class NavigateToBookingSubmissionSuccess
     extends BookingSubmissionConfirmationNavEffect {
   const NavigateToBookingSubmissionSuccess({
     required this.bookingId,
-    required this.bookingSlug,
+    required this.bookingRef,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -176,7 +201,7 @@ class NavigateToBookingSubmissionSuccess
 
   final String golfClubName;
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubSlug;
   final String teeTimeSlot;

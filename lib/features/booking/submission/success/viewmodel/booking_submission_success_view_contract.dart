@@ -19,7 +19,7 @@ class BookingSubmissionSuccessDataLoaded
     extends BookingSubmissionSuccessViewState {
   BookingSubmissionSuccessDataLoaded({
     this.bookingId = emptyString,
-    this.bookingSlug = emptyString,
+    this.bookingRef = emptyString,
     this.bookingDate = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
@@ -39,7 +39,7 @@ class BookingSubmissionSuccessDataLoaded
   }
 
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
@@ -61,7 +61,7 @@ class BookingSubmissionSuccessDataLoaded
 
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
-    String? bookingSlug,
+    String? bookingRef,
     String? bookingDate,
     String? golfClubName,
     String? golfClubSlug,
@@ -77,7 +77,7 @@ class BookingSubmissionSuccessDataLoaded
   }) {
     return BookingSubmissionSuccessDataLoaded(
       bookingId: bookingId ?? this.bookingId,
-      bookingSlug: bookingSlug ?? this.bookingSlug,
+      bookingRef: bookingRef ?? this.bookingRef,
       bookingDate: bookingDate ?? this.bookingDate,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
@@ -101,7 +101,7 @@ sealed class BookingSubmissionSuccessUserIntent extends UserIntent {
 class OnInit extends BookingSubmissionSuccessUserIntent {
   const OnInit({
     required this.bookingId,
-    required this.bookingSlug,
+    required this.bookingRef,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -116,7 +116,7 @@ class OnInit extends BookingSubmissionSuccessUserIntent {
   });
 
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
