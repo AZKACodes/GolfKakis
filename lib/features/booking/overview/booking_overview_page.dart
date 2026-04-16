@@ -5,6 +5,7 @@ import 'package:golf_kakis/features/booking/detail/booking_detail_page.dart';
 import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/booking/submission/success/booking_submission_success_page.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
 
@@ -27,6 +28,13 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
   void initState() {
     super.initState();
     _viewModel = BookingOverviewViewModel();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final accessToken = SessionScope.of(context).state.accessToken;
+      _viewModel.onUserIntent(OnInit(accessToken: accessToken));
+    });
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is NavigateToBookingSubmission) {
         if (!mounted) {
@@ -91,18 +99,36 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: BookingOverviewDashboardView(
+        state: _viewModel.viewState,
         onBookingSubmissionClick: () =>
             _viewModel.onUserIntent(const OnBookingSubmissionClick()),
-        onPopularClubClick: (club) =>
-            _viewModel.onUserIntent(OnPopularClubClick(club)),
+        onReceiptSampleClick: _openSampleReceipt,
         onBookingListClick: () =>
             _viewModel.onUserIntent(const OnBookingListClick()),
         onUpcomingBookingDetailClick: () =>
             _viewModel.onUserIntent(const OnUpcomingBookingDetailClick()),
-        onRecentRoundOneDetailClick: () =>
-            _viewModel.onUserIntent(const OnRecentRoundOneDetailClick()),
-        onRecentRoundTwoDetailClick: () =>
-            _viewModel.onUserIntent(const OnRecentRoundTwoDetailClick()),
+      ),
+    );
+  }
+
+  void _openSampleReceipt() {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const BookingSubmissionSuccessPage(
+          bookingId: 'booking-uuid-sample-001',
+          bookingRef: 'BK-8F3A2C91',
+          bookingDate: '2026-03-27',
+          golfClubName: 'Kinrara Golf Club',
+          golfClubSlug: 'kinrara-golf-club',
+          teeTimeSlot: '07:30 AM',
+          pricePerPerson: 137,
+          currency: 'MYR',
+          hostName: 'Zack Green',
+          hostPhoneNumber: '+60123104472',
+          playerCount: 4,
+          caddieCount: 4,
+          golfCartCount: 2,
+        ),
       ),
     );
   }

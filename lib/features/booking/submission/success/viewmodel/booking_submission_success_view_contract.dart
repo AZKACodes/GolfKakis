@@ -26,6 +26,9 @@ class BookingSubmissionSuccessDataLoaded
     this.teeTimeSlot = emptyString,
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
+    this.playType = '9_holes',
+    this.caddiePreference = 'none',
+    this.buggySharingPreference = 'shared',
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
@@ -46,6 +49,9 @@ class BookingSubmissionSuccessDataLoaded
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final String playType;
+  final String caddiePreference;
+  final String buggySharingPreference;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -59,6 +65,8 @@ class BookingSubmissionSuccessDataLoaded
   String get totalCostLabel =>
       CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
+  String get paymentMethodLabel => 'Pay At Counter';
+
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
     String? bookingRef,
@@ -68,6 +76,9 @@ class BookingSubmissionSuccessDataLoaded
     String? teeTimeSlot,
     double? pricePerPerson,
     String? currency,
+    String? playType,
+    String? caddiePreference,
+    String? buggySharingPreference,
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
@@ -84,6 +95,10 @@ class BookingSubmissionSuccessDataLoaded
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
+      playType: playType ?? this.playType,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,

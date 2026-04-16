@@ -63,6 +63,53 @@ enum TeeTimeSlot {
     };
   }
 
+  bool get isEighteenHoleWindow {
+    return switch (this) {
+      TeeTimeSlot.seven30Am ||
+      TeeTimeSlot.seven45Am ||
+      TeeTimeSlot.eight00Am ||
+      TeeTimeSlot.eight15Am ||
+      TeeTimeSlot.eight30Am ||
+      TeeTimeSlot.eight45Am ||
+      TeeTimeSlot.nine00Am ||
+      TeeTimeSlot.nine15Am ||
+      TeeTimeSlot.nine30Am ||
+      TeeTimeSlot.twelve00Pm ||
+      TeeTimeSlot.twelve15Pm ||
+      TeeTimeSlot.twelve30Pm ||
+      TeeTimeSlot.twelve45Pm ||
+      TeeTimeSlot.one00Pm ||
+      TeeTimeSlot.one15Pm ||
+      TeeTimeSlot.one30Pm ||
+      TeeTimeSlot.one45Pm ||
+      TeeTimeSlot.two00Pm ||
+      TeeTimeSlot.two15Pm ||
+      TeeTimeSlot.two30Pm => true,
+      _ => false,
+    };
+  }
+
+  bool get isNineHoleWindow {
+    return switch (this) {
+      TeeTimeSlot.two45Pm ||
+      TeeTimeSlot.three00Pm ||
+      TeeTimeSlot.three15Pm ||
+      TeeTimeSlot.three30Pm ||
+      TeeTimeSlot.three45Pm ||
+      TeeTimeSlot.four00Pm ||
+      TeeTimeSlot.four15Pm ||
+      TeeTimeSlot.four30Pm => true,
+      _ => false,
+    };
+  }
+
+  bool get requiresSharedCaddieAndJumboBuggy {
+    return switch (this) {
+      TeeTimeSlot.two00Pm || TeeTimeSlot.two15Pm || TeeTimeSlot.two30Pm => true,
+      _ => false,
+    };
+  }
+
   static TeeTimeSlot? fromLabel(String label) {
     for (final slot in TeeTimeSlot.values) {
       if (slot.label == label) {

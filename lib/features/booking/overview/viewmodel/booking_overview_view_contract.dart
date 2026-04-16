@@ -8,9 +8,32 @@ abstract class BookingOverviewViewContract {
 }
 
 class BookingOverviewViewState {
-  const BookingOverviewViewState();
+  const BookingOverviewViewState({
+    this.isLoggedIn = false,
+    this.isUpcomingLoading = false,
+    this.upcomingBooking,
+  });
 
   static const initial = BookingOverviewViewState();
+
+  final bool isLoggedIn;
+  final bool isUpcomingLoading;
+  final BookingModel? upcomingBooking;
+
+  BookingOverviewViewState copyWith({
+    bool? isLoggedIn,
+    bool? isUpcomingLoading,
+    BookingModel? upcomingBooking,
+    bool clearUpcomingBooking = false,
+  }) {
+    return BookingOverviewViewState(
+      isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+      isUpcomingLoading: isUpcomingLoading ?? this.isUpcomingLoading,
+      upcomingBooking: clearUpcomingBooking
+          ? null
+          : (upcomingBooking ?? this.upcomingBooking),
+    );
+  }
 }
 
 sealed class BookingOverviewUserIntent {
@@ -19,6 +42,12 @@ sealed class BookingOverviewUserIntent {
 
 class OnBookingSubmissionClick extends BookingOverviewUserIntent {
   const OnBookingSubmissionClick();
+}
+
+class OnInit extends BookingOverviewUserIntent {
+  const OnInit({this.accessToken});
+
+  final String? accessToken;
 }
 
 class OnPopularClubClick extends BookingOverviewUserIntent {
@@ -33,14 +62,6 @@ class OnBookingListClick extends BookingOverviewUserIntent {
 
 class OnUpcomingBookingDetailClick extends BookingOverviewUserIntent {
   const OnUpcomingBookingDetailClick();
-}
-
-class OnRecentRoundOneDetailClick extends BookingOverviewUserIntent {
-  const OnRecentRoundOneDetailClick();
-}
-
-class OnRecentRoundTwoDetailClick extends BookingOverviewUserIntent {
-  const OnRecentRoundTwoDetailClick();
 }
 
 sealed class NavEffect {

@@ -21,6 +21,8 @@ class BookingSubmissionConfirmationViewModel
 
   final BookingSubmissionSlotUseCase _useCase;
   StreamSubscription<DataStatusModel<dynamic>>? _submissionSubscription;
+  Timer? _holdCountdownTimer;
+  bool _hasShownExpiryDialog = false;
 
   @override
   BookingSubmissionConfirmationViewState createInitialState() {
@@ -36,6 +38,8 @@ class BookingSubmissionConfirmationViewModel
         emitViewState((state) {
           return getCurrentAsLoaded().copyWith(
             bookingRef: intent.bookingRef,
+            holdDurationSeconds: intent.holdDurationSeconds,
+            holdExpiresAt: intent.holdExpiresAt,
             golfClubName: intent.golfClubName,
             golfClubSlug: intent.golfClubSlug,
             selectedDate: intent.selectedDate,
@@ -52,14 +56,18 @@ class BookingSubmissionConfirmationViewModel
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
             playerDetails: intent.playerDetails,
+            remainingHoldSeconds: _remainingSecondsUntil(intent.holdExpiresAt),
+            isHoldExpired: _remainingSecondsUntil(intent.holdExpiresAt) <= 0,
             clearErrorMessage: true,
           );
         });
+        _hasShownExpiryDialog = false;
+        _startHoldCountdown();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnConfirmClick():
         final current = getCurrentAsLoaded();
-        if (current.isSubmitting) {
+        if (current.isSubmitting || current.isHoldExpired) {
           return;
         }
         await _createBookingSubmission(current);
@@ -78,6 +86,21 @@ class BookingSubmissionConfirmationViewModel
   Future<void> _createBookingSubmission(
     BookingSubmissionConfirmationDataLoaded current,
   ) async {
+    if (_remainingSecondsUntil(current.holdExpiresAt) <= 0) {
+      emitViewState((state) {
+        return current.copyWith(
+          isHoldExpired: true,
+          remainingHoldSeconds: 0,
+          errorMessage: 'Your booking session has expired. Please start again.',
+        );
+      });
+      if (!_hasShownExpiryDialog) {
+        _hasShownExpiryDialog = true;
+        sendNavEffect(() => const ShowBookingSessionExpired());
+      }
+      return;
+    }
+
     emitViewState((state) {
       return getCurrentAsLoaded().copyWith(
         isSubmitting: true,
@@ -199,8 +222,43 @@ class BookingSubmissionConfirmationViewModel
     return null;
   }
 
+  void _startHoldCountdown() {
+    _holdCountdownTimer?.cancel();
+    _tickHoldCountdown();
+    _holdCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tickHoldCountdown();
+    });
+  }
+
+  void _tickHoldCountdown() {
+    final current = getCurrentAsLoaded();
+    final remainingHoldSeconds = _remainingSecondsUntil(current.holdExpiresAt);
+    final isHoldExpired = remainingHoldSeconds <= 0;
+
+    emitViewState((state) {
+      return current.copyWith(
+        remainingHoldSeconds: remainingHoldSeconds,
+        isHoldExpired: isHoldExpired,
+      );
+    });
+
+    if (isHoldExpired) {
+      _holdCountdownTimer?.cancel();
+      if (!_hasShownExpiryDialog) {
+        _hasShownExpiryDialog = true;
+        sendNavEffect(() => const ShowBookingSessionExpired());
+      }
+    }
+  }
+
+  int _remainingSecondsUntil(DateTime expiresAt) {
+    final difference = expiresAt.difference(DateTime.now()).inSeconds;
+    return difference < 0 ? 0 : difference;
+  }
+
   @override
   void dispose() {
+    _holdCountdownTimer?.cancel();
     _submissionSubscription?.cancel();
     super.dispose();
   }

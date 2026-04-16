@@ -26,7 +26,6 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   late final HomeRepository _repository;
   late final Future<String> _helloMessageFuture;
-  late final Future<List<HomeSmartRebookItem>> _smartRebookFuture;
   late final Future<List<HomeHotDealItem>> _hotDealsFuture;
 
   @override
@@ -34,7 +33,6 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     _repository = HomeRepositoryImpl();
     _helloMessageFuture = _repository.fetchWelcomeMessage();
-    _smartRebookFuture = _repository.fetchSmartRebookItems();
     _hotDealsFuture = _repository.fetchHotDeals();
   }
 
@@ -55,8 +53,6 @@ class _HomeViewState extends State<HomeView> {
               );
             },
           ),
-          const SizedBox(height: 18),
-          const _MomentumStrip(),
           const SizedBox(height: 24),
           Text(
             'Quick Actions',
@@ -93,21 +89,6 @@ class _HomeViewState extends State<HomeView> {
             ],
           ),
           const SizedBox(height: 18),
-          const _PersonalCaddieCard(),
-          const SizedBox(height: 24),
-          Text(
-            'Smart Rebook',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          FutureBuilder<List<HomeSmartRebookItem>>(
-            future: _smartRebookFuture,
-            builder: (context, snapshot) {
-              return _SmartRebookRow(items: snapshot.data ?? const []);
-            },
-          ),
           const SizedBox(height: 24),
           Text(
             "Today's Hot Deals",
@@ -202,91 +183,6 @@ class _AtAGlanceCard extends StatelessWidget {
   }
 }
 
-class _MomentumStrip extends StatelessWidget {
-  const _MomentumStrip();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        Expanded(
-          child: _MomentumTile(
-            label: 'Rounds This Month',
-            value: '06',
-            accent: Color(0xFF1E5B4A),
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _MomentumTile(
-            label: 'Best Score',
-            value: '72',
-            accent: Color(0xFF2F7BFF),
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _MomentumTile(
-            label: 'Active Offers',
-            value: '03',
-            accent: Color(0xFFFF9F1C),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MomentumTile extends StatelessWidget {
-  const _MomentumTile({
-    required this.label,
-    required this.value,
-    required this.accent,
-  });
-
-  final String label;
-  final String value;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF12332A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.black54,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _HeroTag extends StatelessWidget {
   const _HeroTag({required this.text});
 
@@ -307,182 +203,6 @@ class _HeroTag extends StatelessWidget {
           color: Colors.white,
           fontWeight: FontWeight.w600,
           fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _SmartRebookRow extends StatelessWidget {
-  const _SmartRebookRow({required this.items});
-
-  final List<HomeSmartRebookItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 162,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            _RebookCard(
-              title: items[i].title,
-              subtitle: items[i].subtitle,
-              price: items[i].priceLabel,
-            ),
-            if (i != items.length - 1) const SizedBox(width: 10),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _RebookCard extends StatelessWidget {
-  const _RebookCard({
-    required this.title,
-    required this.subtitle,
-    required this.price,
-  });
-
-  final String title;
-  final String subtitle;
-  final String price;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 230,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              Text(
-                price,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF12332A),
-                ),
-              ),
-              const Spacer(),
-              FilledButton(onPressed: () {}, child: const Text('Rebook')),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PersonalCaddieCard extends StatelessWidget {
-  const _PersonalCaddieCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF4DD), Color(0xFFFFFBF1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: const Color(0xFFFFE0A8)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF9F1C).withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.assistant_outlined,
-                  color: Color(0xFF9A5A00),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Personal Caddie',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              TextButton(onPressed: () {}, child: const Text('Review')),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'You usually play early on weekends. Saujana and Kinrara both have sub-MYR 55 morning windows available.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: const [
-              _InsightChip(label: 'Best value: Kinrara'),
-              _InsightChip(label: 'Weather edge: Saturday'),
-              _InsightChip(label: '2 slots almost full'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InsightChip extends StatelessWidget {
-  const _InsightChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFFFE0A8)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF6D4B00),
         ),
       ),
     );

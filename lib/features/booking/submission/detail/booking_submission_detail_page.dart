@@ -4,6 +4,7 @@ import 'package:golf_kakis/features/booking/submission/confirmation/booking_subm
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
@@ -20,6 +21,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
     required this.pricePerPerson,
     required this.currency,
     this.initialPlayerCount = 4,
+    this.initialNormalPlayerCount = 4,
+    this.initialSeniorPlayerCount = 0,
     this.caddiePreference = 'none',
     this.buggyType = 'normal',
     this.buggySharingPreference = 'shared',
@@ -43,6 +46,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
   final double pricePerPerson;
   final String currency;
   final int initialPlayerCount;
+  final int initialNormalPlayerCount;
+  final int initialSeniorPlayerCount;
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
@@ -84,6 +89,8 @@ class _BookingSubmissionDetailPageState
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
         initialPlayerCount: widget.initialPlayerCount,
+        initialNormalPlayerCount: widget.initialNormalPlayerCount,
+        initialSeniorPlayerCount: widget.initialSeniorPlayerCount,
         caddiePreference: widget.caddiePreference,
         buggyType: widget.buggyType,
         buggySharingPreference: widget.buggySharingPreference,
@@ -112,6 +119,8 @@ class _BookingSubmissionDetailPageState
             builder: (_) => BookingSubmissionConfirmationPage(
               bookingId: effect.bookingId,
               bookingRef: effect.bookingRef,
+              holdDurationSeconds: effect.holdDurationSeconds,
+              holdExpiresAt: effect.holdExpiresAt,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,
@@ -143,7 +152,12 @@ class _BookingSubmissionDetailPageState
                 FilledButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    Navigator.of(context).maybePop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const BookingSubmissionSlotPage(),
+                      ),
+                      (route) => route.isFirst,
+                    );
                   },
                   child: const Text('OK'),
                 ),

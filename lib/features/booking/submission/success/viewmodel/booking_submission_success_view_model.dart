@@ -39,6 +39,7 @@ class BookingSubmissionSuccessViewModel
             teeTimeSlot: intent.teeTimeSlot,
             pricePerPerson: intent.pricePerPerson,
             currency: intent.currency,
+            playType: _resolvePlayType(intent.teeTimeSlot),
             hostName: intent.hostName,
             hostPhoneNumber: intent.hostPhoneNumber,
             playerCount: intent.playerCount,
@@ -167,6 +168,21 @@ class BookingSubmissionSuccessViewModel
           current.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? current.pricePerPerson,
       currency: currency,
+      playType:
+          _readString(data, const <String>['playType', 'play_type']) ??
+          current.playType,
+      caddiePreference:
+          _readString(data, const <String>[
+            'caddieArrangement',
+            'caddie_arrangement',
+          ]) ??
+          current.caddiePreference,
+      buggySharingPreference:
+          _readString(data, const <String>[
+            'buggySharingPreference',
+            'buggy_sharing_preference',
+          ]) ??
+          current.buggySharingPreference,
       hostName:
           _readString(data, const <String>['hostName', 'host_name']) ??
           current.hostName,
@@ -181,6 +197,32 @@ class BookingSubmissionSuccessViewModel
       caddieCount: caddieCount ?? current.caddieCount,
       golfCartCount: golfCartCount ?? current.golfCartCount,
     );
+  }
+
+  String _resolvePlayType(String teeTimeSlot) {
+    const eighteenHoleSlots = <String>{
+      '07:30 AM',
+      '07:45 AM',
+      '08:00 AM',
+      '08:15 AM',
+      '08:30 AM',
+      '08:45 AM',
+      '09:00 AM',
+      '09:15 AM',
+      '09:30 AM',
+      '12:00 PM',
+      '12:15 PM',
+      '12:30 PM',
+      '12:45 PM',
+      '01:00 PM',
+      '01:15 PM',
+      '01:30 PM',
+      '01:45 PM',
+      '02:00 PM',
+      '02:15 PM',
+      '02:30 PM',
+    };
+    return eighteenHoleSlots.contains(teeTimeSlot) ? '18_holes' : '9_holes';
   }
 
   Map<String, dynamic>? _normalizeMap(dynamic response) {

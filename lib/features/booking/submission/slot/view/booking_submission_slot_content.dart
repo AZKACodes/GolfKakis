@@ -28,6 +28,7 @@ class BookingSubmissionSlotContent extends StatelessWidget {
     final selectedClub = state.selectedGolfClub;
     final hasSelectedClub = selectedClub != null;
     final hasAvailableGolfClubs = state.golfClubList.isNotEmpty;
+    final canActivateCalendar = state.canActivateCalendar;
 
     return CustomScrollView(
       slivers: [
@@ -56,6 +57,28 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 Text(
+                  'Players',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                _PlayerCountSection(
+                  normalPlayerCount: state.normalPlayerCount,
+                  seniorPlayerCount: state.seniorPlayerCount,
+                  onNormalPlayerCountChanged: (value) {
+                    viewModel.onUserIntent(OnNormalPlayerCountChanged(value));
+                  },
+                  onSeniorPlayerCountChanged: (value) {
+                    viewModel.onUserIntent(OnSeniorPlayerCountChanged(value));
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                Text(
                   'Golf Club',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -71,12 +94,6 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                   enabled: state.golfClubList.isNotEmpty,
                   onClubSelected: (club) {
                     viewModel.onUserIntent(OnSelectGolfClub(club.slug));
-                    viewModel.onUserIntent(
-                      OnFetchAvailableSlots(
-                        clubSlug: club.slug,
-                        date: state.selectedDate,
-                      ),
-                    );
                   },
                 ),
 
@@ -99,33 +116,13 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                   ),
                 ],
 
-                if (hasSelectedClub) ...[
-                  const SizedBox(height: 16),
-                  _SlotRoundPreferencesSection(
-                    playerCount: state.playerCount,
-                    caddiePreference: state.caddiePreference,
-                    buggySharingPreference: state.buggySharingPreference,
-                    onPlayerCountChanged: (value) {
-                      viewModel.onUserIntent(OnPlayerCountChanged(value));
-                    },
-                    onCaddiePreferenceChanged: (value) {
-                      viewModel.onUserIntent(OnSelectCaddiePreference(value));
-                    },
-                    onBuggySharingPreferenceChanged: (value) {
-                      viewModel.onUserIntent(
-                        OnSelectBuggySharingPreference(value),
-                      );
-                    },
-                  ),
-                ],
-
                 const SizedBox(height: 20),
 
                 AnimatedOpacity(
-                  opacity: hasSelectedClub ? 1 : 0.45,
+                  opacity: canActivateCalendar ? 1 : 0.45,
                   duration: const Duration(milliseconds: 180),
                   child: IgnorePointer(
-                    ignoring: !hasSelectedClub,
+                    ignoring: !canActivateCalendar,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -176,17 +173,12 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                   ),
                 ),
 
-                if (!hasSelectedClub)
+                if (!hasSelectedClub || !canActivateCalendar)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
-                    child: CardMessage(
-                      title: hasAvailableGolfClubs
-                          ? 'Please select a golf club'
-                          : 'No Golf Clubs Available',
-                      message: hasAvailableGolfClubs
-                          ? 'Select a golf club to continue with the calendar and available time slots.'
-                          : 'There are no golf clubs available right now.',
-                      icon: Icons.golf_course_rounded,
+                    child: _CalendarGateMessage(
+                      hasSelectedClub: hasSelectedClub,
+                      hasAvailableGolfClubs: hasAvailableGolfClubs,
                     ),
                   ),
 
@@ -204,7 +196,7 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                     ),
                   ),
 
-                if (hasSelectedClub) ...[
+                if (canActivateCalendar) ...[
                   Row(
                     children: [
                       Text(
@@ -228,7 +220,7 @@ class BookingSubmissionSlotContent extends StatelessWidget {
           ),
         ),
 
-        if (hasSelectedClub)
+        if (canActivateCalendar)
           BookingSubmissionPeriodHeader(
             selectedPeriod: state.selectedPeriod,
             onPeriodChanged: (period) {
@@ -236,7 +228,7 @@ class BookingSubmissionSlotContent extends StatelessWidget {
             },
           ),
 
-        if (hasSelectedClub)
+        if (canActivateCalendar)
           if (state.isLoading)
             const SliverFillRemaining(
               hasScrollBody: false,
@@ -331,182 +323,64 @@ class _SlotLoadingContainer extends StatelessWidget {
   }
 }
 
-class _SlotRoundPreferencesSection extends StatelessWidget {
-  const _SlotRoundPreferencesSection({
-    required this.playerCount,
-    required this.caddiePreference,
-    required this.buggySharingPreference,
-    required this.onPlayerCountChanged,
-    required this.onCaddiePreferenceChanged,
-    required this.onBuggySharingPreferenceChanged,
+class _CalendarGateMessage extends StatelessWidget {
+  const _CalendarGateMessage({
+    required this.hasSelectedClub,
+    required this.hasAvailableGolfClubs,
   });
 
-  final int playerCount;
-  final BookingCaddiePreference caddiePreference;
-  final BookingBuggySharingPreference buggySharingPreference;
-  final ValueChanged<int> onPlayerCountChanged;
-  final ValueChanged<BookingCaddiePreference> onCaddiePreferenceChanged;
-  final ValueChanged<BookingBuggySharingPreference>
-  onBuggySharingPreferenceChanged;
+  final bool hasSelectedClub;
+  final bool hasAvailableGolfClubs;
+
+  @override
+  Widget build(BuildContext context) {
+    return CardMessage(
+      title: !hasSelectedClub
+          ? hasAvailableGolfClubs
+                ? 'Please select a golf club'
+                : 'No Golf Clubs Available'
+          : 'Select a supported nine first',
+      message: !hasSelectedClub
+          ? hasAvailableGolfClubs
+                ? 'Select a golf club to continue with the calendar and available time slots.'
+                : 'There are no golf clubs available right now.'
+          : 'Choose a supported nine before the calendar becomes active.',
+      icon: Icons.golf_course_rounded,
+    );
+  }
+}
+
+class _PlayerCountSection extends StatelessWidget {
+  const _PlayerCountSection({
+    required this.normalPlayerCount,
+    required this.seniorPlayerCount,
+    required this.onNormalPlayerCountChanged,
+    required this.onSeniorPlayerCountChanged,
+  });
+
+  final int normalPlayerCount;
+  final int seniorPlayerCount;
+  final ValueChanged<int> onNormalPlayerCountChanged;
+  final ValueChanged<int> onSeniorPlayerCountChanged;
 
   @override
   Widget build(BuildContext context) {
     return BookingSubmissionAddOnSelection(
       children: [
         _CounterPreferenceRow(
-          label: 'No. of Players',
-          value: playerCount,
-          minValue: 1,
-          onChanged: onPlayerCountChanged,
+          label: 'Normal',
+          value: normalPlayerCount,
+          minValue: 0,
+          onChanged: onNormalPlayerCountChanged,
         ),
         const Divider(height: 1),
-        _SelectionPreferenceRow<BookingCaddiePreference>(
-          label: 'Caddies',
-          value: caddiePreference,
-          options: BookingCaddiePreference.values,
-          onChanged: onCaddiePreferenceChanged,
-        ),
-        const Divider(height: 1),
-        _BuggySharingToggleRow(
-          label: 'Share Buggy',
-          value: buggySharingPreference,
-          onChanged: onBuggySharingPreferenceChanged,
+        _CounterPreferenceRow(
+          label: 'Senior Citizen',
+          value: seniorPlayerCount,
+          minValue: 0,
+          onChanged: onSeniorPlayerCountChanged,
         ),
       ],
-    );
-  }
-}
-
-class _BuggySharingToggleRow extends StatelessWidget {
-  const _BuggySharingToggleRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final BookingBuggySharingPreference value;
-  final ValueChanged<BookingBuggySharingPreference> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isShared = value == BookingBuggySharingPreference.shared;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _CompactToggleBar(
-            isLeftSelected: isShared,
-            leftLabel: 'Yes',
-            rightLabel: 'No',
-            onChanged: (nextValue) {
-              onChanged(
-                nextValue
-                    ? BookingBuggySharingPreference.shared
-                    : BookingBuggySharingPreference.mix,
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactToggleBar extends StatelessWidget {
-  const _CompactToggleBar({
-    required this.isLeftSelected,
-    required this.leftLabel,
-    required this.rightLabel,
-    required this.onChanged,
-  });
-
-  final bool isLeftSelected;
-  final String leftLabel;
-  final String rightLabel;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F3EF),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0x14000000)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _CompactToggleBarOption(
-            label: leftLabel,
-            isSelected: isLeftSelected,
-            theme: theme,
-            onTap: () => onChanged(true),
-          ),
-          _CompactToggleBarOption(
-            label: rightLabel,
-            isSelected: !isLeftSelected,
-            theme: theme,
-            onTap: () => onChanged(false),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactToggleBarOption extends StatelessWidget {
-  const _CompactToggleBarOption({
-    required this.label,
-    required this.isSelected,
-    required this.theme,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isSelected;
-  final ThemeData theme;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0D7A3A) : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: isSelected ? Colors.white : const Color(0xFF516058),
-              fontWeight: FontWeight.w700,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -551,185 +425,6 @@ class _CounterPreferenceRow extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _SelectionPreferenceRow<T extends Enum> extends StatelessWidget {
-  const _SelectionPreferenceRow({
-    required this.label,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String label;
-  final T value;
-  final List<T> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _PreferenceSelectionChip<T>(
-            value: value,
-            options: options,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PreferenceSelectionChip<T extends Enum> extends StatelessWidget {
-  const _PreferenceSelectionChip({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<T> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _showPicker(context),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F8F6),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x14000000)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _labelFor(value),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showPicker(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select Option',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 14),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: options.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final option = options[index];
-                    final isSelected = option == value;
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          onChanged(option);
-                        },
-                        child: Ink(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFF0F8F2)
-                                : const Color(0xFFF8F8F6),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF0D7A3A)
-                                  : const Color(0x14000000),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _labelFor(option),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Color(0xFF0D7A3A),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _labelFor(T option) {
-    return switch (option) {
-      BookingCaddiePreference() => option.label,
-      BookingBuggyType() => option.label,
-      BookingBuggySharingPreference() => option.label,
-      _ => option.name,
-    };
   }
 }
 

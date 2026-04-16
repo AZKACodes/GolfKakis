@@ -30,9 +30,13 @@ class BookingSubmissionDetailViewModel
       case OnInit():
         final maxPlayerCount = _maxPlayerCountForSlot(intent.teeTimeSlot);
         final initialPlayerCount = intent.initialPlayerCount.clamp(
-          1,
+          2,
           maxPlayerCount,
         );
+        final normalizedSeniorPlayerCount = intent.initialSeniorPlayerCount
+            .clamp(0, initialPlayerCount);
+        final normalizedNormalPlayerCount = intent.initialNormalPlayerCount
+            .clamp(0, initialPlayerCount - normalizedSeniorPlayerCount);
         final initialPhoneParts = PhoneUtil.splitPhoneNumber(
           intent.initialPlayerPhoneNumber,
         );
@@ -54,6 +58,8 @@ class BookingSubmissionDetailViewModel
               guestId: intent.guestId,
               maxPlayerCount: maxPlayerCount,
               playerCount: initialPlayerCount,
+              normalPlayerCount: normalizedNormalPlayerCount,
+              seniorPlayerCount: normalizedSeniorPlayerCount,
               caddiePreference: intent.caddiePreference,
               buggyType: intent.buggyType,
               buggySharingPreference: intent.buggySharingPreference,
@@ -61,6 +67,8 @@ class BookingSubmissionDetailViewModel
               golfCartCount: _defaultGolfCartCount(initialPlayerCount),
               playerDetails: _buildInitialPlayerDetails(
                 playerCount: initialPlayerCount,
+                normalPlayerCount: normalizedNormalPlayerCount,
+                seniorPlayerCount: normalizedSeniorPlayerCount,
                 playerName: intent.initialPlayerName,
                 playerPhoneNumber: initialPhoneParts.localNumber.isEmpty
                     ? intent.initialPlayerPhoneNumber
@@ -103,12 +111,24 @@ class BookingSubmissionDetailViewModel
       case OnPlayerCountChanged():
         emitViewState((state) {
           final current = getCurrentAsLoaded();
-          final nextPlayerCount = intent.value.clamp(1, current.maxPlayerCount);
+          final nextPlayerCount = intent.value.clamp(2, current.maxPlayerCount);
           return _deriveState(
             current.copyWith(
               playerCount: nextPlayerCount,
               golfCartCount: _defaultGolfCartCount(nextPlayerCount),
             ),
+          );
+        });
+      case OnSelectCaddiePreference():
+        emitViewState((state) {
+          final current = getCurrentAsLoaded();
+          return _deriveState(current.copyWith(caddiePreference: intent.value));
+        });
+      case OnSelectBuggySharingPreference():
+        emitViewState((state) {
+          final current = getCurrentAsLoaded();
+          return _deriveState(
+            current.copyWith(buggySharingPreference: intent.value),
           );
         });
       case OnPlayerNameChanged():
@@ -161,6 +181,8 @@ class BookingSubmissionDetailViewModel
           () => NavigateToBookingSubmissionConfirmation(
             bookingId: current.bookingId,
             bookingRef: current.bookingRef,
+            holdDurationSeconds: current.holdDurationSeconds,
+            holdExpiresAt: current.holdExpiresAt,
             golfClubName: current.golfClubName,
             golfClubSlug: current.golfClubSlug,
             selectedDate: current.selectedDate,
@@ -186,12 +208,22 @@ class BookingSubmissionDetailViewModel
     BookingSubmissionDetailDataLoaded state,
   ) {
     final normalizedPlayerCount = state.playerCount.clamp(
-      1,
+      2,
       state.maxPlayerCount,
+    );
+    final normalizedSeniorPlayerCount = state.seniorPlayerCount.clamp(
+      0,
+      normalizedPlayerCount,
+    );
+    final normalizedNormalPlayerCount = state.normalPlayerCount.clamp(
+      0,
+      normalizedPlayerCount - normalizedSeniorPlayerCount,
     );
     final normalizedPlayerDetails = _resizePlayerDetails(
       players: state.playerDetails,
       playerCount: normalizedPlayerCount,
+      normalPlayerCount: normalizedNormalPlayerCount,
+      seniorPlayerCount: normalizedSeniorPlayerCount,
     );
     final normalizedCaddieCount = state.caddieCount.clamp(
       0,
@@ -204,6 +236,12 @@ class BookingSubmissionDetailViewModel
 
     return state.copyWith(
       playerCount: normalizedPlayerCount,
+      normalPlayerCount: normalizedNormalPlayerCount,
+      seniorPlayerCount: normalizedSeniorPlayerCount,
+      caddiePreference: state.isForcedSharedCaddieSlot
+          ? 'shared'
+          : state.caddiePreference,
+      buggyType: state.isForcedSharedCaddieSlot ? 'jumbo' : state.buggyType,
       caddieCount: normalizedCaddieCount,
       golfCartCount: normalizedGolfCartCount,
       playerDetails: normalizedPlayerDetails,
@@ -278,38 +316,55 @@ class BookingSubmissionDetailViewModel
   List<BookingSubmissionPlayerModel> _resizePlayerDetails({
     required List<BookingSubmissionPlayerModel> players,
     required int playerCount,
+    required int normalPlayerCount,
+    required int seniorPlayerCount,
   }) {
     if (players.length == playerCount) {
-      return players;
+      return List<BookingSubmissionPlayerModel>.generate(playerCount, (index) {
+        final category = index < normalPlayerCount ? 'normal' : 'senior';
+        return players[index].copyWith(category: category, isHost: index == 0);
+      });
     }
 
     if (players.length > playerCount) {
-      return players.sublist(0, playerCount);
+      return List<BookingSubmissionPlayerModel>.generate(playerCount, (index) {
+        final category = index < normalPlayerCount ? 'normal' : 'senior';
+        return players[index].copyWith(category: category, isHost: index == 0);
+      });
     }
 
     return List<BookingSubmissionPlayerModel>.generate(playerCount, (index) {
+      final category = index < normalPlayerCount ? 'normal' : 'senior';
       if (index < players.length) {
-        return players[index];
+        return players[index].copyWith(category: category, isHost: index == 0);
       }
 
-      return const BookingSubmissionPlayerModel();
+      return BookingSubmissionPlayerModel(
+        category: category,
+        isHost: index == 0,
+      );
     });
   }
 
   List<BookingSubmissionPlayerModel> _buildInitialPlayerDetails({
     required int playerCount,
+    required int normalPlayerCount,
+    required int seniorPlayerCount,
     required String playerName,
     required String playerPhoneNumber,
   }) {
     return List<BookingSubmissionPlayerModel>.generate(playerCount, (index) {
+      final category = index < normalPlayerCount ? 'normal' : 'senior';
       if (index == 0) {
         return BookingSubmissionPlayerModel(
           name: playerName,
           phoneNumber: playerPhoneNumber,
+          category: category,
+          isHost: true,
         );
       }
 
-      return const BookingSubmissionPlayerModel();
+      return BookingSubmissionPlayerModel(category: category);
     });
   }
 

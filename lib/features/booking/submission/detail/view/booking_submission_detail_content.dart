@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/add_on/booking_submission_add_on_selection.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
@@ -125,8 +126,20 @@ class _BookingSubmissionDetailContentState
             const SizedBox(height: 20),
             BookingSubmissionDetailSelectionSummary(state: state),
             const SizedBox(height: 16),
+            _RoundPreferencesSection(
+              caddiePreference: state.effectiveCaddiePreference,
+              buggyType: state.effectiveBuggyType,
+              buggySharingPreference: state.buggySharingPreference,
+              isForcedSharedCaddieSlot: state.isForcedSharedCaddieSlot,
+              onCaddiePreferenceChanged: (value) => widget.viewModel
+                  .onUserIntent(OnSelectCaddiePreference(value)),
+              onBuggySharingPreferenceChanged: (value) => widget.viewModel
+                  .onUserIntent(OnSelectBuggySharingPreference(value)),
+            ),
+            const SizedBox(height: 16),
             _PlayerDetailsSection(
               playerCount: state.playerCount,
+              playerDetails: state.playerDetails,
               nameControllers: _playerNameControllers,
               phoneControllers: _playerPhoneControllers,
               countryCodes: _playerCountryCodes,
@@ -246,9 +259,161 @@ class _CostRow extends StatelessWidget {
   }
 }
 
+class _RoundPreferencesSection extends StatelessWidget {
+  const _RoundPreferencesSection({
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
+    required this.isForcedSharedCaddieSlot,
+    required this.onCaddiePreferenceChanged,
+    required this.onBuggySharingPreferenceChanged,
+  });
+
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final bool isForcedSharedCaddieSlot;
+  final ValueChanged<String> onCaddiePreferenceChanged;
+  final ValueChanged<String> onBuggySharingPreferenceChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return BookingSubmissionAddOnSelection(
+      children: [
+        if (isForcedSharedCaddieSlot)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF6E8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFFD58A)),
+            ),
+            child: Text(
+              'For tee times between 2:00 PM and 2:30 PM, caddie arrangement is automatically Shared and buggy type is Jumbo.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF7A5200),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        _SelectionPreferenceRow(
+          label: 'Caddies',
+          value: _caddieLabel(caddiePreference),
+          enabled: !isForcedSharedCaddieSlot,
+          onTap: !isForcedSharedCaddieSlot
+              ? () => _showCaddiePicker(context)
+              : null,
+        ),
+        const Divider(height: 1),
+        _SelectionPreferenceRow(
+          label: 'Buggy Type',
+          value: _buggyTypeLabel(buggyType),
+          enabled: false,
+        ),
+        const Divider(height: 1),
+        _SelectionPreferenceRow(
+          label: 'Share Buggy',
+          value: _buggySharingLabel(buggySharingPreference),
+          onTap: () => _showBuggySharingPicker(context),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showCaddiePicker(BuildContext context) async {
+    await _showOptionPicker(
+      context: context,
+      title: 'Select Caddie Arrangement',
+      options: const <String>['none', 'shared', 'per_player'],
+      selectedValue: caddiePreference,
+      labelFor: _caddieLabel,
+      onSelected: onCaddiePreferenceChanged,
+    );
+  }
+
+  Future<void> _showBuggySharingPicker(BuildContext context) async {
+    await _showOptionPicker(
+      context: context,
+      title: 'Select Buggy Sharing',
+      options: const <String>['shared', 'mix'],
+      selectedValue: buggySharingPreference,
+      labelFor: _buggySharingLabel,
+      onSelected: onBuggySharingPreferenceChanged,
+    );
+  }
+}
+
+class _SelectionPreferenceRow extends StatelessWidget {
+  const _SelectionPreferenceRow({
+    required this.label,
+    required this.value,
+    this.enabled = true,
+    this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: enabled ? Colors.black87 : Colors.black54,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F8F6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0x14000000)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: enabled ? Colors.black87 : Colors.black54,
+                    ),
+                  ),
+                  if (enabled) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PlayerDetailsSection extends StatelessWidget {
   const _PlayerDetailsSection({
     required this.playerCount,
+    required this.playerDetails,
     required this.nameControllers,
     required this.phoneControllers,
     required this.countryCodes,
@@ -257,6 +422,7 @@ class _PlayerDetailsSection extends StatelessWidget {
   });
 
   final int playerCount;
+  final List<BookingSubmissionPlayerModel> playerDetails;
   final List<TextEditingController> nameControllers;
   final List<TextEditingController> phoneControllers;
   final List<PhoneCountryCodeOption> countryCodes;
@@ -290,11 +456,23 @@ class _PlayerDetailsSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (var index = 0; index < playerCount; index++) ...[
-            Text(
-              'Player ${index + 1}',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  'Player ${index + 1}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _PlayerCategoryBadge(
+                  label: _playerCategoryLabel(
+                    index < playerDetails.length
+                        ? playerDetails[index].category
+                        : 'normal',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
@@ -338,6 +516,31 @@ class _PlayerDetailsSection extends StatelessWidget {
             ],
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _PlayerCategoryBadge extends StatelessWidget {
+  const _PlayerCategoryBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5FF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFD7E3FF)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF17397C),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -563,4 +766,143 @@ class _DetailCountryCodePickerButton extends StatelessWidget {
       ),
     );
   }
+}
+
+String _caddieLabel(String value) {
+  switch (value) {
+    case 'none':
+      return 'None';
+    case 'shared':
+      return 'Shared';
+    case 'per_player':
+      return 'Per Player';
+    default:
+      return value;
+  }
+}
+
+String _buggyTypeLabel(String value) {
+  switch (value) {
+    case 'jumbo':
+      return 'Jumbo';
+    case 'normal':
+      return 'Normal';
+    default:
+      return value;
+  }
+}
+
+String _buggySharingLabel(String value) {
+  switch (value) {
+    case 'shared':
+      return 'Shared';
+    case 'mix':
+    case 'mixed':
+      return 'Mixed';
+    default:
+      return value;
+  }
+}
+
+String _playerCategoryLabel(String value) {
+  switch (value) {
+    case 'senior':
+    case 'senior_citizen':
+      return 'Senior Citizen';
+    case 'normal':
+    default:
+      return 'Normal';
+  }
+}
+
+Future<void> _showOptionPicker({
+  required BuildContext context,
+  required String title,
+  required List<String> options,
+  required String selectedValue,
+  required String Function(String value) labelFor,
+  required ValueChanged<String> onSelected,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: options.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  final isSelected = option == selectedValue;
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onSelected(option);
+                      },
+                      child: Ink(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFF0F8F2)
+                              : const Color(0xFFF8F8F6),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF0D7A3A)
+                                : const Color(0x14000000),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                labelFor(option),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF0D7A3A),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
