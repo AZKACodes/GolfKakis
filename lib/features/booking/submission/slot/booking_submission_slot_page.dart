@@ -123,8 +123,8 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
                   .first,
               teeTimeSlot: selectedSlot.time,
               playerCount: state.playerCount,
-              normalPlayerCount: state.playerCount,
-              seniorPlayerCount: 0,
+              normalPlayerCount: state.normalPlayerCount,
+              seniorPlayerCount: state.seniorPlayerCount,
               caddieArrangement: state.caddiePreference.value,
               buggyType: state.buggyType.value,
               buggySharingPreference:
@@ -218,6 +218,12 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
               slotState.selectedSlot!.currency,
           initialPlayerCount:
               _readInt(bookingSummary['playerCount']) ?? slotState.playerCount,
+          initialNormalPlayerCount:
+              _readInt(bookingSummary['normalPlayerCount']) ??
+              slotState.normalPlayerCount,
+          initialSeniorPlayerCount:
+              _readInt(bookingSummary['seniorPlayerCount']) ??
+              slotState.seniorPlayerCount,
           caddiePreference:
               bookingSummary['caddieArrangement']?.toString() ??
               slotState.caddiePreference.value,

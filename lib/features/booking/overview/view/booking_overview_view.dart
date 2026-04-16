@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/booking/overview/viewmodel/booking_overview_view_contract.dart';
 
 const double _bottomNavScrollClearance = 136;
 
 class BookingOverviewDashboardView extends StatelessWidget {
   const BookingOverviewDashboardView({
+    required this.state,
     required this.onBookingSubmissionClick,
-    required this.onPopularClubClick,
+    required this.onReceiptSampleClick,
     required this.onBookingListClick,
     required this.onUpcomingBookingDetailClick,
-    required this.onRecentRoundOneDetailClick,
-    required this.onRecentRoundTwoDetailClick,
     super.key,
   });
 
+  final BookingOverviewViewState state;
   final VoidCallback onBookingSubmissionClick;
-  final ValueChanged<GolfClubModel> onPopularClubClick;
+  final VoidCallback onReceiptSampleClick;
   final VoidCallback onBookingListClick;
   final VoidCallback onUpcomingBookingDetailClick;
-  final VoidCallback onRecentRoundOneDetailClick;
-  final VoidCallback onRecentRoundTwoDetailClick;
 
   @override
   Widget build(BuildContext context) {
@@ -28,103 +26,176 @@ class BookingOverviewDashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _StartBookingHero(onTap: onBookingSubmissionClick),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.icon(
+            child: OutlinedButton.icon(
               onPressed: onBookingSubmissionClick,
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Start New Booking'),
+              icon: const Icon(Icons.golf_course_outlined),
+              label: const Text('Choose Club & Tee Time'),
             ),
           ),
-
+          const SizedBox(height: 12),
+          _ReceiptDownloadTouchpoint(onTap: onReceiptSampleClick),
           const SizedBox(height: 18),
-
           _BookingListTouchpoint(onTap: onBookingListClick),
+          if (state.isLoggedIn) ...[
+            const SizedBox(height: 18),
+            const _SectionTitle(title: 'Upcoming Booking'),
+            const SizedBox(height: 10),
+            if (state.isUpcomingLoading)
+              const _UpcomingBookingLoadingCard()
+            else if (state.upcomingBooking != null)
+              _UpcomingCard(
+                course: state.upcomingBooking!.courseName,
+                dateLabel: state.upcomingBooking!.dateLabel,
+                timeLabel: state.upcomingBooking!.teeTimeSlot,
+                playersLabel: state.upcomingBooking!.playersLabel,
+                countdownLabel: _startsInLabel(
+                  state.upcomingBooking!.bookingDate,
+                  state.upcomingBooking!.teeTimeSlot,
+                ),
+                checkInStatus: _checkInStatusLabel(
+                  state.upcomingBooking!.bookingDate,
+                  state.upcomingBooking!.teeTimeSlot,
+                ),
+                onOpenDetails: onUpcomingBookingDetailClick,
+              )
+            else
+              const _EmptyUpcomingCard(),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 18),
+String _startsInLabel(String? bookingDate, String teeTimeSlot) {
+  final teeDateTime = _resolveTeeDateTime(bookingDate, teeTimeSlot);
+  if (teeDateTime == null) {
+    return 'Upcoming';
+  }
 
-          const _SectionTitle(title: 'Upcoming Booking'),
+  final difference = teeDateTime.difference(DateTime.now());
+  if (difference.isNegative) {
+    return 'Tee off passed';
+  }
 
-          const SizedBox(height: 10),
+  final days = difference.inDays;
+  final hours = difference.inHours.remainder(24);
+  if (days > 0) {
+    return 'Starts in ${days}d ${hours}h';
+  }
+  final minutes = difference.inMinutes.remainder(60);
+  return 'Starts in ${difference.inHours}h ${minutes}m';
+}
 
-          _UpcomingCard(
-            course: 'Kinrara Golf Club',
-            dateLabel: 'Fri, Mar 6',
-            timeLabel: '07:30 AM',
-            playersLabel: '2 Players',
-            countdownLabel: 'Starts in 1d 9h',
-            weatherLabel: '28 C, light wind',
-            checkInStatus: 'Check-in opens in 3h',
-            onOpenDetails: onUpcomingBookingDetailClick,
+String _checkInStatusLabel(String? bookingDate, String teeTimeSlot) {
+  final teeDateTime = _resolveTeeDateTime(bookingDate, teeTimeSlot);
+  if (teeDateTime == null) {
+    return 'Check-in time unavailable';
+  }
+
+  final checkInOpenAt = teeDateTime.subtract(const Duration(hours: 3));
+  final difference = checkInOpenAt.difference(DateTime.now());
+  if (difference.isNegative) {
+    return 'Check-in is now open';
+  }
+
+  final hours = difference.inHours;
+  final minutes = difference.inMinutes.remainder(60);
+  if (hours > 0) {
+    return 'Check-in opens in ${hours}h ${minutes}m';
+  }
+  return 'Check-in opens in ${difference.inMinutes}m';
+}
+
+DateTime? _resolveTeeDateTime(String? bookingDate, String teeTimeSlot) {
+  if (bookingDate == null || bookingDate.trim().isEmpty) {
+    return null;
+  }
+
+  final date = DateTime.tryParse(bookingDate);
+  if (date == null) {
+    return null;
+  }
+
+  final parts = teeTimeSlot.trim().split(' ');
+  if (parts.length != 2) {
+    return null;
+  }
+  final timeParts = parts.first.split(':');
+  if (timeParts.length != 2) {
+    return null;
+  }
+  final hour = int.tryParse(timeParts.first);
+  final minute = int.tryParse(timeParts.last);
+  if (hour == null || minute == null) {
+    return null;
+  }
+
+  var resolvedHour = hour % 12;
+  if (parts.last.toUpperCase() == 'PM') {
+    resolvedHour += 12;
+  }
+
+  return DateTime(date.year, date.month, date.day, resolvedHour, minute);
+}
+
+class _StartBookingHero extends StatelessWidget {
+  const _StartBookingHero({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D7A3A), Color(0xFF1F9A55)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x260D7A3A),
+            blurRadius: 20,
+            offset: Offset(0, 10),
           ),
-
-          const SizedBox(height: 18),
-
-          const _SectionTitle(title: 'Popular Clubs Today'),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            height: 212,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _popularClubs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final item = _popularClubs[index];
-                return SizedBox(
-                  width: 250,
-                  child: _PopularClubCard(
-                    item: item,
-                    onTap: () => onPopularClubClick(item.club),
-                  ),
-                );
-              },
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ready to lock in your next tee time?',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
             ),
           ),
-
-          const SizedBox(height: 18),
-
-          const _SectionTitle(title: 'Recent Rounds'),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            height: 208,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                SizedBox(
-                  width: 252,
-                  child: _RoundCard(
-                    course: 'Saujana G&CC',
-                    dateLabel: 'Tue, Feb 25',
-                    scoreLabel: '75 (+3)',
-                    durationLabel: '4h 12m',
-                    fairwaysLabel: '71%',
-                    girLabel: '61%',
-                    puttsLabel: '31',
-                    onOpenDetails: onRecentRoundOneDetailClick,
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                SizedBox(
-                  width: 252,
-                  child: _RoundCard(
-                    course: 'Kota Permai',
-                    dateLabel: 'Sat, Mar 1',
-                    scoreLabel: '72 (E)',
-                    durationLabel: '3h 58m',
-                    fairwaysLabel: '78%',
-                    girLabel: '67%',
-                    puttsLabel: '29',
-                    onOpenDetails: onRecentRoundTwoDetailClick,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            'Start a new booking, pick your preferred club, and secure the slot before it fills up.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.4,
             ),
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: onTap,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF0D7A3A),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            ),
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('Start Booking Now'),
           ),
         ],
       ),
@@ -132,64 +203,62 @@ class BookingOverviewDashboardView extends StatelessWidget {
   }
 }
 
-final List<_PopularClubItem> _popularClubs = <_PopularClubItem>[
-  _PopularClubItem(
-    club: GolfClubModel(
-      id: '1',
-      slug: 'kinrara-golf-club',
-      name: 'Kinrara Golf Club',
-      address: 'Bandar Kinrara, Puchong',
-      noOfHoles: 18,
-    ),
-    distanceLabel: '9 km away',
-    openSlotsLabel: '14 morning slots',
-    greenFeeLabel: 'From MYR 39',
-    peakLabel: 'Peak 7:20 AM',
-  ),
+class _ReceiptDownloadTouchpoint extends StatelessWidget {
+  const _ReceiptDownloadTouchpoint({required this.onTap});
 
-  _PopularClubItem(
-    club: GolfClubModel(
-      id: '2',
-      slug: 'saujana-golf-country-club',
-      name: 'Saujana Golf & Country Club',
-      address: 'Shah Alam, Selangor',
-      noOfHoles: 36,
-    ),
-    distanceLabel: '15 km away',
-    openSlotsLabel: '11 morning slots',
-    greenFeeLabel: 'From MYR 52',
-    peakLabel: 'Peak 8:00 AM',
-  ),
+  final VoidCallback onTap;
 
-  _PopularClubItem(
-    club: GolfClubModel(
-      id: '4',
-      slug: 'mines-resort-golf-club',
-      name: 'The Mines Resort & Golf Club',
-      address: 'Serdang, Selangor',
-      noOfHoles: 18,
-    ),
-    distanceLabel: '21 km away',
-    openSlotsLabel: '9 morning slots',
-    greenFeeLabel: 'From MYR 47',
-    peakLabel: 'Peak 7:40 AM',
-  ),
-];
-
-class _PopularClubItem {
-  const _PopularClubItem({
-    required this.club,
-    required this.distanceLabel,
-    required this.openSlotsLabel,
-    required this.greenFeeLabel,
-    required this.peakLabel,
-  });
-
-  final GolfClubModel club;
-  final String distanceLabel;
-  final String openSlotsLabel;
-  final String greenFeeLabel;
-  final String peakLabel;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F8FF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD8E4FF)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              color: Color(0xFF2A4EA0),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Test Booking Receipt',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF102A5C),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Open a sample receipt screen to test PDF download',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF4A5A7A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(onPressed: onTap, child: const Text('Open')),
+        ],
+      ),
+    );
+  }
 }
 
 class _BookingListTouchpoint extends StatelessWidget {
@@ -210,9 +279,7 @@ class _BookingListTouchpoint extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.list_alt_outlined, color: Color(0xFF0A1F1A)),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,9 +290,7 @@ class _BookingListTouchpoint extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 2),
-
                 Text(
                   'View all upcoming and past bookings',
                   style: Theme.of(
@@ -259,125 +324,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _PopularClubCard extends StatelessWidget {
-  const _PopularClubCard({required this.item, required this.onTap});
-
-  final _PopularClubItem item;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF7FBF9), Color(0xFFFFFFFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFDCE9E2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.club.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            item.club.address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-          ),
-
-          const SizedBox(height: 10),
-
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _Tag(text: item.distanceLabel, color: const Color(0xFF215E4D)),
-              _Tag(text: item.openSlotsLabel, color: const Color(0xFF2F7BFF)),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          Row(
-            children: [
-              Expanded(
-                child: _ClubMetric(
-                  label: 'Green Fee',
-                  value: item.greenFeeLabel,
-                ),
-              ),
-              Expanded(
-                child: _ClubMetric(label: 'Peak', value: item.peakLabel),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                textStyle: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              onPressed: onTap,
-              child: const Text('View Club'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClubMetric extends StatelessWidget {
-  const _ClubMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-        ),
-      ],
-    );
-  }
-}
-
 class _UpcomingCard extends StatelessWidget {
   const _UpcomingCard({
     required this.course,
@@ -385,7 +331,6 @@ class _UpcomingCard extends StatelessWidget {
     required this.timeLabel,
     required this.playersLabel,
     required this.countdownLabel,
-    required this.weatherLabel,
     required this.checkInStatus,
     required this.onOpenDetails,
   });
@@ -395,7 +340,6 @@ class _UpcomingCard extends StatelessWidget {
   final String timeLabel;
   final String playersLabel;
   final String countdownLabel;
-  final String weatherLabel;
   final String checkInStatus;
   final VoidCallback onOpenDetails;
 
@@ -439,7 +383,6 @@ class _UpcomingCard extends StatelessWidget {
               _SurfaceTag(text: dateLabel),
               _SurfaceTag(text: timeLabel),
               _SurfaceTag(text: playersLabel),
-              _SurfaceTag(text: weatherLabel),
             ],
           ),
           const SizedBox(height: 14),
@@ -454,15 +397,6 @@ class _UpcomingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              OutlinedButton(
-                onPressed: onOpenDetails,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white24),
-                ),
-                child: const Text('Modify'),
-              ),
-              const SizedBox(width: 8),
               FilledButton(
                 onPressed: onOpenDetails,
                 style: FilledButton.styleFrom(
@@ -479,122 +413,55 @@ class _UpcomingCard extends StatelessWidget {
   }
 }
 
-class _RoundCard extends StatelessWidget {
-  const _RoundCard({
-    required this.course,
-    required this.dateLabel,
-    required this.scoreLabel,
-    required this.durationLabel,
-    required this.fairwaysLabel,
-    required this.girLabel,
-    required this.puttsLabel,
-    required this.onOpenDetails,
-  });
-
-  final String course;
-  final String dateLabel;
-  final String scoreLabel;
-  final String durationLabel;
-  final String fairwaysLabel;
-  final String girLabel;
-  final String puttsLabel;
-  final VoidCallback onOpenDetails;
+class _UpcomingBookingLoadingCard extends StatelessWidget {
+  const _UpcomingBookingLoadingCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAF9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE1E7E4)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  course,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                dateLabel,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(label: 'Score', value: scoreLabel),
-              ),
-              Expanded(
-                child: _MetricTile(label: 'Duration', value: durationLabel),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(label: 'Fairways', value: fairwaysLabel),
-              ),
-              Expanded(
-                child: _MetricTile(label: 'GIR', value: girLabel),
-              ),
-              Expanded(
-                child: _MetricTile(label: 'Putts', value: puttsLabel),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: onOpenDetails,
-              icon: const Icon(Icons.visibility_outlined),
-              label: const Text('View Details'),
-            ),
-          ),
-        ],
-      ),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
+class _EmptyUpcomingCard extends StatelessWidget {
+  const _EmptyUpcomingCard();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-        ),
-      ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No upcoming bookings yet',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Once you book a round, your next tee time will show up here.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -607,7 +474,7 @@ class _SurfaceTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
@@ -617,32 +484,7 @@ class _SurfaceTag extends StatelessWidget {
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  const _Tag({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

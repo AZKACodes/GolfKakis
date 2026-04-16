@@ -22,63 +22,99 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
               title: 'Booking Confirmation',
               onBackPressed: () => viewModel.performAction(const OnBackClick()),
             ),
-            body: BookingSubmissionConfirmationContent(state: state),
-            bottomNavigationBar: SafeArea(
-              minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: ElevatedButton(
-                onPressed: state.isSubmitting
-                    ? null
-                    : () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (dialogContext) {
-                            return AlertDialog(
-                              title: const Text('Confirm Booking'),
-                              content: const Text(
-                                'Please ensure all booking details are correct before proceeding.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(false),
-                                  child: const Text('Review Again'),
-                                ),
-                                FilledButton(
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(true),
-                                  child: const Text('Proceed'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+            body: state.isSubmitting
+                ? const _BookingConfirmationLoadingView()
+                : BookingSubmissionConfirmationContent(state: state),
+            bottomNavigationBar: state.isSubmitting
+                ? null
+                : SafeArea(
+                    minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: ElevatedButton(
+                      onPressed: state.isHoldExpired
+                          ? null
+                          : () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (dialogContext) {
+                                  return AlertDialog(
+                                    title: const Text('Confirm Booking'),
+                                    content: const Text(
+                                      'Please ensure all booking details are correct before proceeding.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(false),
+                                        child: const Text('Review Again'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(true),
+                                        child: const Text('Proceed'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
 
-                        if (confirmed == true) {
-                          viewModel.performAction(const OnConfirmClick());
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D7A3A),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(52),
-                  elevation: 6,
-                  shadowColor: const Color(0x330D7A3A),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                              if (confirmed == true) {
+                                viewModel.performAction(const OnConfirmClick());
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D7A3A),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        elevation: 6,
+                        shadowColor: const Color(0x330D7A3A),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        state.isHoldExpired
+                            ? 'Booking Session Expired'
+                            : 'Confirm Booking • ${state.totalCostLabel}',
+                      ),
+                    ),
                   ),
-                ),
-                child: state.isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text('Confirm Booking • ${state.totalCostLabel}'),
-              ),
-            ),
           ),
         };
       },
+    );
+  }
+}
+
+class _BookingConfirmationLoadingView extends StatelessWidget {
+  const _BookingConfirmationLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ColoredBox(
+      color: theme.scaffoldBackgroundColor,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Submitting your booking...',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

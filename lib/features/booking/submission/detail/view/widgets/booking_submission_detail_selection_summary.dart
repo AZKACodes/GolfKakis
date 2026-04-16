@@ -52,13 +52,6 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
             value: '${state.pricePerPersonLabel} per person',
           ),
 
-          const SizedBox(height: 6),
-
-          BookingSubmissionDetailSelectionSummaryRow(
-            label: 'Guest ID',
-            value: state.guestId?.isNotEmpty == true ? state.guestId! : 'N/A',
-          ),
-
           const SizedBox(height: 10),
 
           Container(
