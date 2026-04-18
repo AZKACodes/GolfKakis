@@ -29,6 +29,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     required this.caddiePreference,
     required this.buggyType,
     required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
@@ -52,6 +53,7 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -92,6 +94,7 @@ class _BookingSubmissionConfirmationPageState
         caddiePreference: widget.caddiePreference,
         buggyType: widget.buggyType,
         buggySharingPreference: widget.buggySharingPreference,
+        selectedNine: widget.selectedNine,
         caddieCount: widget.caddieCount,
         golfCartCount: widget.golfCartCount,
         playerDetails: widget.playerDetails,

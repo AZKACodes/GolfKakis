@@ -53,6 +53,7 @@ class BookingSubmissionConfirmationViewModel
             caddiePreference: intent.caddiePreference,
             buggyType: intent.buggyType,
             buggySharingPreference: intent.buggySharingPreference,
+            selectedNine: intent.selectedNine,
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
             playerDetails: intent.playerDetails,

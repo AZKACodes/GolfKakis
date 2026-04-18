@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 
 import '../viewmodel/golf_club_detail_view_contract.dart';
 
@@ -7,13 +6,13 @@ class GolfClubDetailView extends StatelessWidget {
   const GolfClubDetailView({
     required this.state,
     required this.onRefresh,
-    required this.onBookNowClick,
+    required this.onDirectionsClick,
     super.key,
   });
 
   final GolfClubDetailViewState state;
   final Future<void> Function() onRefresh;
-  final VoidCallback onBookNowClick;
+  final VoidCallback onDirectionsClick;
 
   @override
   Widget build(BuildContext context) {
@@ -21,73 +20,22 @@ class GolfClubDetailView extends StatelessWidget {
     final club = detail.club;
     final theme = Theme.of(context);
 
+    if (state.isLoading) {
+      return const _FullscreenLoadingState();
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          if (state.errorMessage != null) ...[
-            ErrorBanner(message: state.errorMessage!),
-            const SizedBox(height: 12),
-          ],
-          if (state.isLoading) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 12),
-          ],
           _HeroCard(
             clubName: club.name,
             address: club.address,
             bestForLabel: detail.bestForLabel,
           ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Overview',
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Distance',
-                        value: detail.distanceLabel,
-                        accent: const Color(0xFF1E5B4A),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Green Fee',
-                        value: detail.greenFeeLabel,
-                        accent: const Color(0xFF2F7BFF),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Availability',
-                        value: detail.openSlotsLabel,
-                        accent: const Color(0xFF2FBF71),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Peak Slot',
-                        value: detail.peakLabel,
-                        accent: const Color(0xFFFF9F1C),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _SectionCard(
             title: 'About This Club',
             child: Text(
@@ -113,43 +61,174 @@ class GolfClubDetailView extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionCard(
             title: 'Course Snapshot',
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: _SnapshotTile(
-                    icon: Icons.golf_course_outlined,
-                    label: 'Holes',
-                    value: '${club.noOfHoles}',
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SnapshotTile(
+                        icon: Icons.golf_course_outlined,
+                        label: 'Holes',
+                        value: '${club.noOfHoles}',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _SnapshotTile(
+                        icon: Icons.wb_sunny_outlined,
+                        label: 'Next Slot',
+                        value: detail.nextSlotLabel.isEmpty
+                            ? 'Check app'
+                            : detail.nextSlotLabel,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _SnapshotTile(
+                        icon: Icons.event_outlined,
+                        label: 'Booking Date',
+                        value: detail.bookingDateLabel.isEmpty
+                            ? 'Pending'
+                            : detail.bookingDateLabel,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: _SnapshotTile(
-                    icon: Icons.wb_sunny_outlined,
-                    label: 'Best Window',
-                    value: 'Morning',
+                if (detail.weather != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFDCE7FF)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daily Weather Report',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F0FF),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                _resolveWeatherIcon(
+                                  detail.weather!.weatherIcon,
+                                ),
+                                color: const Color(0xFF173B7A),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    detail.weather!.weatherLabel,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Now ${detail.weather!.temperatureCelsius} C • Wind ${detail.weather!.windSpeedKph} km/h',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'High ${detail.weather!.highCelsius} C • Low ${detail.weather!.lowCelsius} C',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: _SnapshotTile(
-                    icon: Icons.groups_outlined,
-                    label: 'Pace',
-                    value: 'Smooth',
-                  ),
-                ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onBookNowClick,
-            icon: const Icon(Icons.add_circle_outline),
-            label: const Text('Start Booking Here'),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onDirectionsClick,
+              icon: const Icon(Icons.near_me_outlined),
+              label: const Text('Directions'),
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _FullscreenLoadingState extends StatelessWidget {
+  const _FullscreenLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 36,
+            height: 36,
+            child: CircularProgressIndicator(strokeWidth: 3),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Loading golf club details...',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData _resolveWeatherIcon(String weatherIcon) {
+  switch (weatherIcon) {
+    case 'Clear':
+      return Icons.wb_sunny_rounded;
+    case 'Clouds':
+      return Icons.cloud_rounded;
+    case 'Mist':
+      return Icons.cloud_queue_rounded;
+    case 'Rain':
+      return Icons.grain_rounded;
+    case 'Storm':
+      return Icons.thunderstorm_rounded;
+    default:
+      return Icons.golf_course_rounded;
   }
 }
 
@@ -270,48 +349,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.label,
-    required this.value,
-    required this.accent,
-  });
-
-  final String label;
-  final String value;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.black54,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SnapshotTile extends StatelessWidget {
   const _SnapshotTile({
     required this.icon,
@@ -340,6 +377,7 @@ class _SnapshotTile extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(

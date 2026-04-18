@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
@@ -64,6 +65,15 @@ class BookingSubmissionDetailViewModel
               buggyType: intent.buggyType,
               buggySharingPreference: intent.buggySharingPreference,
               selectedNine: intent.selectedNine,
+              caddieCount: _defaultCaddieCount(
+                playerCount: initialPlayerCount,
+                caddiePreference: intent.caddiePreference,
+                isForcedSharedCaddieSlot:
+                    TeeTimeSlot.fromLabel(
+                      intent.teeTimeSlot,
+                    )?.requiresSharedCaddieAndJumboBuggy ==
+                    true,
+              ),
               golfCartCount: _defaultGolfCartCount(initialPlayerCount),
               playerDetails: _buildInitialPlayerDetails(
                 playerCount: initialPlayerCount,
@@ -115,22 +125,13 @@ class BookingSubmissionDetailViewModel
           return _deriveState(
             current.copyWith(
               playerCount: nextPlayerCount,
-              golfCartCount: _defaultGolfCartCount(nextPlayerCount),
+              caddieCount: current.caddieCount.clamp(0, nextPlayerCount),
             ),
           );
         });
       case OnSelectCaddiePreference():
-        emitViewState((state) {
-          final current = getCurrentAsLoaded();
-          return _deriveState(current.copyWith(caddiePreference: intent.value));
-        });
       case OnSelectBuggySharingPreference():
-        emitViewState((state) {
-          final current = getCurrentAsLoaded();
-          return _deriveState(
-            current.copyWith(buggySharingPreference: intent.value),
-          );
-        });
+        return;
       case OnPlayerNameChanged():
         emitViewState((state) {
           return _deriveState(
@@ -165,7 +166,10 @@ class BookingSubmissionDetailViewModel
           final current = getCurrentAsLoaded();
           return _deriveState(
             current.copyWith(
-              golfCartCount: intent.value.clamp(0, current.playerCount),
+              golfCartCount: intent.value.clamp(
+                0,
+                _defaultGolfCartCount(current.playerCount),
+              ),
             ),
           );
         });
@@ -193,9 +197,10 @@ class BookingSubmissionDetailViewModel
             hostName: _primaryPlayer(current).name,
             hostPhoneNumber: _primaryPlayer(current).phoneNumber,
             playerCount: current.playerCount,
-            caddiePreference: current.caddiePreference,
-            buggyType: current.buggyType,
-            buggySharingPreference: current.buggySharingPreference,
+            caddiePreference: current.effectiveCaddiePreference,
+            buggyType: current.effectiveBuggyType,
+            buggySharingPreference: current.effectiveBuggySharingPreference,
+            selectedNine: current.selectedNine,
             caddieCount: current.caddieCount,
             golfCartCount: current.golfCartCount,
             playerDetails: current.playerDetails,
@@ -231,17 +236,23 @@ class BookingSubmissionDetailViewModel
     );
     final normalizedGolfCartCount = state.golfCartCount.clamp(
       0,
-      normalizedPlayerCount,
+      _defaultGolfCartCount(normalizedPlayerCount),
     );
+    final normalizedCaddiePreference = normalizedCaddieCount <= 0
+        ? 'none'
+        : state.isForcedSharedCaddieSlot
+        ? 'shared'
+        : normalizedCaddieCount >= normalizedPlayerCount
+        ? 'per_player'
+        : 'shared';
 
     return state.copyWith(
       playerCount: normalizedPlayerCount,
       normalPlayerCount: normalizedNormalPlayerCount,
       seniorPlayerCount: normalizedSeniorPlayerCount,
-      caddiePreference: state.isForcedSharedCaddieSlot
-          ? 'shared'
-          : state.caddiePreference,
+      caddiePreference: normalizedCaddiePreference,
       buggyType: state.isForcedSharedCaddieSlot ? 'jumbo' : state.buggyType,
+      buggySharingPreference: 'shared',
       caddieCount: normalizedCaddieCount,
       golfCartCount: normalizedGolfCartCount,
       playerDetails: normalizedPlayerDetails,
@@ -388,6 +399,25 @@ class BookingSubmissionDetailViewModel
     }
 
     return 3;
+  }
+
+  int _defaultCaddieCount({
+    required int playerCount,
+    required String caddiePreference,
+    required bool isForcedSharedCaddieSlot,
+  }) {
+    if (isForcedSharedCaddieSlot) {
+      return playerCount > 0 ? 1 : 0;
+    }
+
+    switch (caddiePreference.trim().toLowerCase()) {
+      case 'per_player':
+        return playerCount;
+      case 'shared':
+        return playerCount > 0 ? 1 : 0;
+      default:
+        return 0;
+    }
   }
 
   int _maxPlayerCountForSlot(String teeTimeSlot) {
