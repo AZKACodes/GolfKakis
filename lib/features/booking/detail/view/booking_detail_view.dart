@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
@@ -89,73 +90,28 @@ class BookingDetailView extends StatelessWidget {
                       icon: Icons.person_outline,
                       label: 'Caddies',
                       value: '${booking.caddieCount}',
-                      pillLabel: _formatEnumLabel(booking.caddieArrangement),
                     ),
                     const SizedBox(width: 10),
                     _MetricTile(
                       icon: Icons.directions_car_outlined,
                       label: 'Buggy',
                       value: '${booking.golfCartCount}',
-                      pillLabel: _formatEnumLabel(
-                        booking.buggySharingPreference,
-                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _InfoRow(
-                  label: 'Selected Nine',
+                  label: 'Starting Course',
                   value: _formatSentenceLabel(booking.selectedNine),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _ProminentSectionCard(
-              title: 'Payment Summary',
-              children: [
-                _HighlightedInfoCard(
-                  label: 'Payment',
-                  value: _formatPaymentMethod(booking.paymentMethod),
-                  icon: Icons.point_of_sale_outlined,
-                ),
                 const SizedBox(height: 12),
-                _PriceRow(label: 'Grand Total', value: booking.feeLabel),
-                if (booking.pendingCounterConfirmation.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _InfoRow(
-                    label: 'Pending Counter',
-                    value: booking.pendingCounterConfirmation.join(', '),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 16),
-            _SectionCard(
-              title: 'Player Details',
-              children: [
-                for (var i = 0; i < booking.playerDetails.length; i++) ...[
-                  _InfoRow(
-                    label: 'Player ${i + 1}',
-                    value: booking.playerDetails[i].name,
-                  ),
-                  _InfoRow(
-                    label: 'Phone',
-                    value: booking.playerDetails[i].phoneNumber,
-                  ),
-                  _InfoRow(
-                    label: 'Category',
-                    value: _formatSentenceLabel(
-                      booking.playerDetails[i].category,
-                    ),
-                  ),
-                  if (i != booking.playerDetails.length - 1)
-                    const Divider(height: 20),
-                ],
+                _RoundConfigurationTabs(booking: booking),
               ],
             ),
             const SizedBox(height: 16),
             _SectionCard(
               title: 'Scoreboard',
+              trailing: const _InlineComingSoonPill(),
               children: [
                 Row(
                   children: [
@@ -168,13 +124,136 @@ class BookingDetailView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                const _ComingSoonBanner(message: 'Scoreboard Coming Soon'),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RoundConfigurationTabs extends StatelessWidget {
+  const _RoundConfigurationTabs({required this.booking});
+
+  final BookingModel booking;
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Builder(
+        builder: (context) {
+          final controller = DefaultTabController.of(context);
+
+          return AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              final selectedIndex = controller.index;
+              final selectedBody = selectedIndex == 0
+                  ? _PlayerDetailsTab(booking: booking)
+                  : _PaymentSummaryTab(booking: booking);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: TabBar(
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const <BoxShadow>[
+                            BoxShadow(
+                              color: Color(0x12000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        labelStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        unselectedLabelStyle: Theme.of(
+                          context,
+                        ).textTheme.labelLarge,
+                        labelColor: Colors.black87,
+                        unselectedLabelColor: Colors.black54,
+                        splashBorderRadius: BorderRadius.circular(8),
+                        tabs: const <Tab>[
+                          Tab(text: 'Player Details'),
+                          Tab(text: 'Payment Summary'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: KeyedSubtree(
+                      key: ValueKey<int>(selectedIndex),
+                      child: selectedBody,
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlayerDetailsTab extends StatelessWidget {
+  const _PlayerDetailsTab({required this.booking});
+
+  final BookingModel booking;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < booking.playerDetails.length; i++) ...[
+          _InfoRow(
+            label: 'Player ${i + 1}',
+            value: booking.playerDetails[i].name,
+          ),
+          _InfoRow(label: 'Phone', value: booking.playerDetails[i].phoneNumber),
+          _InfoRow(
+            label: 'Category',
+            value: _formatSentenceLabel(booking.playerDetails[i].category),
+          ),
+          if (i != booking.playerDetails.length - 1) const Divider(height: 20),
+        ],
+      ],
+    );
+  }
+}
+
+class _PaymentSummaryTab extends StatelessWidget {
+  const _PaymentSummaryTab({required this.booking});
+
+  final BookingModel booking;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _HighlightedInfoCard(
+          label: 'Payment',
+          value: _formatPaymentMethod(booking.paymentMethod),
+          icon: Icons.point_of_sale_outlined,
+        ),
+        const SizedBox(height: 12),
+        _PriceRow(label: 'Grand Total', value: booking.feeLabel),
+      ],
     );
   }
 }
@@ -258,43 +337,6 @@ String _formatTimelineDateTime(String? value) {
   return '${local.day} ${months[local.month - 1]} ${local.year}, ${hour.toString()}:$minute$suffix';
 }
 
-class _ComingSoonBanner extends StatelessWidget {
-  const _ComingSoonBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD4DFFF)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.campaign_outlined,
-            size: 16,
-            color: Color(0xFF2A4EA0),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            message,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: const Color(0xFF2A4EA0),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _FullscreenLoadingState extends StatelessWidget {
   const _FullscreenLoadingState();
 
@@ -345,10 +387,15 @@ class _DetailCard extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.children,
+    this.trailing,
+  });
 
   final String title;
   final List<Widget> children;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -358,11 +405,21 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Visibility(
+                visible: trailing != null,
+                child: trailing ?? const SizedBox.shrink(),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           ...children,
@@ -372,47 +429,24 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _ProminentSectionCard extends StatelessWidget {
-  const _ProminentSectionCard({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
+class _InlineComingSoonPill extends StatelessWidget {
+  const _InlineComingSoonPill();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFF7F9FF), Color(0xFFEEF3FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD7E1FF)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x140F2F73),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        color: const Color(0xFFEFF4FF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFD4DFFF)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+      child: Text(
+        'Coming Soon',
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: const Color(0xFF2A4EA0),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -521,19 +555,15 @@ class _MetricTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    this.pillLabel,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final String? pillLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final resolvedPill = pillLabel?.trim() ?? '';
-    final hasPill = resolvedPill.isNotEmpty && resolvedPill != '-';
 
     return Expanded(
       child: Container(
@@ -561,21 +591,16 @@ class _MetricTile extends StatelessWidget {
             SizedBox(
               height: 28,
               child: Center(
-                child: hasPill
-                    ? StatusPill(
-                        label: resolvedPill,
-                        color: const Color(0xFF2A4EA0),
-                      )
-                    : Text(
-                        value,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
           ],

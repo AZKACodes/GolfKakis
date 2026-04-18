@@ -45,8 +45,9 @@ class OnBookingSubmissionClick extends BookingOverviewUserIntent {
 }
 
 class OnInit extends BookingOverviewUserIntent {
-  const OnInit({this.accessToken});
+  const OnInit({required this.isLoggedIn, this.accessToken});
 
+  final bool isLoggedIn;
   final String? accessToken;
 }
 

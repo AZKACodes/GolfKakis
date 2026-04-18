@@ -36,6 +36,7 @@ class BookingSubmissionConfirmationDataLoaded
     this.caddiePreference = 'none',
     this.buggyType = 'normal',
     this.buggySharingPreference = 'shared',
+    this.selectedNine,
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
@@ -67,6 +68,7 @@ class BookingSubmissionConfirmationDataLoaded
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -107,6 +109,7 @@ class BookingSubmissionConfirmationDataLoaded
     String? caddiePreference,
     String? buggyType,
     String? buggySharingPreference,
+    String? selectedNine,
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
@@ -134,6 +137,7 @@ class BookingSubmissionConfirmationDataLoaded
       buggyType: buggyType ?? this.buggyType,
       buggySharingPreference:
           buggySharingPreference ?? this.buggySharingPreference,
+      selectedNine: selectedNine ?? this.selectedNine,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
@@ -169,6 +173,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.caddiePreference,
     required this.buggyType,
     required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
@@ -190,6 +195,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;

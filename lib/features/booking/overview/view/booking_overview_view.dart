@@ -7,7 +7,6 @@ class BookingOverviewDashboardView extends StatelessWidget {
   const BookingOverviewDashboardView({
     required this.state,
     required this.onBookingSubmissionClick,
-    required this.onReceiptSampleClick,
     required this.onBookingListClick,
     required this.onUpcomingBookingDetailClick,
     super.key,
@@ -15,7 +14,6 @@ class BookingOverviewDashboardView extends StatelessWidget {
 
   final BookingOverviewViewState state;
   final VoidCallback onBookingSubmissionClick;
-  final VoidCallback onReceiptSampleClick;
   final VoidCallback onBookingListClick;
   final VoidCallback onUpcomingBookingDetailClick;
 
@@ -27,17 +25,6 @@ class BookingOverviewDashboardView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _StartBookingHero(onTap: onBookingSubmissionClick),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onBookingSubmissionClick,
-              icon: const Icon(Icons.golf_course_outlined),
-              label: const Text('Choose Club & Tee Time'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _ReceiptDownloadTouchpoint(onTap: onReceiptSampleClick),
           const SizedBox(height: 18),
           _BookingListTouchpoint(onTap: onBookingListClick),
           if (state.isLoggedIn) ...[
@@ -197,64 +184,6 @@ class _StartBookingHero extends StatelessWidget {
             icon: const Icon(Icons.add_circle_outline),
             label: const Text('Start Booking Now'),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReceiptDownloadTouchpoint extends StatelessWidget {
-  const _ReceiptDownloadTouchpoint({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FF),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD8E4FF)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.receipt_long_outlined,
-              color: Color(0xFF2A4EA0),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Test Booking Receipt',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF102A5C),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Open a sample receipt screen to test PDF download',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF4A5A7A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(onPressed: onTap, child: const Text('Open')),
         ],
       ),
     );

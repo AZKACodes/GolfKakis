@@ -134,6 +134,7 @@ class _BookingSubmissionDetailPageState
               caddiePreference: effect.caddiePreference,
               buggyType: effect.buggyType,
               buggySharingPreference: effect.buggySharingPreference,
+              selectedNine: effect.selectedNine,
               caddieCount: effect.caddieCount,
               golfCartCount: effect.golfCartCount,
               playerDetails: effect.playerDetails,

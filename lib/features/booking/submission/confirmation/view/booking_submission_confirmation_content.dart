@@ -17,46 +17,79 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (state.errorMessage.isNotEmpty) ...[
+              _ErrorBanner(message: state.errorMessage),
+              const SizedBox(height: 12),
+            ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: state.isHoldExpired
+                    ? const Color(0xFFFDECEC)
+                    : const Color(0xFFFFF6E8),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: state.isHoldExpired
+                      ? const Color(0xFFE7A1A1)
+                      : const Color(0xFFFFD58A),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    state.isHoldExpired
+                        ? Icons.timer_off_outlined
+                        : Icons.timer_outlined,
+                    color: state.isHoldExpired
+                        ? const Color(0xFF8A3D3D)
+                        : const Color(0xFF7A5200),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.isHoldExpired
+                          ? 'Booking session expired'
+                          : 'Complete your booking within ${state.holdCountdownLabel}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: state.isHoldExpired
+                            ? const Color(0xFF8A3D3D)
+                            : const Color(0xFF7A5200),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             _DetailCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Review Booking',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          state.golfClubName,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   _ImportantDetailsPanel(
-                    golfClubName: state.golfClubName,
                     dateLabel: DateUtil.formatApiDate(state.selectedDate),
                     teeTimeSlot: state.teeTimeSlot,
                   ),
                 ],
               ),
             ),
-            if (state.errorMessage.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                state.errorMessage,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            _SectionCard(
-              title: 'Contact Information',
-              children: [
-                _InfoRow(label: 'Name', value: state.hostName),
-                _InfoRow(label: 'Phone', value: state.hostPhoneNumber),
-              ],
-            ),
             const SizedBox(height: 16),
             _SectionCard(
-              title: 'Round Setup',
+              title: 'Round Configuration',
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,57 +110,160 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                       icon: Icons.person_outline,
                       label: 'Caddies',
                       value: '${state.caddieCount}',
-                      pillLabel: _formatEnumLabel(state.caddiePreference),
                     ),
                     const SizedBox(width: 10),
                     _MetricTile(
                       icon: Icons.directions_car_outlined,
                       label: 'Buggy',
                       value: '${state.golfCartCount}',
-                      pillLabel: _formatEnumLabel(state.buggySharingPreference),
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _ProminentSectionCard(
-              title: 'Payment Summary',
-              children: [
-                _HighlightedInfoCard(
-                  label: 'Payment Method',
-                  value: state.paymentMethodLabel,
-                  icon: Icons.receipt_long_outlined,
+                const SizedBox(height: 16),
+                _InfoRow(label: 'Host', value: state.hostName),
+                _InfoRow(label: 'Phone', value: state.hostPhoneNumber),
+                _InfoRow(
+                  label: 'Starting Course',
+                  value: _formatSentenceLabel(state.selectedNine),
+                ),
+                _InfoRow(
+                  label: 'Buggy Type',
+                  value: _formatEnumLabel(state.buggyType),
                 ),
                 const SizedBox(height: 12),
-                _HighlightedInfoCard(
-                  label: 'Price Per Pax',
-                  value: state.pricePerPersonLabel,
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 12),
-                _HighlightedInfoCard(
-                  label: 'Total',
-                  value: state.totalCostLabel,
-                  icon: Icons.point_of_sale_outlined,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _SectionCard(
-              title: 'Player Details',
-              children: [
-                for (var index = 0; index < state.playerDetails.length; index++)
-                  _PlayerInfoRow(
-                    index: index + 1,
-                    name: state.playerDetails[index].name,
-                    phoneNumber: state.playerDetails[index].phoneNumber,
-                  ),
+                _RoundConfigurationTabs(state: state),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RoundConfigurationTabs extends StatelessWidget {
+  const _RoundConfigurationTabs({required this.state});
+
+  final BookingSubmissionConfirmationDataLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Builder(
+        builder: (context) {
+          final controller = DefaultTabController.of(context);
+
+          return AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              final selectedIndex = controller.index;
+              final selectedBody = selectedIndex == 0
+                  ? _PlayerDetailsTab(state: state)
+                  : _PaymentSummaryTab(state: state);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: TabBar(
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const <BoxShadow>[
+                            BoxShadow(
+                              color: Color(0x12000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        labelStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        unselectedLabelStyle: Theme.of(
+                          context,
+                        ).textTheme.labelLarge,
+                        labelColor: Colors.black87,
+                        unselectedLabelColor: Colors.black54,
+                        splashBorderRadius: BorderRadius.circular(8),
+                        tabs: const <Tab>[
+                          Tab(text: 'Player Details'),
+                          Tab(text: 'Payment Summary'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: KeyedSubtree(
+                      key: ValueKey<int>(selectedIndex),
+                      child: selectedBody,
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlayerDetailsTab extends StatelessWidget {
+  const _PlayerDetailsTab({required this.state});
+
+  final BookingSubmissionConfirmationDataLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < state.playerDetails.length; i++) ...[
+          _InfoRow(
+            label: 'Player ${i + 1}',
+            value: state.playerDetails[i].name,
+          ),
+          _InfoRow(label: 'Phone', value: state.playerDetails[i].phoneNumber),
+          if (i != state.playerDetails.length - 1) const Divider(height: 20),
+        ],
+      ],
+    );
+  }
+}
+
+class _PaymentSummaryTab extends StatelessWidget {
+  const _PaymentSummaryTab({required this.state});
+
+  final BookingSubmissionConfirmationDataLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _HighlightedInfoCard(
+          label: 'Payment',
+          value: state.paymentMethodLabel,
+          icon: Icons.point_of_sale_outlined,
+        ),
+        const SizedBox(height: 12),
+        _HighlightedInfoCard(
+          label: 'Price Per Pax',
+          value: state.pricePerPersonLabel,
+          icon: Icons.person_outline,
+        ),
+        const SizedBox(height: 12),
+        _PriceRow(label: 'Grand Total', value: state.totalCostLabel),
+      ],
     );
   }
 }
@@ -158,8 +294,8 @@ String _resolveHoleCount(String teeTimeSlot) {
   return eighteenHoleSlots.contains(teeTimeSlot) ? '18' : '9';
 }
 
-String _formatEnumLabel(String value) {
-  final normalized = value.trim();
+String _formatEnumLabel(String? value) {
+  final normalized = value?.trim() ?? '';
   if (normalized.isEmpty) {
     return '-';
   }
@@ -171,6 +307,45 @@ String _formatEnumLabel(String value) {
       .join(' ');
 }
 
+String _formatSentenceLabel(String? value) {
+  final normalized = value?.trim() ?? '';
+  if (normalized.isEmpty) {
+    return '-';
+  }
+
+  return normalized
+      .split('_')
+      .where((part) => part.isNotEmpty)
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFD4D4)),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFFB42318),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _DetailCard extends StatelessWidget {
   const _DetailCard({required this.child});
 
@@ -180,10 +355,10 @@ class _DetailCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black12),
       ),
       child: child,
@@ -201,24 +376,17 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black12),
-      ),
+    return _DetailCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           ...children,
         ],
       ),
@@ -228,19 +396,15 @@ class _SectionCard extends StatelessWidget {
 
 class _ImportantDetailsPanel extends StatelessWidget {
   const _ImportantDetailsPanel({
-    required this.golfClubName,
     required this.dateLabel,
     required this.teeTimeSlot,
   });
 
-  final String golfClubName;
   final String dateLabel;
   final String teeTimeSlot;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -252,14 +416,6 @@ class _ImportantDetailsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            golfClubName,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF102A5C),
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -284,7 +440,105 @@ class _ImportantDetailsPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          _InfoRow(label: 'Booking Status', value: 'Pending Confirmation'),
         ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: Colors.black87),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Center(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -325,7 +579,7 @@ class _HighlightStatCard extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: foregroundColor,
+                  color: foregroundColor.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -339,180 +593,6 @@ class _HighlightStatCard extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.black54,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.pillLabel,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String? pillLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final resolvedPill = pillLabel?.trim() ?? '';
-    final hasPill = resolvedPill.isNotEmpty && resolvedPill != '-';
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: Colors.black87),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.black54,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 28,
-              child: Center(
-                child: hasPill
-                    ? _Pill(label: resolvedPill)
-                    : Text(
-                        value,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A4EA0),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _ProminentSectionCard extends StatelessWidget {
-  const _ProminentSectionCard({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFF7F9FF), Color(0xFFEEF3FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD7E1FF)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x140F2F73),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...children,
         ],
       ),
     );
@@ -581,49 +661,41 @@ class _HighlightedInfoCard extends StatelessWidget {
   }
 }
 
-class _PlayerInfoRow extends StatelessWidget {
-  const _PlayerInfoRow({
-    required this.index,
-    required this.name,
-    required this.phoneNumber,
-  });
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({required this.label, required this.value});
 
-  final int index;
-  final String name;
-  final String phoneNumber;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9F9F9),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Player $index',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.black54,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 6),
-            Text(name, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 2),
-            Text(
-              phoneNumber,
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF17397C),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

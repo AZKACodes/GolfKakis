@@ -107,11 +107,20 @@ class BookingSubmissionDetailDataLoaded
   bool get isForcedSharedCaddieSlot =>
       teeTime?.requiresSharedCaddieAndJumboBuggy == true;
 
-  String get effectiveCaddiePreference =>
-      isForcedSharedCaddieSlot ? 'shared' : caddiePreference;
+  String get effectiveCaddiePreference {
+    if (caddieCount <= 0) {
+      return 'none';
+    }
+    if (isForcedSharedCaddieSlot) {
+      return 'shared';
+    }
+    return caddieCount >= playerCount ? 'per_player' : 'shared';
+  }
 
   String get effectiveBuggyType =>
       isForcedSharedCaddieSlot ? 'jumbo' : buggyType;
+
+  String get effectiveBuggySharingPreference => 'shared';
 
   BookingSubmissionDetailDataLoaded copyWith({
     String? slotId,
@@ -331,6 +340,7 @@ class NavigateToBookingSubmissionConfirmation
     required this.caddiePreference,
     required this.buggyType,
     required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
@@ -353,6 +363,7 @@ class NavigateToBookingSubmissionConfirmation
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;

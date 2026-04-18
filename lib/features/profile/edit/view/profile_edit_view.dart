@@ -92,6 +92,9 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                 _EditableAvatar(
                   initials: _buildInitials(widget.state.fullName),
                   avatarIndex: widget.state.avatarIndex,
+                  onTap: () => widget.onAvatarChanged(
+                    (widget.state.avatarIndex + 1) % _avatarPalettes.length,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -101,6 +104,15 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                Text(
+                  'Tap the avatar to cycle styles or choose one below.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 10,
@@ -114,8 +126,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                       onTap: () => widget.onAvatarChanged(index),
                       borderRadius: BorderRadius.circular(999),
                       child: Container(
-                        width: 42,
-                        height: 42,
+                        width: 52,
+                        height: 52,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: palette,
@@ -128,6 +140,15 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                                 ? const Color(0xFF173B7A)
                                 : Colors.transparent,
                             width: 3,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _buildInitials(widget.state.fullName),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
@@ -229,32 +250,73 @@ String _buildInitials(String fullName) {
 }
 
 class _EditableAvatar extends StatelessWidget {
-  const _EditableAvatar({required this.initials, required this.avatarIndex});
+  const _EditableAvatar({
+    required this.initials,
+    required this.avatarIndex,
+    required this.onTap,
+  });
 
   final String initials;
   final int avatarIndex;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = _avatarPalettes[avatarIndex % _avatarPalettes.length];
 
-    return Container(
-      width: 92,
-      height: 92,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: palette,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Text(
-          initials,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Ink(
+          width: 110,
+          height: 110,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: palette,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x22333D4B),
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Text(
+                  initials,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: Color(0xFF173B7A),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

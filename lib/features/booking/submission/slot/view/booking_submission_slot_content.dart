@@ -101,7 +101,7 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                     state.availableSupportedNines.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
-                    'Supported Nines',
+                    'Starting Course',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -339,12 +339,12 @@ class _CalendarGateMessage extends StatelessWidget {
           ? hasAvailableGolfClubs
                 ? 'Please select a golf club'
                 : 'No Golf Clubs Available'
-          : 'Select a supported nine first',
+          : 'Select a starting course first',
       message: !hasSelectedClub
           ? hasAvailableGolfClubs
                 ? 'Select a golf club to continue with the calendar and available time slots.'
                 : 'There are no golf clubs available right now.'
-          : 'Choose a supported nine before the calendar becomes active.',
+          : 'Choose a starting course before the calendar becomes active.',
       icon: Icons.golf_course_rounded,
     );
   }
@@ -461,7 +461,7 @@ class _SupportedNinePickerCard extends StatelessWidget {
                 child: Text(
                   value.isNotEmpty
                       ? _formatLabel(value)
-                      : 'Select supported nine',
+                      : 'Select starting course',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: value.isEmpty
                         ? Colors.black54
@@ -500,14 +500,14 @@ class _SupportedNinePickerCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select Supported Nine',
+                'Select Starting Course',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
-                'Choose the preferred nine for this booking.',
+                'Choose the starting course for this booking.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.black54),

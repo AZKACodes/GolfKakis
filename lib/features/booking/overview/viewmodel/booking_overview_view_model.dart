@@ -13,6 +13,8 @@ class BookingOverviewViewModel extends ChangeNotifier
       StreamController<BookingOverviewNavEffect>.broadcast();
 
   BookingOverviewViewState _viewState = BookingOverviewViewState.initial;
+  String? _lastAccessToken;
+  bool _lastIsLoggedIn = false;
 
   @override
   BookingOverviewViewState get viewState => _viewState;
@@ -25,7 +27,10 @@ class BookingOverviewViewModel extends ChangeNotifier
   Future<void> onUserIntent(BookingOverviewUserIntent intent) async {
     switch (intent) {
       case OnInit():
-        await _handleInit(intent.accessToken);
+        await _handleInit(
+          isLoggedIn: intent.isLoggedIn,
+          accessToken: intent.accessToken,
+        );
       case OnBookingSubmissionClick():
         _navEffectsController.add(const NavigateToBookingSubmission());
       case OnPopularClubClick():
@@ -40,9 +45,19 @@ class BookingOverviewViewModel extends ChangeNotifier
     }
   }
 
-  Future<void> _handleInit(String? accessToken) async {
+  Future<void> _handleInit({
+    required bool isLoggedIn,
+    String? accessToken,
+  }) async {
     final normalizedToken = accessToken?.trim() ?? '';
-    if (normalizedToken.isEmpty) {
+    if (_lastIsLoggedIn == isLoggedIn && _lastAccessToken == normalizedToken) {
+      return;
+    }
+
+    _lastIsLoggedIn = isLoggedIn;
+    _lastAccessToken = normalizedToken;
+
+    if (!isLoggedIn || normalizedToken.isEmpty) {
       _updateState(
         _viewState.copyWith(
           isLoggedIn: false,

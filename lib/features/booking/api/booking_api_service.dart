@@ -9,8 +9,40 @@ class BookingApiService {
 
   final ApiClient _apiClient;
 
+  Future<dynamic> onFetchGolfClubs({String? slug}) {
+    return _apiClient.getJson(
+      '/booking/golf-clubs',
+      queryParameters: <String, dynamic>{
+        if (slug != null && slug.trim().isNotEmpty) 'slug': slug,
+      },
+    );
+  }
+
   Future<dynamic> onFetchGolfClubList() {
-    return _apiClient.getJson('/booking/golf-clubs');
+    return onFetchGolfClubs();
+  }
+
+  Future<dynamic> onFetchGolfClubDetail({required String slug}) {
+    return onFetchGolfClubs(slug: slug);
+  }
+
+  Future<dynamic> onQuickBook({
+    required String golfClubSlug,
+    double? latitude,
+    double? longitude,
+    int maxResults = 3,
+    int searchDays = 7,
+  }) {
+    return _apiClient.postJson(
+      '/booking/quick-book',
+      body: <String, dynamic>{
+        'golfClubSlug': golfClubSlug,
+        'latitude': latitude,
+        'longitude': longitude,
+        'maxResults': maxResults,
+        'searchDays': searchDays,
+      },
+    );
   }
 
   Future<dynamic> onFetchBookingUpcomingList({required String accessToken}) {
