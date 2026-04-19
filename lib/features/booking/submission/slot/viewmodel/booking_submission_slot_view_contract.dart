@@ -1,5 +1,4 @@
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
-import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
@@ -140,24 +139,6 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     final club = selectedGolfClub;
     if (club == null) {
       return emptyString;
-    }
-
-    if (club.noOfHoles == 9) {
-      return '9_holes';
-    }
-
-    if (selectedSupportedNine.isNotEmpty) {
-      return '9_holes';
-    }
-
-    final teeTime = selectedSlot == null
-        ? null
-        : TeeTimeSlot.fromLabel(selectedSlot!.time);
-    if (teeTime?.isNineHoleWindow == true) {
-      return '9_holes';
-    }
-    if (teeTime?.isEighteenHoleWindow == true) {
-      return '18_holes';
     }
 
     return '18_holes';

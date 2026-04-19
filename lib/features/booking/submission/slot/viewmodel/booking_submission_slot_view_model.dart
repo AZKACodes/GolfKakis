@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
@@ -343,6 +344,7 @@ class BookingSubmissionSlotViewModel
     });
 
     await _slotSubscription?.cancel();
+    final completer = Completer<void>();
     _slotSubscription = _useCase
         .onFetchAvailableSlots(
           clubSlug: clubSlug,
@@ -364,6 +366,9 @@ class BookingSubmissionSlotViewModel
                   ),
                 );
               });
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
             case DataStatus.error:
               final message = result.apiMessage.isEmpty
                   ? 'Failed to fetch available slots'
@@ -378,10 +383,14 @@ class BookingSubmissionSlotViewModel
                 );
               });
               sendNavEffect(() => ShowErrorMessage(message));
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
             default:
               break;
           }
         });
+    return completer.future;
   }
 
   String _resolveSelectedClub(List<GolfClubModel> clubs) {
@@ -414,17 +423,9 @@ class BookingSubmissionSlotViewModel
         maxNormalPlayerCount,
       );
     }
-    final visibleSlots = state.bookingSlots.where((slot) {
-      final teeTime = TeeTimeSlot.fromLabel(slot.time);
-      if (teeTime == null || teeTime.period != state.selectedPeriod) {
-        return false;
-      }
-
-      return _isSlotValidForPlayType(
-        teeTime: teeTime,
-        playType: state.playTypeValue,
-      );
-    }).toList();
+    final visibleSlots = state.bookingSlots
+        .where((slot) => _isSlotInSelectedPeriod(slot, state.selectedPeriod))
+        .toList();
     final visibleSelectedIndex = state.selectedSlot == null
         ? null
         : visibleSlots.indexWhere(
@@ -492,6 +493,28 @@ class BookingSubmissionSlotViewModel
         : BookingBuggyType.normal;
   }
 
+  bool _isSlotInSelectedPeriod(BookingSlotModel slot, TimePeriod period) {
+    final slotPeriod = _periodForSlot(slot);
+    return slotPeriod == null || slotPeriod == period;
+  }
+
+  TimePeriod? _periodForSlot(BookingSlotModel slot) {
+    final normalizedTime = slot.time.toLowerCase();
+    if (normalizedTime.contains('am')) {
+      return TimePeriod.am;
+    }
+    if (normalizedTime.contains('pm')) {
+      return TimePeriod.pm;
+    }
+
+    final startAt = slot.startAt;
+    if (startAt != null) {
+      return startAt.toLocal().hour < 12 ? TimePeriod.am : TimePeriod.pm;
+    }
+
+    return null;
+  }
+
   BookingCaddiePreference? _lockedCaddiePreferenceForSlot(
     BookingSlotModel? slot,
   ) {
@@ -501,20 +524,6 @@ class BookingSubmissionSlotViewModel
     }
 
     return null;
-  }
-
-  bool _isSlotValidForPlayType({
-    required TeeTimeSlot teeTime,
-    required String playType,
-  }) {
-    switch (playType) {
-      case '18_holes':
-        return teeTime.isEighteenHoleWindow;
-      case '9_holes':
-        return teeTime.isNineHoleWindow;
-      default:
-        return true;
-    }
   }
 
   @override
