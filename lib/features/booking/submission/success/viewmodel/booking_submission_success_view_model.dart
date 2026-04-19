@@ -200,29 +200,7 @@ class BookingSubmissionSuccessViewModel
   }
 
   String _resolvePlayType(String teeTimeSlot) {
-    const eighteenHoleSlots = <String>{
-      '07:30 AM',
-      '07:45 AM',
-      '08:00 AM',
-      '08:15 AM',
-      '08:30 AM',
-      '08:45 AM',
-      '09:00 AM',
-      '09:15 AM',
-      '09:30 AM',
-      '12:00 PM',
-      '12:15 PM',
-      '12:30 PM',
-      '12:45 PM',
-      '01:00 PM',
-      '01:15 PM',
-      '01:30 PM',
-      '01:45 PM',
-      '02:00 PM',
-      '02:15 PM',
-      '02:30 PM',
-    };
-    return eighteenHoleSlots.contains(teeTimeSlot) ? '18_holes' : '9_holes';
+    return '18_holes';
   }
 
   Map<String, dynamic>? _normalizeMap(dynamic response) {

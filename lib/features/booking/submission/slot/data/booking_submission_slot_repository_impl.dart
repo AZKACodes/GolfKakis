@@ -65,8 +65,6 @@ class BookingSubmissionSlotRepositoryImpl
       }
 
       if (rawResponse is Map<String, dynamic>) {
-        final resolvedPlayType = rawResponse['playType']?.toString();
-        final inferredHoleCount = resolvedPlayType == '9_holes' ? 9 : 18;
         final dynamic nestedList =
             rawResponse['data'] ??
             rawResponse['items'] ??
@@ -78,7 +76,7 @@ class BookingSubmissionSlotRepositoryImpl
               .map(
                 (slot) => BookingSlotModel.fromJson(<String, dynamic>{
                   ...slot,
-                  'noOfHoles': slot['noOfHoles'] ?? inferredHoleCount,
+                  'noOfHoles': slot['noOfHoles'] ?? 18,
                 }),
               )
               .where((slot) => slot.time.isNotEmpty)

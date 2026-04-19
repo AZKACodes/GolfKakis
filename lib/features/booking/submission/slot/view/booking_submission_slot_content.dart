@@ -30,247 +30,260 @@ class BookingSubmissionSlotContent extends StatelessWidget {
     final hasAvailableGolfClubs = state.golfClubList.isNotEmpty;
     final canActivateCalendar = state.canActivateCalendar;
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Booking Slot',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        if (!state.canActivateCalendar || state.selectedClubSlug.isEmpty) {
+          return;
+        }
 
-                const SizedBox(height: 6),
-
-                Text(
-                  'Pick a date, choose your club, then lock in a tee time.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Players',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                _PlayerCountSection(
-                  normalPlayerCount: state.normalPlayerCount,
-                  seniorPlayerCount: state.seniorPlayerCount,
-                  onNormalPlayerCountChanged: (value) {
-                    viewModel.onUserIntent(OnNormalPlayerCountChanged(value));
-                  },
-                  onSeniorPlayerCountChanged: (value) {
-                    viewModel.onUserIntent(OnSeniorPlayerCountChanged(value));
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Golf Club',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                GolfClubPickerCard(
-                  selectedClub: selectedClub,
-                  clubs: state.golfClubList,
-                  isLoading: state.isLoading && state.golfClubList.isEmpty,
-                  enabled: state.golfClubList.isNotEmpty,
-                  onClubSelected: (club) {
-                    viewModel.onUserIntent(OnSelectGolfClub(club.slug));
-                  },
-                ),
-
-                if (hasSelectedClub &&
-                    state.availableSupportedNines.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+        await viewModel.onFetchAvailableSlots(
+          clubSlug: state.selectedClubSlug,
+          date: state.selectedDate,
+        );
+      },
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Starting Course',
+                    'Booking Slot',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    'Pick a date, choose your club, then lock in a tee time.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'Players',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  _SupportedNinePickerCard(
-                    value: state.selectedSupportedNine,
-                    options: state.availableSupportedNines,
-                    onChanged: (value) {
-                      viewModel.onUserIntent(OnSelectSupportedNine(value));
+
+                  const SizedBox(height: 10),
+
+                  _PlayerCountSection(
+                    normalPlayerCount: state.normalPlayerCount,
+                    seniorPlayerCount: state.seniorPlayerCount,
+                    onNormalPlayerCountChanged: (value) {
+                      viewModel.onUserIntent(OnNormalPlayerCountChanged(value));
+                    },
+                    onSeniorPlayerCountChanged: (value) {
+                      viewModel.onUserIntent(OnSeniorPlayerCountChanged(value));
                     },
                   ),
-                ],
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                AnimatedOpacity(
-                  opacity: canActivateCalendar ? 1 : 0.45,
-                  duration: const Duration(milliseconds: 180),
-                  child: IgnorePointer(
-                    ignoring: !canActivateCalendar,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Calendar',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
+                  Text(
+                    'Golf Club',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  GolfClubPickerCard(
+                    selectedClub: selectedClub,
+                    clubs: state.golfClubList,
+                    isLoading: state.isLoading && state.golfClubList.isEmpty,
+                    enabled: state.golfClubList.isNotEmpty,
+                    onClubSelected: (club) {
+                      viewModel.onUserIntent(OnSelectGolfClub(club.slug));
+                    },
+                  ),
+
+                  if (hasSelectedClub &&
+                      state.availableSupportedNines.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Starting Course',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _SupportedNinePickerCard(
+                      value: state.selectedSupportedNine,
+                      options: state.availableSupportedNines,
+                      onChanged: (value) {
+                        viewModel.onUserIntent(OnSelectSupportedNine(value));
+                      },
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  AnimatedOpacity(
+                    opacity: canActivateCalendar ? 1 : 0.45,
+                    duration: const Duration(milliseconds: 180),
+                    child: IgnorePointer(
+                      ignoring: !canActivateCalendar,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Calendar',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
 
-                            const Spacer(),
+                              const Spacer(),
 
-                            AppDatePickerButton(
-                              initialDate: state.pickerInitialDate,
-                              firstDate: DateUtils.dateOnly(DateTime.now()),
-                              lastDate: DateUtils.dateOnly(
-                                DateTime.now().add(const Duration(days: 365)),
+                              AppDatePickerButton(
+                                initialDate: state.pickerInitialDate,
+                                firstDate: DateUtils.dateOnly(DateTime.now()),
+                                lastDate: DateUtils.dateOnly(
+                                  DateTime.now().add(const Duration(days: 365)),
+                                ),
+                                onDatePicked: (picked) {
+                                  viewModel.onUserIntent(OnSelectDate(picked));
+                                },
                               ),
-                              onDatePicked: (picked) {
-                                viewModel.onUserIntent(OnSelectDate(picked));
-                              },
+                            ],
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Text(
+                            localizations.formatFullDate(state.selectedDate),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          BookingSubmissionCalendar(
+                            selectedDate: state.selectedDate,
+                            onDateSelected: (date) {
+                              viewModel.onUserIntent(OnSelectDate(date));
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (!hasSelectedClub || !canActivateCalendar)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _CalendarGateMessage(
+                        hasSelectedClub: hasSelectedClub,
+                        hasAvailableGolfClubs: hasAvailableGolfClubs,
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  if (state.errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        state.errorMessage,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(height: 6),
-
+                  if (canActivateCalendar) ...[
+                    Row(
+                      children: [
                         Text(
-                          localizations.formatFullDate(state.selectedDate),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                          'Available Time Slots',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const Spacer(),
 
-                        BookingSubmissionCalendar(
-                          selectedDate: state.selectedDate,
-                          onDateSelected: (date) {
-                            viewModel.onUserIntent(OnSelectDate(date));
-                          },
+                        BookingSubmissionSlotDotLabel(
+                          color: theme.colorScheme.primary,
+                          label: 'Selected',
                         ),
                       ],
                     ),
-                  ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          if (canActivateCalendar)
+            BookingSubmissionPeriodHeader(
+              selectedPeriod: state.selectedPeriod,
+              onPeriodChanged: (period) {
+                viewModel.onUserIntent(OnSelectPeriod(period));
+              },
+            ),
+
+          if (canActivateCalendar)
+            if (state.isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Center(child: _SlotLoadingContainer()),
                 ),
-
-                if (!hasSelectedClub || !canActivateCalendar)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: _CalendarGateMessage(
-                      hasSelectedClub: hasSelectedClub,
-                      hasAvailableGolfClubs: hasAvailableGolfClubs,
-                    ),
-                  ),
-
-                const SizedBox(height: 12),
-
-                if (state.errorMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+              )
+            else if (state.visibleSlots.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Center(
                     child: Text(
-                      state.errorMessage,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
+                      'No slots available.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.black54,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-
-                if (canActivateCalendar) ...[
-                  Row(
-                    children: [
-                      Text(
-                        'Available Time Slots',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      BookingSubmissionSlotDotLabel(
-                        color: theme.colorScheme.primary,
-                        label: 'Selected',
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-
-        if (canActivateCalendar)
-          BookingSubmissionPeriodHeader(
-            selectedPeriod: state.selectedPeriod,
-            onPeriodChanged: (period) {
-              viewModel.onUserIntent(OnSelectPeriod(period));
-            },
-          ),
-
-        if (canActivateCalendar)
-          if (state.isLoading)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
-                child: Center(child: _SlotLoadingContainer()),
-              ),
-            )
-          else if (state.visibleSlots.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                child: Center(
-                  child: Text(
-                    'No slots available.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(
+                  child: BookingSlotContainer(
+                    slots: state.visibleSlots,
+                    selectedIndex: state.visibleSelectedIndex,
+                    unavailableIndices: state.visibleUnavailableIndices,
+                    onSelected: (visibleIndex) {
+                      viewModel.onUserIntent(
+                        OnSelectSlot(state.visibleSlots[visibleIndex]),
+                      );
+                    },
                   ),
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: BookingSlotContainer(
-                  slots: state.visibleSlots,
-                  selectedIndex: state.visibleSelectedIndex,
-                  unavailableIndices: state.visibleUnavailableIndices,
-                  onSelected: (visibleIndex) {
-                    viewModel.onUserIntent(
-                      OnSelectSlot(state.visibleSlots[visibleIndex]),
-                    );
-                  },
-                ),
-              ),
-            ),
-      ],
+        ],
+      ),
     );
   }
 }

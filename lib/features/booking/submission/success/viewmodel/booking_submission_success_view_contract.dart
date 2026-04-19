@@ -26,7 +26,7 @@ class BookingSubmissionSuccessDataLoaded
     this.teeTimeSlot = emptyString,
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
-    this.playType = '9_holes',
+    this.playType = '18_holes',
     this.caddiePreference = 'none',
     this.buggySharingPreference = 'shared',
     this.hostName = emptyString,

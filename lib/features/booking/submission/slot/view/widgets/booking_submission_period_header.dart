@@ -60,7 +60,7 @@ class _BookingSubmissionPeriodHeaderDelegate
           ),
 
           const SizedBox(width: 8),
-          
+
           ChoiceChip(
             label: const Text('PM'),
             selected: selectedPeriod == TimePeriod.pm,
