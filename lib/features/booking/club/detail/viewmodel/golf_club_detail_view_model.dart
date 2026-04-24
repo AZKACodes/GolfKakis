@@ -13,17 +13,28 @@ class GolfClubDetailViewModel
         >
     implements GolfClubDetailViewContract {
   GolfClubDetailViewModel({
-    required GolfClubModel club,
+    required String clubSlug,
+    GolfClubModel? initialClub,
     required GolfClubDetailRepository repository,
-  }) : _club = club,
+  }) : _clubSlug = clubSlug,
+       _initialClub =
+           initialClub ??
+           GolfClubModel(
+             id: '',
+             slug: clubSlug,
+             name: 'Golf Club',
+             address: '',
+             noOfHoles: 18,
+           ),
        _repository = repository;
 
-  final GolfClubModel _club;
+  final String _clubSlug;
+  final GolfClubModel _initialClub;
   final GolfClubDetailRepository _repository;
 
   @override
   GolfClubDetailViewState createInitialState() {
-    return GolfClubDetailViewState.initial(_club);
+    return GolfClubDetailViewState.initial(_initialClub);
   }
 
   @override
@@ -45,7 +56,10 @@ class GolfClubDetailViewModel
     );
 
     try {
-      final result = await _repository.onFetchGolfClubDetail(club: _club);
+      final result = await _repository.onFetchGolfClubDetail(
+        slug: _clubSlug,
+        initialClub: _initialClub,
+      );
       emitViewState(
         (state) => state.copyWith(
           detail: result.detail,
@@ -59,7 +73,7 @@ class GolfClubDetailViewModel
         (state) => state.copyWith(
           isLoading: false,
           isUsingFallback: false,
-          errorMessage: 'Unable to load golf club details right now.',
+          clearErrorMessage: true,
         ),
       );
     }

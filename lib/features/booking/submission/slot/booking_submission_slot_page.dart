@@ -91,6 +91,12 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
       return;
     }
 
+    final accessToken = SessionScope.of(context).state.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      _showMessage('Please sign in again before creating a booking hold.');
+      return;
+    }
+
     setState(() {
       _isSubmittingHold = true;
     });
@@ -100,16 +106,25 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
           .onCreateBookingHold(
             request: BookingHoldRequestModel(
               slotId: selectedSlot.slotId,
-              playType: state.playTypeValue,
+              accessToken: accessToken,
               idempotencyKey: prefill.bookingUuid,
+              hostName: prefill.name,
+              hostPhoneNumber: _normalizePhoneNumber(prefill.phoneNumber),
+              source: _bookingSource,
+              playType: state.playTypeValue,
               selectedNine: state.selectedSupportedNine.isEmpty
                   ? null
                   : state.selectedSupportedNine,
-              hostName: prefill.name,
-              hostPhoneNumber: _normalizePhoneNumber(prefill.phoneNumber),
+              golfClubName: state.selectedClubName,
+              golfClubSlug: state.selectedClubSlug,
+              bookingDate: state.selectedDate
+                  .toIso8601String()
+                  .split('T')
+                  .first,
+              teeTimeSlot: selectedSlot.time,
               playerCount: state.playerCount,
-              normalPlayerCount: state.playerCount,
-              seniorPlayerCount: 0,
+              normalPlayerCount: state.normalPlayerCount,
+              seniorPlayerCount: state.seniorPlayerCount,
               caddieArrangement: state.caddiePreference.value,
               buggyType: state.buggyType.value,
               buggySharingPreference:
@@ -117,7 +132,6 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
                   ? 'mixed'
                   : state.buggySharingPreference.value,
               paymentMethod: 'pay_counter',
-              source: _bookingSource,
             ),
           )
           .first;
@@ -182,6 +196,7 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
         builder: (_) => BookingSubmissionDetailPage(
           slotId: slotState.selectedSlot!.slotId,
           bookingId: holdResponse['bookingId']?.toString() ?? '',
+          bookingRef: holdResponse['bookingRef']?.toString() ?? '',
           holdDurationSeconds:
               _readInt(holdResponse['holdDurationSeconds']) ?? 300,
           holdExpiresAt: holdExpiresAt,
@@ -203,6 +218,12 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
               slotState.selectedSlot!.currency,
           initialPlayerCount:
               _readInt(bookingSummary['playerCount']) ?? slotState.playerCount,
+          initialNormalPlayerCount:
+              _readInt(bookingSummary['normalPlayerCount']) ??
+              slotState.normalPlayerCount,
+          initialSeniorPlayerCount:
+              _readInt(bookingSummary['seniorPlayerCount']) ??
+              slotState.seniorPlayerCount,
           caddiePreference:
               bookingSummary['caddieArrangement']?.toString() ??
               slotState.caddiePreference.value,
@@ -285,24 +306,27 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
   }
 
   String get _bookingSource {
+    if (kIsWeb) {
+      return 'web';
+    }
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
         return 'ios';
       case TargetPlatform.android:
+        return 'android';
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return 'android';
+        return 'web';
     }
   }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

@@ -32,13 +32,14 @@ class BookingSubmissionSuccessViewModel
         emitViewState((state) {
           return getCurrentAsLoaded().copyWith(
             bookingId: intent.bookingId,
-            bookingSlug: intent.bookingSlug,
+            bookingRef: intent.bookingRef,
             bookingDate: intent.bookingDate,
             golfClubName: intent.golfClubName,
             golfClubSlug: intent.golfClubSlug,
             teeTimeSlot: intent.teeTimeSlot,
             pricePerPerson: intent.pricePerPerson,
             currency: intent.currency,
+            playType: _resolvePlayType(intent.teeTimeSlot),
             hostName: intent.hostName,
             hostPhoneNumber: intent.hostPhoneNumber,
             playerCount: intent.playerCount,
@@ -46,8 +47,8 @@ class BookingSubmissionSuccessViewModel
             golfCartCount: intent.golfCartCount,
           );
         });
-        if (intent.bookingSlug.isNotEmpty) {
-          await _fetchBookingDetails(intent.bookingSlug);
+        if (intent.bookingRef.isNotEmpty) {
+          await _fetchBookingDetails(intent.bookingRef);
         }
       case OnDoneClick():
         sendNavEffect(() => const NavigateToSubmissionStart());
@@ -63,16 +64,14 @@ class BookingSubmissionSuccessViewModel
     return BookingSubmissionSuccessDataLoaded.initial();
   }
 
-  Future<void> _fetchBookingDetails(String bookingSlug) async {
+  Future<void> _fetchBookingDetails(String bookingRef) async {
     emitViewState((state) {
-      return getCurrentAsLoaded().copyWith(
-        isLoading: true,
-      );
+      return getCurrentAsLoaded().copyWith(isLoading: true);
     });
 
     await _bookingDetailSubscription?.cancel();
     _bookingDetailSubscription = _useCase
-        .onFetchBookingDetails(bookingSlug: bookingSlug)
+        .onFetchBookingDetails(bookingRef: bookingRef)
         .listen((result) {
           switch (result.status) {
             case DataStatus.success:
@@ -104,22 +103,25 @@ class BookingSubmissionSuccessViewModel
     final players = _parsePlayers(
       data['playerDetails'] ?? data['players'] ?? data['player_details'],
     );
-    final playerCount = _readInt(
-      data,
-      const <String>['playerCount', 'player_count', 'playersCount'],
-    );
-    final caddieCount = _readInt(
-      data,
-      const <String>['caddieCount', 'caddie_count'],
-    );
-    final golfCartCount = _readInt(
-      data,
-      const <String>['golfCartCount', 'golf_cart_count', 'cartCount'],
-    );
-    final pricePerPerson = _readDouble(
-      data,
-      const <String>['pricePerPerson', 'price_per_person', 'amountPerPax'],
-    );
+    final playerCount = _readInt(data, const <String>[
+      'playerCount',
+      'player_count',
+      'playersCount',
+    ]);
+    final caddieCount = _readInt(data, const <String>[
+      'caddieCount',
+      'caddie_count',
+    ]);
+    final golfCartCount = _readInt(data, const <String>[
+      'golfCartCount',
+      'golf_cart_count',
+      'cartCount',
+    ]);
+    final pricePerPerson = _readDouble(data, const <String>[
+      'pricePerPerson',
+      'price_per_person',
+      'amountPerPax',
+    ]);
     final currency =
         _readString(data, const <String>['currency', 'currencyCode']) ??
         current.currency;
@@ -130,65 +132,75 @@ class BookingSubmissionSuccessViewModel
       bookingId:
           _readString(data, const <String>['bookingId', 'booking_id', 'id']) ??
           current.bookingId,
-      bookingSlug:
-          _readString(
-            data,
-            const <String>['bookingSlug', 'booking_slug', 'slug'],
-          ) ??
-          current.bookingSlug,
+      bookingRef:
+          _readString(data, const <String>['bookingRef', 'bookingReference']) ??
+          current.bookingRef,
       bookingDate:
-          _readString(
-            data,
-            const <String>['bookingDate', 'booking_date', 'date'],
-          ) ??
+          _readString(data, const <String>[
+            'bookingDate',
+            'booking_date',
+            'date',
+          ]) ??
           current.bookingDate,
       golfClubName:
-          _readString(
-            data,
-            const <String>[
-              'golfClubName',
-              'golf_club_name',
-              'courseName',
-              'clubName',
-            ],
-          ) ??
+          _readString(data, const <String>[
+            'golfClubName',
+            'golf_club_name',
+            'courseName',
+            'clubName',
+          ]) ??
           current.golfClubName,
       golfClubSlug:
-          _readString(
-            data,
-            const <String>[
-              'golfClubSlug',
-              'golf_club_slug',
-              'courseSlug',
-              'clubSlug',
-            ],
-          ) ??
+          _readString(data, const <String>[
+            'golfClubSlug',
+            'golf_club_slug',
+            'courseSlug',
+            'clubSlug',
+          ]) ??
           current.golfClubSlug,
       teeTimeSlot:
-          _readString(
-            data,
-            const <String>['teeTimeSlot', 'tee_time_slot', 'teeTime', 'time'],
-          ) ??
+          _readString(data, const <String>[
+            'teeTimeSlot',
+            'tee_time_slot',
+            'teeTime',
+            'time',
+          ]) ??
           current.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? current.pricePerPerson,
       currency: currency,
+      playType:
+          _readString(data, const <String>['playType', 'play_type']) ??
+          current.playType,
+      caddiePreference:
+          _readString(data, const <String>[
+            'caddieArrangement',
+            'caddie_arrangement',
+          ]) ??
+          current.caddiePreference,
+      buggySharingPreference:
+          _readString(data, const <String>[
+            'buggySharingPreference',
+            'buggy_sharing_preference',
+          ]) ??
+          current.buggySharingPreference,
       hostName:
           _readString(data, const <String>['hostName', 'host_name']) ??
           current.hostName,
       hostPhoneNumber:
-          _readString(
-            data,
-            const <String>[
-              'hostPhoneNumber',
-              'host_phone_number',
-              'hostPhone',
-            ],
-          ) ??
+          _readString(data, const <String>[
+            'hostPhoneNumber',
+            'host_phone_number',
+            'hostPhone',
+          ]) ??
           current.hostPhoneNumber,
       playerCount: resolvedPlayerCount,
       caddieCount: caddieCount ?? current.caddieCount,
       golfCartCount: golfCartCount ?? current.golfCartCount,
     );
+  }
+
+  String _resolvePlayType(String teeTimeSlot) {
+    return '18_holes';
   }
 
   Map<String, dynamic>? _normalizeMap(dynamic response) {

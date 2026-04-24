@@ -1,10 +1,13 @@
 import '../../foundation/network/network.dart';
+import 'weather_api_service.dart';
 
 class HomeApiService {
-  HomeApiService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  HomeApiService({ApiClient? apiClient, WeatherApiService? weatherApiService})
+    : _apiClient = apiClient ?? ApiClient(),
+      _weatherApiService = weatherApiService ?? WeatherApiService();
 
   final ApiClient _apiClient;
+  final WeatherApiService _weatherApiService;
 
   Future<dynamic> getHello() {
     return _apiClient.getJson('/hello');
@@ -20,5 +23,9 @@ class HomeApiService {
 
   Future<dynamic> getHotDeals() {
     return _apiClient.getJson('/home/hot-deals');
+  }
+
+  Future<dynamic> getKinraraWeather() {
+    return _weatherApiService.getKinraraWeather();
   }
 }

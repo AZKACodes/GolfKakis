@@ -10,6 +10,9 @@ class GolfClubDetailData {
     required this.description,
     required this.bestForLabel,
     required this.facilityLabels,
+    this.weather,
+    this.nextSlotLabel = '',
+    this.bookingDateLabel = '',
   });
 
   final GolfClubModel club;
@@ -20,6 +23,27 @@ class GolfClubDetailData {
   final String description;
   final String bestForLabel;
   final List<String> facilityLabels;
+  final GolfClubWeatherSummary? weather;
+  final String nextSlotLabel;
+  final String bookingDateLabel;
+}
+
+class GolfClubWeatherSummary {
+  const GolfClubWeatherSummary({
+    required this.temperatureCelsius,
+    required this.highCelsius,
+    required this.lowCelsius,
+    required this.windSpeedKph,
+    required this.weatherLabel,
+    required this.weatherIcon,
+  });
+
+  final int temperatureCelsius;
+  final int highCelsius;
+  final int lowCelsius;
+  final int windSpeedKph;
+  final String weatherLabel;
+  final String weatherIcon;
 }
 
 class GolfClubDetailResult {
@@ -31,6 +55,7 @@ class GolfClubDetailResult {
 
 abstract class GolfClubDetailRepository {
   Future<GolfClubDetailResult> onFetchGolfClubDetail({
-    required GolfClubModel club,
+    required String slug,
+    GolfClubModel? initialClub,
   });
 }

@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
@@ -33,9 +34,12 @@ class BookingSubmissionDetailDataLoaded
     this.currency = DefaultConstantUtil.defaultCurrency,
     this.guestId,
     this.bookingId = emptyString,
+    this.bookingRef = emptyString,
     this.holdDurationSeconds = 0,
     DateTime? holdExpiresAt,
     this.playerCount = 4,
+    this.normalPlayerCount = 4,
+    this.seniorPlayerCount = 0,
     this.maxPlayerCount = 4,
     this.caddiePreference = 'none',
     this.buggyType = 'normal',
@@ -66,9 +70,12 @@ class BookingSubmissionDetailDataLoaded
   final String currency;
   final String? guestId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final int playerCount;
+  final int normalPlayerCount;
+  final int seniorPlayerCount;
   final int maxPlayerCount;
   final String caddiePreference;
   final String buggyType;
@@ -95,6 +102,26 @@ class BookingSubmissionDetailDataLoaded
     return '$minutes:$seconds';
   }
 
+  TeeTimeSlot? get teeTime => TeeTimeSlot.fromLabel(teeTimeSlot);
+
+  bool get isForcedSharedCaddieSlot =>
+      teeTime?.requiresSharedCaddieAndJumboBuggy == true;
+
+  String get effectiveCaddiePreference {
+    if (caddieCount <= 0) {
+      return 'none';
+    }
+    if (isForcedSharedCaddieSlot) {
+      return 'shared';
+    }
+    return caddieCount >= playerCount ? 'per_player' : 'shared';
+  }
+
+  String get effectiveBuggyType =>
+      isForcedSharedCaddieSlot ? 'jumbo' : buggyType;
+
+  String get effectiveBuggySharingPreference => 'shared';
+
   BookingSubmissionDetailDataLoaded copyWith({
     String? slotId,
     String? playType,
@@ -106,9 +133,12 @@ class BookingSubmissionDetailDataLoaded
     String? currency,
     String? guestId,
     String? bookingId,
+    String? bookingRef,
     int? holdDurationSeconds,
     DateTime? holdExpiresAt,
     int? playerCount,
+    int? normalPlayerCount,
+    int? seniorPlayerCount,
     int? maxPlayerCount,
     String? caddiePreference,
     String? buggyType,
@@ -133,9 +163,12 @@ class BookingSubmissionDetailDataLoaded
       currency: currency ?? this.currency,
       guestId: guestId ?? this.guestId,
       bookingId: bookingId ?? this.bookingId,
+      bookingRef: bookingRef ?? this.bookingRef,
       holdDurationSeconds: holdDurationSeconds ?? this.holdDurationSeconds,
       holdExpiresAt: holdExpiresAt ?? this.holdExpiresAt,
       playerCount: playerCount ?? this.playerCount,
+      normalPlayerCount: normalPlayerCount ?? this.normalPlayerCount,
+      seniorPlayerCount: seniorPlayerCount ?? this.seniorPlayerCount,
       maxPlayerCount: maxPlayerCount ?? this.maxPlayerCount,
       caddiePreference: caddiePreference ?? this.caddiePreference,
       buggyType: buggyType ?? this.buggyType,
@@ -165,6 +198,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
   const OnInit({
     required this.slotId,
     required this.bookingId,
+    required this.bookingRef,
     required this.holdDurationSeconds,
     required this.holdExpiresAt,
     required this.playType,
@@ -175,6 +209,8 @@ class OnInit extends BookingSubmissionDetailUserIntent {
     required this.pricePerPerson,
     required this.currency,
     this.initialPlayerCount = 4,
+    this.initialNormalPlayerCount = 4,
+    this.initialSeniorPlayerCount = 0,
     this.caddiePreference = 'none',
     this.buggyType = 'normal',
     this.buggySharingPreference = 'shared',
@@ -186,6 +222,7 @@ class OnInit extends BookingSubmissionDetailUserIntent {
 
   final String slotId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final String playType;
@@ -196,6 +233,8 @@ class OnInit extends BookingSubmissionDetailUserIntent {
   final double pricePerPerson;
   final String currency;
   final int initialPlayerCount;
+  final int initialNormalPlayerCount;
+  final int initialSeniorPlayerCount;
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
@@ -253,6 +292,18 @@ class OnGolfCartCountChanged extends BookingSubmissionDetailUserIntent {
   final int value;
 }
 
+class OnSelectCaddiePreference extends BookingSubmissionDetailUserIntent {
+  const OnSelectCaddiePreference(this.value);
+
+  final String value;
+}
+
+class OnSelectBuggySharingPreference extends BookingSubmissionDetailUserIntent {
+  const OnSelectBuggySharingPreference(this.value);
+
+  final String value;
+}
+
 class OnContinueClick extends BookingSubmissionDetailUserIntent {
   const OnContinueClick();
 }
@@ -273,6 +324,9 @@ class NavigateToBookingSubmissionConfirmation
     extends BookingSubmissionDetailNavEffect {
   const NavigateToBookingSubmissionConfirmation({
     required this.bookingId,
+    required this.bookingRef,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -283,12 +337,19 @@ class NavigateToBookingSubmissionConfirmation
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
   });
 
   final String bookingId;
+  final String bookingRef;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -299,6 +360,10 @@ class NavigateToBookingSubmissionConfirmation
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;

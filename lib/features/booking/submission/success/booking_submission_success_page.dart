@@ -11,7 +11,7 @@ import 'package:golf_kakis/features/foundation/util/user_util.dart';
 class BookingSubmissionSuccessPage extends StatefulWidget {
   const BookingSubmissionSuccessPage({
     required this.bookingId,
-    required this.bookingSlug,
+    required this.bookingRef,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -27,7 +27,7 @@ class BookingSubmissionSuccessPage extends StatefulWidget {
   });
 
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
@@ -61,7 +61,7 @@ class _BookingSubmissionSuccessPageState
     _viewModel.performAction(
       OnInit(
         bookingId: widget.bookingId,
-        bookingSlug: widget.bookingSlug,
+        bookingRef: widget.bookingRef,
         bookingDate: widget.bookingDate,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
@@ -20,6 +21,8 @@ class BookingSubmissionConfirmationViewModel
 
   final BookingSubmissionSlotUseCase _useCase;
   StreamSubscription<DataStatusModel<dynamic>>? _submissionSubscription;
+  Timer? _holdCountdownTimer;
+  bool _hasShownExpiryDialog = false;
 
   @override
   BookingSubmissionConfirmationViewState createInitialState() {
@@ -34,6 +37,9 @@ class BookingSubmissionConfirmationViewModel
       case OnInit():
         emitViewState((state) {
           return getCurrentAsLoaded().copyWith(
+            bookingRef: intent.bookingRef,
+            holdDurationSeconds: intent.holdDurationSeconds,
+            holdExpiresAt: intent.holdExpiresAt,
             golfClubName: intent.golfClubName,
             golfClubSlug: intent.golfClubSlug,
             selectedDate: intent.selectedDate,
@@ -44,17 +50,25 @@ class BookingSubmissionConfirmationViewModel
             hostName: intent.hostName,
             hostPhoneNumber: intent.hostPhoneNumber,
             playerCount: intent.playerCount,
+            caddiePreference: intent.caddiePreference,
+            buggyType: intent.buggyType,
+            buggySharingPreference: intent.buggySharingPreference,
+            selectedNine: intent.selectedNine,
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
             playerDetails: intent.playerDetails,
+            remainingHoldSeconds: _remainingSecondsUntil(intent.holdExpiresAt),
+            isHoldExpired: _remainingSecondsUntil(intent.holdExpiresAt) <= 0,
             clearErrorMessage: true,
           );
         });
+        _hasShownExpiryDialog = false;
+        _startHoldCountdown();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnConfirmClick():
         final current = getCurrentAsLoaded();
-        if (current.isSubmitting) {
+        if (current.isSubmitting || current.isHoldExpired) {
           return;
         }
         await _createBookingSubmission(current);
@@ -73,6 +87,21 @@ class BookingSubmissionConfirmationViewModel
   Future<void> _createBookingSubmission(
     BookingSubmissionConfirmationDataLoaded current,
   ) async {
+    if (_remainingSecondsUntil(current.holdExpiresAt) <= 0) {
+      emitViewState((state) {
+        return current.copyWith(
+          isHoldExpired: true,
+          remainingHoldSeconds: 0,
+          errorMessage: 'Your booking session has expired. Please start again.',
+        );
+      });
+      if (!_hasShownExpiryDialog) {
+        _hasShownExpiryDialog = true;
+        sendNavEffect(() => const ShowBookingSessionExpired());
+      }
+      return;
+    }
+
     emitViewState((state) {
       return getCurrentAsLoaded().copyWith(
         isSubmitting: true,
@@ -87,6 +116,17 @@ class BookingSubmissionConfirmationViewModel
           switch (result.status) {
             case DataStatus.success:
               final latest = getCurrentAsLoaded();
+              final bookingId = _resolveBookingId(result.data);
+              if (bookingId.isEmpty) {
+                emitViewState((state) {
+                  return latest.copyWith(
+                    isSubmitting: false,
+                    errorMessage:
+                        'Booking submission succeeded without a booking ID.',
+                  );
+                });
+                return;
+              }
               emitViewState((state) {
                 return latest.copyWith(
                   isSubmitting: false,
@@ -95,8 +135,9 @@ class BookingSubmissionConfirmationViewModel
               });
               sendNavEffect(
                 () => NavigateToBookingSubmissionSuccess(
-                  bookingId: _resolveBookingId(result.data, latest),
-                  bookingSlug: _resolveBookingSlug(result.data),
+                  bookingId: bookingId,
+                  bookingRef:
+                      _resolveBookingRef(result.data) ?? latest.bookingRef,
                   bookingDate: DateUtil.formatApiDate(latest.selectedDate),
                   golfClubName: latest.golfClubName,
                   golfClubSlug: latest.golfClubSlug,
@@ -129,36 +170,26 @@ class BookingSubmissionConfirmationViewModel
     BookingSubmissionConfirmationDataLoaded current,
   ) {
     return BookingSubmissionRequestModel(
-      golfClubName: current.golfClubName,
-      golfClubSlug: current.golfClubSlug,
-      bookingDate: DateUtil.formatApiDate(current.selectedDate),
-      teeTimeSlot: current.teeTimeSlot,
-      pricePerPerson: current.pricePerPerson,
-      currency: current.currency,
-      guestId: current.guestId,
-      hostName: current.hostName,
-      hostPhoneNumber: current.hostPhoneNumber,
-      playerCount: current.playerCount,
-      caddieCount: current.caddieCount,
-      golfCartCount: current.golfCartCount,
-      playerDetails: current.playerDetails,
+      bookingRef: current.bookingRef,
+      caddieArrangement: current.caddiePreference,
+      buggyType: current.buggyType,
+      buggySharingPreference: current.buggySharingPreference,
+      playerDetails: _buildPlayerDetails(current),
+      acknowledgedTerms: true,
     );
   }
 
-  String _buildBookingId(BookingSubmissionConfirmationDataLoaded current) {
-    final normalizedClub = current.golfClubSlug
-        .replaceAll('-', '')
-        .toUpperCase();
-    final suffix = DateTime.now().millisecondsSinceEpoch.toString().substring(
-      8,
-    );
-    return '${normalizedClub.substring(0, normalizedClub.length.clamp(0, 4))}-$suffix';
-  }
-
-  String _resolveBookingId(
-    dynamic response,
+  List<BookingSubmissionPlayerModel> _buildPlayerDetails(
     BookingSubmissionConfirmationDataLoaded current,
   ) {
+    return current.playerDetails.indexed.map((entry) {
+      final index = entry.$1;
+      final player = entry.$2;
+      return player.copyWith(category: 'normal', isHost: index == 0);
+    }).toList();
+  }
+
+  String _resolveBookingId(dynamic response) {
     if (response is Map<String, dynamic>) {
       final dynamic bookingId =
           response['bookingId'] ??
@@ -174,28 +205,61 @@ class BookingSubmissionConfirmationViewModel
       }
     }
 
-    return _buildBookingId(current);
+    return '';
   }
 
-  String _resolveBookingSlug(dynamic response) {
+  String? _resolveBookingRef(dynamic response) {
     if (response is Map<String, dynamic>) {
-      final dynamic bookingSlug =
-          response['bookingSlug'] ??
-          response['booking_slug'] ??
-          response['slug'];
-      if (bookingSlug is String && bookingSlug.trim().isNotEmpty) {
-        return bookingSlug;
+      final dynamic bookingRef =
+          response['bookingRef'] ?? response['bookingReference'];
+      if (bookingRef is String && bookingRef.trim().isNotEmpty) {
+        return bookingRef;
       }
-      if (bookingSlug != null) {
-        return bookingSlug.toString();
+      if (bookingRef != null) {
+        return bookingRef.toString();
       }
     }
 
-    return '';
+    return null;
+  }
+
+  void _startHoldCountdown() {
+    _holdCountdownTimer?.cancel();
+    _tickHoldCountdown();
+    _holdCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tickHoldCountdown();
+    });
+  }
+
+  void _tickHoldCountdown() {
+    final current = getCurrentAsLoaded();
+    final remainingHoldSeconds = _remainingSecondsUntil(current.holdExpiresAt);
+    final isHoldExpired = remainingHoldSeconds <= 0;
+
+    emitViewState((state) {
+      return current.copyWith(
+        remainingHoldSeconds: remainingHoldSeconds,
+        isHoldExpired: isHoldExpired,
+      );
+    });
+
+    if (isHoldExpired) {
+      _holdCountdownTimer?.cancel();
+      if (!_hasShownExpiryDialog) {
+        _hasShownExpiryDialog = true;
+        sendNavEffect(() => const ShowBookingSessionExpired());
+      }
+    }
+  }
+
+  int _remainingSecondsUntil(DateTime expiresAt) {
+    final difference = expiresAt.difference(DateTime.now()).inSeconds;
+    return difference < 0 ? 0 : difference;
   }
 
   @override
   void dispose() {
+    _holdCountdownTimer?.cancel();
     _submissionSubscription?.cancel();
     super.dispose();
   }

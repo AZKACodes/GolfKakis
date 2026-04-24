@@ -19,13 +19,21 @@ class HomeOverviewPage extends StatelessWidget {
         );
       },
       onCoursesTap: () {
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(builder: (_) => const HomeGolfClubListPage()),
         );
       },
       onMyTeeTimesTap: () {
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(builder: (_) => const BookingListPage()),
+        );
+      },
+      onQuickBookTap: (clubSlug) {
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                BookingSubmissionSlotPage(initialClubSlug: clubSlug),
+          ),
         );
       },
     );
