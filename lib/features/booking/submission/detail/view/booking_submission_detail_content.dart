@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/add_on/booking_submission_add_on_selection.dart';
+import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_counter_control.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
@@ -125,8 +127,20 @@ class _BookingSubmissionDetailContentState
             const SizedBox(height: 20),
             BookingSubmissionDetailSelectionSummary(state: state),
             const SizedBox(height: 16),
+            _RoundPreferencesSection(
+              caddieCount: state.caddieCount,
+              golfCartCount: state.golfCartCount,
+              playerCount: state.playerCount,
+              isForcedSharedCaddieSlot: state.isForcedSharedCaddieSlot,
+              onCaddieCountChanged: (value) =>
+                  widget.viewModel.onUserIntent(OnCaddieCountChanged(value)),
+              onGolfCartCountChanged: (value) =>
+                  widget.viewModel.onUserIntent(OnGolfCartCountChanged(value)),
+            ),
+            const SizedBox(height: 16),
             _PlayerDetailsSection(
               playerCount: state.playerCount,
+              playerDetails: state.playerDetails,
               nameControllers: _playerNameControllers,
               phoneControllers: _playerPhoneControllers,
               countryCodes: _playerCountryCodes,
@@ -246,9 +260,130 @@ class _CostRow extends StatelessWidget {
   }
 }
 
+class _RoundPreferencesSection extends StatelessWidget {
+  const _RoundPreferencesSection({
+    required this.caddieCount,
+    required this.golfCartCount,
+    required this.playerCount,
+    required this.isForcedSharedCaddieSlot,
+    required this.onCaddieCountChanged,
+    required this.onGolfCartCountChanged,
+  });
+
+  final int caddieCount;
+  final int golfCartCount;
+  final int playerCount;
+  final bool isForcedSharedCaddieSlot;
+  final ValueChanged<int> onCaddieCountChanged;
+  final ValueChanged<int> onGolfCartCountChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return BookingSubmissionAddOnSelection(
+      title: 'Round Preferences',
+      children: [
+        if (isForcedSharedCaddieSlot)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF6E8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFFD58A)),
+            ),
+            child: Text(
+              'For tee times between 2:00 PM and 2:30 PM, caddie arrangement is automatically Shared and buggy type is Jumbo.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF7A5200),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        _CounterPreferenceRow(
+          label: 'Caddies',
+          description: 'Subject prior to Golf Club Availability',
+          trailing: BookingSubmissionDetailCounterControl(
+            value: caddieCount,
+            minValue: 0,
+            onChanged: (value) {
+              final nextValue = value.clamp(0, playerCount);
+              onCaddieCountChanged(nextValue);
+            },
+          ),
+        ),
+        const Divider(height: 1),
+        _CounterPreferenceRow(
+          label: 'Buggies',
+          description: 'Subject prior to Golf Club Availability',
+          trailing: BookingSubmissionDetailCounterControl(
+            value: golfCartCount,
+            minValue: 0,
+            onChanged: (value) {
+              final nextValue = value.clamp(0, _maxGolfCartCount(playerCount));
+              onGolfCartCountChanged(nextValue);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CounterPreferenceRow extends StatelessWidget {
+  const _CounterPreferenceRow({
+    required this.label,
+    required this.description,
+    required this.trailing,
+  });
+
+  final String label;
+  final String description;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
 class _PlayerDetailsSection extends StatelessWidget {
   const _PlayerDetailsSection({
     required this.playerCount,
+    required this.playerDetails,
     required this.nameControllers,
     required this.phoneControllers,
     required this.countryCodes,
@@ -257,6 +392,7 @@ class _PlayerDetailsSection extends StatelessWidget {
   });
 
   final int playerCount;
+  final List<BookingSubmissionPlayerModel> playerDetails;
   final List<TextEditingController> nameControllers;
   final List<TextEditingController> phoneControllers;
   final List<PhoneCountryCodeOption> countryCodes;
@@ -290,11 +426,23 @@ class _PlayerDetailsSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (var index = 0; index < playerCount; index++) ...[
-            Text(
-              'Player ${index + 1}',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  'Player ${index + 1}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _PlayerCategoryBadge(
+                  label: _playerCategoryLabel(
+                    index < playerDetails.length
+                        ? playerDetails[index].category
+                        : 'normal',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
@@ -338,6 +486,31 @@ class _PlayerDetailsSection extends StatelessWidget {
             ],
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _PlayerCategoryBadge extends StatelessWidget {
+  const _PlayerCategoryBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5FF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFD7E3FF)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF17397C),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -563,4 +736,25 @@ class _DetailCountryCodePickerButton extends StatelessWidget {
       ),
     );
   }
+}
+
+String _playerCategoryLabel(String value) {
+  switch (value) {
+    case 'senior':
+    case 'senior_citizen':
+      return 'Senior Citizen';
+    case 'normal':
+    default:
+      return 'Normal';
+  }
+}
+
+int _maxGolfCartCount(int playerCount) {
+  if (playerCount <= 2) {
+    return 1;
+  }
+  if (playerCount <= 4) {
+    return 2;
+  }
+  return 3;
 }

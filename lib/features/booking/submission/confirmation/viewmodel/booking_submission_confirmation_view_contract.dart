@@ -20,6 +20,9 @@ sealed class BookingSubmissionConfirmationViewState extends ViewState {
 class BookingSubmissionConfirmationDataLoaded
     extends BookingSubmissionConfirmationViewState {
   BookingSubmissionConfirmationDataLoaded({
+    this.bookingRef = emptyString,
+    this.holdDurationSeconds = 0,
+    DateTime? holdExpiresAt,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     DateTime? selectedDate,
@@ -30,18 +33,28 @@ class BookingSubmissionConfirmationDataLoaded
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
+    this.caddiePreference = 'none',
+    this.buggyType = 'normal',
+    this.buggySharingPreference = 'shared',
+    this.selectedNine,
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
+    this.remainingHoldSeconds = 0,
+    this.isHoldExpired = false,
     this.isSubmitting = false,
     this.errorMessage = emptyString,
-  }) : selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
+  }) : holdExpiresAt = holdExpiresAt ?? DateTime.now(),
+       selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
        super();
 
   factory BookingSubmissionConfirmationDataLoaded.initial() {
     return BookingSubmissionConfirmationDataLoaded();
   }
 
+  final String bookingRef;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -52,9 +65,15 @@ class BookingSubmissionConfirmationDataLoaded
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final int remainingHoldSeconds;
+  final bool isHoldExpired;
   final bool isSubmitting;
   final String errorMessage;
 
@@ -64,7 +83,19 @@ class BookingSubmissionConfirmationDataLoaded
   String get totalCostLabel =>
       CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
+  String get paymentMethodLabel => 'Pay At Counter';
+
+  String get holdCountdownLabel {
+    final safeSeconds = remainingHoldSeconds < 0 ? 0 : remainingHoldSeconds;
+    final minutes = (safeSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (safeSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   BookingSubmissionConfirmationDataLoaded copyWith({
+    String? bookingRef,
+    int? holdDurationSeconds,
+    DateTime? holdExpiresAt,
     String? golfClubName,
     String? golfClubSlug,
     DateTime? selectedDate,
@@ -75,14 +106,23 @@ class BookingSubmissionConfirmationDataLoaded
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
+    String? caddiePreference,
+    String? buggyType,
+    String? buggySharingPreference,
+    String? selectedNine,
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
+    int? remainingHoldSeconds,
+    bool? isHoldExpired,
     bool? isSubmitting,
     String? errorMessage,
     bool clearErrorMessage = false,
   }) {
     return BookingSubmissionConfirmationDataLoaded(
+      bookingRef: bookingRef ?? this.bookingRef,
+      holdDurationSeconds: holdDurationSeconds ?? this.holdDurationSeconds,
+      holdExpiresAt: holdExpiresAt ?? this.holdExpiresAt,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -93,9 +133,16 @@ class BookingSubmissionConfirmationDataLoaded
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggyType: buggyType ?? this.buggyType,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
+      selectedNine: selectedNine ?? this.selectedNine,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
+      remainingHoldSeconds: remainingHoldSeconds ?? this.remainingHoldSeconds,
+      isHoldExpired: isHoldExpired ?? this.isHoldExpired,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearErrorMessage
           ? emptyString
@@ -110,6 +157,9 @@ sealed class BookingSubmissionConfirmationUserIntent extends UserIntent {
 
 class OnInit extends BookingSubmissionConfirmationUserIntent {
   const OnInit({
+    required this.bookingRef,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -120,11 +170,18 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
   });
 
+  final String bookingRef;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -135,6 +192,10 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -156,11 +217,20 @@ class NavigateBack extends BookingSubmissionConfirmationNavEffect {
   const NavigateBack();
 }
 
+class NavigateToBookingSubmissionStart
+    extends BookingSubmissionConfirmationNavEffect {
+  const NavigateToBookingSubmissionStart();
+}
+
+class ShowBookingSessionExpired extends BookingSubmissionConfirmationNavEffect {
+  const ShowBookingSessionExpired();
+}
+
 class NavigateToBookingSubmissionSuccess
     extends BookingSubmissionConfirmationNavEffect {
   const NavigateToBookingSubmissionSuccess({
     required this.bookingId,
-    required this.bookingSlug,
+    required this.bookingRef,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -176,7 +246,7 @@ class NavigateToBookingSubmissionSuccess
 
   final String golfClubName;
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubSlug;
   final String teeTimeSlot;

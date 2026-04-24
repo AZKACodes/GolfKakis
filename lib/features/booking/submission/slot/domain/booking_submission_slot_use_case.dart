@@ -23,6 +23,6 @@ abstract class BookingSubmissionSlotUseCase {
   });
 
   Stream<DataStatusModel<dynamic>> onFetchBookingDetails({
-    required String bookingSlug,
+    required String bookingRef,
   });
 }

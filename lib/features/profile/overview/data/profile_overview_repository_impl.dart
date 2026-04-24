@@ -17,25 +17,24 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
   Future<ProfileOverviewResult> onFetchUserProfile({
     required SessionState session,
   }) async {
-    if (session.isLoggedIn &&
-        session.accessToken != null &&
-        session.accessToken!.trim().isNotEmpty) {
-      try {
-        final user = await _apiService.onFetchUserDetails(
-          accessToken: session.accessToken!.trim(),
-        );
-        return ProfileOverviewResult(
-          profile: _buildAuthenticatedProfile(session, user),
-          isFallback: false,
-        );
-      } catch (_) {
-        // Fall back to session-backed profile below.
+    if (session.isLoggedIn) {
+      final accessToken = session.accessToken?.trim();
+      if (accessToken == null || accessToken.isEmpty) {
+        throw ApiException(message: 'Missing access token for user profile.');
       }
+
+      final user = await _apiService.onFetchUserDetails(
+        accessToken: accessToken,
+      );
+      return ProfileOverviewResult(
+        profile: _buildAuthenticatedProfile(session, user),
+        isFallback: false,
+      );
     }
 
     return ProfileOverviewResult(
-      profile: _buildFallbackProfile(session),
-      isFallback: true,
+      profile: _buildGuestProfile(session),
+      isFallback: false,
     );
   }
 
@@ -59,25 +58,19 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
     );
   }
 
-  UserProfileModel _buildFallbackProfile(SessionState session) {
-    final isLoggedIn = session.isLoggedIn;
-    final role = session.effectiveUserRole;
+  UserProfileModel _buildGuestProfile(SessionState session) {
     return UserProfileModel(
-      userId: isLoggedIn ? 'USR-1001' : 'guest-${session.deviceId}',
-      userSlug: isLoggedIn ? 'zack-green' : 'guest-${session.deviceId}',
-      displayName: isLoggedIn ? session.effectiveUsername : 'Guest User',
-      nickname: isLoggedIn ? session.profileNickname ?? 'Zack' : 'Guest',
-      occupation: isLoggedIn ? session.profileOccupation ?? 'Golfer' : '-',
-      email: isLoggedIn
-          ? session.profileEmail ?? 'zack.green@example.com'
-          : '-',
-      phoneNumber: isLoggedIn
-          ? session.profilePhoneNumber ?? '+60 12-310 4472'
-          : '-',
-      avatarIndex: isLoggedIn ? session.profileAvatarIndex ?? 0 : 0,
-      role: role,
-      membershipLabel: _defaultMembershipLabel(role),
-      isLoggedIn: isLoggedIn,
+      userId: 'guest-${session.deviceId}',
+      userSlug: 'guest-${session.deviceId}',
+      displayName: 'Guest User',
+      nickname: 'Guest',
+      occupation: '-',
+      email: '-',
+      phoneNumber: '-',
+      avatarIndex: 0,
+      role: UserRole.guest,
+      membershipLabel: _defaultMembershipLabel(UserRole.guest),
+      isLoggedIn: false,
     );
   }
 

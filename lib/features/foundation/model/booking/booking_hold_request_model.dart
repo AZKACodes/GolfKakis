@@ -1,28 +1,38 @@
 class BookingHoldRequestModel {
   const BookingHoldRequestModel({
     required this.slotId,
-    required this.playType,
+    required this.accessToken,
     required this.hostName,
     required this.hostPhoneNumber,
-    required this.playerCount,
+    required this.source,
+    this.playType,
     this.idempotencyKey,
     this.selectedNine,
+    this.golfClubName,
+    this.golfClubSlug,
+    this.bookingDate,
+    this.teeTimeSlot,
+    this.playerCount,
     this.normalPlayerCount,
     this.seniorPlayerCount = 0,
     this.caddieArrangement = 'none',
     this.buggyType = 'normal',
     this.buggySharingPreference = 'shared',
     this.paymentMethod = 'pay_counter',
-    this.source = 'android',
   });
 
   final String slotId;
-  final String playType;
+  final String accessToken;
+  final String? playType;
   final String? idempotencyKey;
   final String? selectedNine;
+  final String? golfClubName;
+  final String? golfClubSlug;
+  final String? bookingDate;
+  final String? teeTimeSlot;
   final String hostName;
   final String hostPhoneNumber;
-  final int playerCount;
+  final int? playerCount;
   final int? normalPlayerCount;
   final int seniorPlayerCount;
   final String caddieArrangement;
@@ -34,18 +44,8 @@ class BookingHoldRequestModel {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'slotId': slotId,
-      'playType': playType,
-      if (selectedNine != null && selectedNine!.trim().isNotEmpty)
-        'selectedNine': selectedNine,
       'hostName': hostName,
       'hostPhoneNumber': hostPhoneNumber,
-      'playerCount': playerCount,
-      'normalPlayerCount': normalPlayerCount ?? playerCount,
-      'seniorPlayerCount': seniorPlayerCount,
-      'caddieArrangement': caddieArrangement,
-      'buggyType': buggyType,
-      'buggySharingPreference': buggySharingPreference,
-      'paymentMethod': paymentMethod,
       'source': source,
     };
   }

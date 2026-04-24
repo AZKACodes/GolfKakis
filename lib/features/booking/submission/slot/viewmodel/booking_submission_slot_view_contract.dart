@@ -60,7 +60,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.bookingSlots = const <BookingSlotModel>[],
     this.selectedClubSlug = emptyString,
     this.selectedSupportedNine = emptyString,
-    this.playerCount = 4,
+    this.normalPlayerCount = 2,
+    this.seniorPlayerCount = 0,
     this.caddiePreference = BookingCaddiePreference.none,
     this.buggyType = BookingBuggyType.normal,
     this.buggySharingPreference = BookingBuggySharingPreference.shared,
@@ -95,7 +96,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   final List<BookingSlotModel> bookingSlots;
   final String selectedClubSlug;
   final String selectedSupportedNine;
-  final int playerCount;
+  final int normalPlayerCount;
+  final int seniorPlayerCount;
   final BookingCaddiePreference caddiePreference;
   final BookingBuggyType buggyType;
   final BookingBuggySharingPreference buggySharingPreference;
@@ -125,18 +127,18 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   List<String> get availableSupportedNines =>
       selectedGolfClub?.supportedNines ?? const <String>[];
 
+  bool get requiresSupportedNineSelection => availableSupportedNines.isNotEmpty;
+
+  bool get canActivateCalendar =>
+      selectedGolfClub != null &&
+      (!requiresSupportedNineSelection || selectedSupportedNine.isNotEmpty);
+
+  int get playerCount => normalPlayerCount + seniorPlayerCount;
+
   String get playTypeValue {
     final club = selectedGolfClub;
     if (club == null) {
       return emptyString;
-    }
-
-    if (club.noOfHoles == 9) {
-      return '9_holes';
-    }
-
-    if (selectedSupportedNine.isNotEmpty) {
-      return '9_holes';
     }
 
     return '18_holes';
@@ -166,7 +168,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     String? selectedClubSlug,
     String? selectedSupportedNine,
     bool clearSelectedSupportedNine = false,
-    int? playerCount,
+    int? normalPlayerCount,
+    int? seniorPlayerCount,
     BookingCaddiePreference? caddiePreference,
     BookingBuggyType? buggyType,
     BookingBuggySharingPreference? buggySharingPreference,
@@ -191,7 +194,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
       selectedSupportedNine: clearSelectedSupportedNine
           ? emptyString
           : (selectedSupportedNine ?? this.selectedSupportedNine),
-      playerCount: playerCount ?? this.playerCount,
+      normalPlayerCount: normalPlayerCount ?? this.normalPlayerCount,
+      seniorPlayerCount: seniorPlayerCount ?? this.seniorPlayerCount,
       caddiePreference: caddiePreference ?? this.caddiePreference,
       buggyType: buggyType ?? this.buggyType,
       buggySharingPreference:
@@ -254,6 +258,18 @@ class OnSelectSupportedNine extends BookingSubmissionSlotUserIntent {
 
 class OnPlayerCountChanged extends BookingSubmissionSlotUserIntent {
   const OnPlayerCountChanged(this.value);
+
+  final int value;
+}
+
+class OnNormalPlayerCountChanged extends BookingSubmissionSlotUserIntent {
+  const OnNormalPlayerCountChanged(this.value);
+
+  final int value;
+}
+
+class OnSeniorPlayerCountChanged extends BookingSubmissionSlotUserIntent {
+  const OnSeniorPlayerCountChanged(this.value);
 
   final int value;
 }

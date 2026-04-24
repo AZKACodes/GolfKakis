@@ -21,5 +21,5 @@ abstract class BookingSubmissionSlotRepository {
     required BookingSubmissionRequestModel request,
   });
 
-  Future<dynamic> onFetchBookingDetails({required String bookingSlug});
+  Future<dynamic> onFetchBookingDetails({required String bookingRef});
 }

@@ -22,6 +22,7 @@ class BookingOverviewPage extends StatefulWidget {
 class _BookingOverviewPageState extends State<BookingOverviewPage> {
   late final BookingOverviewViewModel _viewModel;
   StreamSubscription<BookingOverviewNavEffect>? _navEffectSubscription;
+  bool _hasSyncedSession = false;
 
   @override
   void initState() {
@@ -45,7 +46,10 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
         }
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => GolfClubDetailPage(club: effect.club),
+            builder: (_) => GolfClubDetailPage(
+              clubSlug: effect.club.slug,
+              initialClub: effect.club,
+            ),
           ),
         );
       }
@@ -80,6 +84,12 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncSessionState();
+  }
+
+  @override
   void dispose() {
     _navEffectSubscription?.cancel();
     _viewModel.dispose();
@@ -91,19 +101,37 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: BookingOverviewDashboardView(
+        state: _viewModel.viewState,
         onBookingSubmissionClick: () =>
             _viewModel.onUserIntent(const OnBookingSubmissionClick()),
-        onPopularClubClick: (club) =>
-            _viewModel.onUserIntent(OnPopularClubClick(club)),
         onBookingListClick: () =>
             _viewModel.onUserIntent(const OnBookingListClick()),
         onUpcomingBookingDetailClick: () =>
             _viewModel.onUserIntent(const OnUpcomingBookingDetailClick()),
-        onRecentRoundOneDetailClick: () =>
-            _viewModel.onUserIntent(const OnRecentRoundOneDetailClick()),
-        onRecentRoundTwoDetailClick: () =>
-            _viewModel.onUserIntent(const OnRecentRoundTwoDetailClick()),
       ),
+    );
+  }
+
+  void _syncSessionState() {
+    final session = SessionScope.of(context).state;
+    final isLoggedIn = session.isLoggedIn;
+    final accessToken = session.accessToken;
+
+    if (!_hasSyncedSession) {
+      _hasSyncedSession = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _viewModel.onUserIntent(
+          OnInit(isLoggedIn: isLoggedIn, accessToken: accessToken),
+        );
+      });
+      return;
+    }
+
+    _viewModel.onUserIntent(
+      OnInit(isLoggedIn: isLoggedIn, accessToken: accessToken),
     );
   }
 }

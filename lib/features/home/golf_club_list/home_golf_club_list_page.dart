@@ -1,53 +1,159 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
-class HomeGolfClubListPage extends StatelessWidget {
+const double _bottomNavScrollClearance = 136;
+
+class HomeGolfClubListPage extends StatefulWidget {
   const HomeGolfClubListPage({super.key});
+
+  @override
+  State<HomeGolfClubListPage> createState() => _HomeGolfClubListPageState();
+}
+
+class _HomeGolfClubListPageState extends State<HomeGolfClubListPage> {
+  late final BookingApiService _apiService;
+  late Future<List<GolfClubModel>> _clubsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = BookingApiService();
+    _clubsFuture = _loadClubs();
+  }
+
+  Future<List<GolfClubModel>> _loadClubs() async {
+    final response = await _apiService.onFetchGolfClubList();
+    return _parseGolfClubList(response);
+  }
+
+  Future<void> _refresh() async {
+    final future = _loadClubs();
+    setState(() {
+      _clubsFuture = future;
+    });
+    await future;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Golf Club List')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _clubs.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final club = _clubs[index];
-          return _GolfClubListCard(
-            club: club,
-            priceLabel: _priceLabels[index],
-            teeWindowLabel: _teeWindowLabels[index],
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => GolfClubDetailPage(club: club),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<GolfClubModel>>(
+          future: _clubsFuture,
+          builder: (context, snapshot) {
+            final clubs = snapshot.data ?? const <GolfClubModel>[];
+
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                clubs.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError && clubs.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  32,
+                  16,
+                  _bottomNavScrollClearance,
                 ),
+                children: [
+                  _EmptyState(
+                    title: 'Unable to load golf clubs',
+                    message: 'Pull to refresh and try again.',
+                  ),
+                ],
               );
-            },
-          );
-        },
+            }
+
+            if (clubs.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  32,
+                  16,
+                  _bottomNavScrollClearance,
+                ),
+                children: const [
+                  _EmptyState(
+                    title: 'No golf clubs found',
+                    message: 'Try again in a moment.',
+                  ),
+                ],
+              );
+            }
+
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                _bottomNavScrollClearance,
+              ),
+              itemCount: clubs.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final club = clubs[index];
+                return _GolfClubListCard(
+                  club: club,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => GolfClubDetailPage(
+                          clubSlug: club.slug,
+                          initialClub: club,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
+  }
+
+  List<GolfClubModel> _parseGolfClubList(dynamic rawResponse) {
+    if (rawResponse is List) {
+      return rawResponse
+          .whereType<Map<String, dynamic>>()
+          .map(GolfClubModel.fromJson)
+          .where((club) => club.slug.isNotEmpty)
+          .toList();
+    }
+
+    if (rawResponse is Map<String, dynamic>) {
+      final dynamic nestedList =
+          rawResponse['data'] ??
+          rawResponse['items'] ??
+          rawResponse['clubs'] ??
+          rawResponse['golfClubs'];
+      return _parseGolfClubList(nestedList);
+    }
+
+    return const <GolfClubModel>[];
   }
 }
 
 class _GolfClubListCard extends StatelessWidget {
-  const _GolfClubListCard({
-    required this.club,
-    required this.priceLabel,
-    required this.teeWindowLabel,
-    required this.onTap,
-  });
+  const _GolfClubListCard({required this.club, required this.onTap});
 
   final GolfClubModel club;
-  final String priceLabel;
-  final String teeWindowLabel;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final supportsNineHoles =
+        club.supportsNineHoles || club.supportedNines.isNotEmpty;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -109,15 +215,19 @@ class _GolfClubListCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _ClubMetaChip(
-                      icon: Icons.schedule_outlined,
-                      label: teeWindowLabel,
+                      icon: Icons.flag_outlined,
+                      label: supportsNineHoles
+                          ? 'Supports 9 holes'
+                          : '18-hole routing',
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ClubMetaChip(
                       icon: Icons.payments_outlined,
-                      label: priceLabel,
+                      label: club.paymentMethods.isEmpty
+                          ? 'Payment at club'
+                          : _formatSentenceLabel(club.paymentMethods.first),
                     ),
                   ),
                 ],
@@ -171,47 +281,52 @@ class _ClubMetaChip extends StatelessWidget {
   }
 }
 
-const List<GolfClubModel> _clubs = [
-  GolfClubModel(
-    id: '1',
-    slug: 'kinrara-golf-club',
-    name: 'Kinrara Golf Club',
-    address: 'Bandar Kinrara, Puchong',
-    noOfHoles: 18,
-  ),
-  GolfClubModel(
-    id: '2',
-    slug: 'saujana-golf-country-club',
-    name: 'Saujana Golf & Country Club',
-    address: 'Shah Alam, Selangor',
-    noOfHoles: 36,
-  ),
-  GolfClubModel(
-    id: '3',
-    slug: 'kota-permai-golf-country-club',
-    name: 'Kota Permai Golf & Country Club',
-    address: 'Kota Kemuning, Shah Alam',
-    noOfHoles: 18,
-  ),
-  GolfClubModel(
-    id: '4',
-    slug: 'mines-resort-golf-club',
-    name: 'The Mines Resort & Golf Club',
-    address: 'Serdang, Selangor',
-    noOfHoles: 18,
-  ),
-];
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.title, required this.message});
 
-const List<String> _priceLabels = [
-  'From MYR 39',
-  'From MYR 52',
-  'From MYR 47',
-  'From MYR 58',
-];
+  final String title;
+  final String message;
 
-const List<String> _teeWindowLabels = [
-  'Morning slots from 7:20 AM',
-  'Peak play from 8:00 AM',
-  'Weekend tee-off from 7:50 AM',
-  'Early access from 7:40 AM',
-];
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE1E7E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatSentenceLabel(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) {
+    return 'Payment at club';
+  }
+
+  return normalized
+      .split('_')
+      .where((part) => part.isNotEmpty)
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+}

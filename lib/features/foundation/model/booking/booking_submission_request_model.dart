@@ -2,50 +2,31 @@ import 'package:golf_kakis/features/foundation/model/booking/booking_submission_
 
 class BookingSubmissionRequestModel {
   const BookingSubmissionRequestModel({
-    required this.golfClubName,
-    required this.golfClubSlug,
-    required this.bookingDate,
-    required this.teeTimeSlot,
-    required this.pricePerPerson,
-    required this.currency,
-    this.guestId,
-    required this.hostName,
-    required this.hostPhoneNumber,
-    required this.playerCount,
-    required this.caddieCount,
-    required this.golfCartCount,
+    required this.bookingRef,
+    required this.caddieArrangement,
+    required this.buggyType,
+    required this.buggySharingPreference,
     required this.playerDetails,
+    this.accessToken,
+    this.acknowledgedTerms = true,
   });
 
-  final String golfClubName;
-  final String golfClubSlug;
-  final String bookingDate;
-  final String teeTimeSlot;
-  final double pricePerPerson;
-  final String currency;
-  final String? guestId;
-  final String hostName;
-  final String hostPhoneNumber;
-  final int playerCount;
-  final int caddieCount;
-  final int golfCartCount;
+  final String bookingRef;
+  final String caddieArrangement;
+  final String buggyType;
+  final String buggySharingPreference;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final String? accessToken;
+  final bool acknowledgedTerms;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'golfClubName': golfClubName,
-      'golfClubSlug': golfClubSlug,
-      'bookingDate': bookingDate,
-      'teeTimeSlot': teeTimeSlot,
-      'pricePerPerson': pricePerPerson,
-      'currency': currency,
-      'guestId': guestId,
-      'hostName': hostName,
-      'hostPhoneNumber': hostPhoneNumber,
-      'playerCount': playerCount,
-      'caddieCount': caddieCount,
-      'golfCartCount': golfCartCount,
+      'bookingRef': bookingRef,
+      'caddieArrangement': caddieArrangement,
+      'buggyType': buggyType,
+      'buggySharingPreference': buggySharingPreference,
       'playerDetails': playerDetails.map((player) => player.toJson()).toList(),
+      'acknowledgedTerms': acknowledgedTerms,
     };
   }
 }

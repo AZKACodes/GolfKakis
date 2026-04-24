@@ -9,21 +9,40 @@ class BookingApiService {
 
   final ApiClient _apiClient;
 
-  Future<dynamic> onFetchGolfClubList() {
-    return Future<dynamic>.value(const <Map<String, dynamic>>[
-      <String, dynamic>{
-        'id': '40000000-0000-0000-0000-000000000001',
-        'slug': 'kinrara-golf-club',
-        'name': 'Main Golf Course',
-        'address': 'Bandar Kinrara, Puchong, Selangor',
-        'noOfHoles': 18,
-        'supportsNineHoles': true,
-        'supportedNines': <String>['damai', 'sutera'],
-        'buggyPolicy': 'required',
-        'paymentMethods': <String>['pay_counter'],
-        'updatedAt': '2026-03-18T12:26:21.693743+00:00',
+  Future<dynamic> onFetchGolfClubs({String? slug}) {
+    return _apiClient.getJson(
+      '/booking/golf-clubs',
+      queryParameters: <String, dynamic>{
+        if (slug != null && slug.trim().isNotEmpty) 'slug': slug,
       },
-    ]);
+    );
+  }
+
+  Future<dynamic> onFetchGolfClubList() {
+    return onFetchGolfClubs();
+  }
+
+  Future<dynamic> onFetchGolfClubDetail({required String slug}) {
+    return onFetchGolfClubs(slug: slug);
+  }
+
+  Future<dynamic> onQuickBook({
+    required String golfClubSlug,
+    double? latitude,
+    double? longitude,
+    int maxResults = 3,
+    int searchDays = 7,
+  }) {
+    return _apiClient.postJson(
+      '/booking/quick-book',
+      body: <String, dynamic>{
+        'golfClubSlug': golfClubSlug,
+        'latitude': latitude,
+        'longitude': longitude,
+        'maxResults': maxResults,
+        'searchDays': searchDays,
+      },
+    );
   }
 
   Future<dynamic> onFetchBookingUpcomingList({required String accessToken}) {
@@ -48,79 +67,48 @@ class BookingApiService {
     required String playType,
     String? selectedNine,
   }) {
-    return Future<dynamic>.value(<String, dynamic>{
-      'club': <String, dynamic>{'slug': clubSlug, 'name': 'Main Golf Course'},
-      'bookingDate': date,
-      'playType': playType,
-      'selectedNine': selectedNine,
-      'slots': const <Map<String, dynamic>>[
-        <String, dynamic>{
-          'slotId': 'b91e2ed9-7a13-48a3-ae0a-25b4bcdfd457',
-          'teeTimeSlot': '07:30 am',
-          'startAt': '2026-04-01T23:30:00+00:00',
-          'endAt': '2026-04-02T00:00:00+00:00',
-          'currency': 'MYR',
-          'fromPrice': 145,
-          'pricingLabel': 'From MYR 145 nett',
-          'remainingPlayerCapacity': 4,
-          'buggyPolicy': 'required',
-          'isAvailable': true,
-        },
-        <String, dynamic>{
-          'slotId': 'ec4bf5ac-ebfb-42ed-89f3-0910a50fb05f',
-          'teeTimeSlot': '12:30 pm',
-          'startAt': '2026-04-02T04:30:00+00:00',
-          'endAt': '2026-04-02T05:00:00+00:00',
-          'currency': 'MYR',
-          'fromPrice': 155,
-          'pricingLabel': 'From MYR 155 nett',
-          'remainingPlayerCapacity': 4,
-          'buggyPolicy': 'required',
-          'isAvailable': true,
-        },
-        <String, dynamic>{
-          'slotId': '4d08524d-b264-44d8-b7ad-1f002acf78e5',
-          'teeTimeSlot': '04:30 pm',
-          'startAt': '2026-04-02T08:30:00+00:00',
-          'endAt': '2026-04-02T09:00:00+00:00',
-          'currency': 'MYR',
-          'fromPrice': 135,
-          'pricingLabel': 'From MYR 135 nett',
-          'remainingPlayerCapacity': 4,
-          'buggyPolicy': 'required',
-          'isAvailable': true,
-        },
-      ],
-    });
+    return _apiClient.postJson(
+      '/booking/available-slots',
+      body: <String, dynamic>{
+        'golfClubSlug': clubSlug,
+        'bookingDate': date,
+        'playType': playType,
+        if (selectedNine != null && selectedNine.trim().isNotEmpty)
+          'selectedNine': selectedNine,
+      },
+    );
   }
 
   Future<dynamic> onCreateBookingSubmission({
     required BookingSubmissionRequestModel request,
   }) {
-    return _apiClient.postJson('/booking/submit', body: request.toJson());
+    final additionalHeaders = <String, String>{
+      if (request.accessToken != null && request.accessToken!.isNotEmpty)
+        'Authorization': 'Bearer ${request.accessToken!}',
+    };
+    return _apiClient.postJson(
+      '/booking/submit',
+      body: request.toJson(),
+      headers: additionalHeaders.isEmpty ? null : additionalHeaders,
+    );
   }
 
   Future<dynamic> onCreateBookingHold({
     required BookingHoldRequestModel request,
   }) {
-    final additionalHeaders =
-        request.idempotencyKey == null || request.idempotencyKey!.isEmpty
-        ? const <String, String>{}
-        : <String, String>{'Idempotency-Key': request.idempotencyKey!};
-    final resolvedHeaders = _apiClient.resolveHeaders(
-      additionalHeaders.isEmpty ? null : additionalHeaders,
-    );
+    final additionalHeaders = <String, String>{
+      'Authorization': 'Bearer ${request.accessToken}',
+      if (request.idempotencyKey != null && request.idempotencyKey!.isNotEmpty)
+        'Idempotency-Key': request.idempotencyKey!,
+    };
+    final resolvedHeaders = _apiClient.resolveHeaders(additionalHeaders);
     final body = request.toJson();
 
     debugPrint('onCreateBookingHold headers: $resolvedHeaders');
     debugPrint('onCreateBookingHold body: $body');
 
     return _apiClient
-        .postJson(
-          '/booking/hold',
-          body: body,
-          headers: additionalHeaders.isEmpty ? null : additionalHeaders,
-        )
+        .postJson('/booking/hold', body: body, headers: additionalHeaders)
         .then((response) {
           debugPrint('onCreateBookingHold response: $response');
           return response;
@@ -131,8 +119,18 @@ class BookingApiService {
         });
   }
 
-  Future<dynamic> onFetchBookingDetails({required String bookingSlug}) {
-    return _apiClient.getJson('/booking/$bookingSlug');
+  Future<dynamic> onFetchBookingDetails({
+    required String bookingRef,
+    String? accessToken,
+  }) {
+    final headers = <String, String>{
+      if (accessToken != null && accessToken.isNotEmpty)
+        'Authorization': 'Bearer $accessToken',
+    };
+    return _apiClient.getJson(
+      '/booking/$bookingRef',
+      headers: headers.isEmpty ? null : headers,
+    );
   }
 
   Future<dynamic> onUpdateBookingDetails({

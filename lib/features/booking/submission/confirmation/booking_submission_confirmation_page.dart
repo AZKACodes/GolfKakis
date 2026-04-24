@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
+import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/view/booking_submission_confirmation_view.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
@@ -12,6 +13,9 @@ import 'package:golf_kakis/features/foundation/model/booking/booking_submission_
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
     required this.bookingId,
+    required this.bookingRef,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.selectedDate,
@@ -22,6 +26,10 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
+    required this.caddiePreference,
+    required this.buggyType,
+    required this.buggySharingPreference,
+    this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
@@ -29,6 +37,9 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   });
 
   final String bookingId;
+  final String bookingRef;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final String golfClubName;
   final String golfClubSlug;
   final DateTime selectedDate;
@@ -39,6 +50,10 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
+  final String caddiePreference;
+  final String buggyType;
+  final String buggySharingPreference;
+  final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -63,6 +78,9 @@ class _BookingSubmissionConfirmationPageState
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
       OnInit(
+        bookingRef: widget.bookingRef,
+        holdDurationSeconds: widget.holdDurationSeconds,
+        holdExpiresAt: widget.holdExpiresAt,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         selectedDate: widget.selectedDate,
@@ -73,6 +91,10 @@ class _BookingSubmissionConfirmationPageState
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
         playerCount: widget.playerCount,
+        caddiePreference: widget.caddiePreference,
+        buggyType: widget.buggyType,
+        buggySharingPreference: widget.buggySharingPreference,
+        selectedNine: widget.selectedNine,
         caddieCount: widget.caddieCount,
         golfCartCount: widget.golfCartCount,
         playerDetails: widget.playerDetails,
@@ -92,11 +114,11 @@ class _BookingSubmissionConfirmationPageState
       case NavigateBack():
         Navigator.of(context).maybePop();
       case NavigateToBookingSubmissionSuccess():
-        Navigator.of(context).push(
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionSuccessPage(
               bookingId: effect.bookingId,
-              bookingSlug: effect.bookingSlug,
+              bookingRef: effect.bookingRef,
               bookingDate: effect.bookingDate,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
@@ -110,6 +132,39 @@ class _BookingSubmissionConfirmationPageState
               golfCartCount: effect.golfCartCount,
             ),
           ),
+          (route) => route.isFirst,
+        );
+      case ShowBookingSessionExpired():
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Booking Session Expired'),
+              content: const Text('Your booking session has expired.'),
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const BookingSubmissionSlotPage(),
+                      ),
+                      (route) => route.isFirst,
+                    );
+                  },
+                  child: const Text('Back to Slots'),
+                ),
+              ],
+            );
+          },
+        );
+      case NavigateToBookingSubmissionStart():
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => const BookingSubmissionSlotPage(),
+          ),
+          (route) => route.isFirst,
         );
     }
   }

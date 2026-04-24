@@ -48,15 +48,15 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
           const SizedBox(height: 6),
 
           BookingSubmissionDetailSelectionSummaryRow(
-            label: 'Price',
-            value: '${state.pricePerPersonLabel} per person',
+            label: 'Buggy Type',
+            value: _buggyTypeLabel(state.effectiveBuggyType),
           ),
 
           const SizedBox(height: 6),
 
           BookingSubmissionDetailSelectionSummaryRow(
-            label: 'Guest ID',
-            value: state.guestId?.isNotEmpty == true ? state.guestId! : 'N/A',
+            label: 'Price',
+            value: '${state.pricePerPersonLabel} per person',
           ),
 
           const SizedBox(height: 10),
@@ -92,6 +92,17 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _buggyTypeLabel(String value) {
+  switch (value) {
+    case 'jumbo':
+      return 'Jumbo';
+    case 'normal':
+      return 'Normal';
+    default:
+      return value;
   }
 }
 

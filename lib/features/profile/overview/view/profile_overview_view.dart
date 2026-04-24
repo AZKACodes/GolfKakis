@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
-import 'package:golf_kakis/features/foundation/widgets/info_banner.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile.dart';
 
@@ -71,13 +70,6 @@ class ProfileOverviewView extends StatelessWidget {
             _bottomNavScrollClearance,
           ),
           children: [
-            if (state.isUsingFallback) ...[
-              const InfoBanner(
-                message:
-                    'Showing temporary fallback profile until the user profile endpoint is ready.',
-              ),
-              const SizedBox(height: 12),
-            ],
             if (state.errorMessage != null) ...[
               ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
@@ -301,17 +293,9 @@ class _HeroCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  profile.membershipLabel,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.82),
-                  ),
-                ),
               ],
             ),
           ),
-          _RoleBadge(label: profile.roleLabel),
         ],
       ),
     );
@@ -624,30 +608,6 @@ class _LogoutButton extends StatelessWidget {
         ),
         icon: const Icon(Icons.logout_outlined),
         label: const Text('Logout'),
-      ),
-    );
-  }
-}
-
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: const Color(0xFF173B7A),
-          fontWeight: FontWeight.w800,
-        ),
       ),
     );
   }

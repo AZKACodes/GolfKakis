@@ -19,13 +19,16 @@ class BookingSubmissionSuccessDataLoaded
     extends BookingSubmissionSuccessViewState {
   BookingSubmissionSuccessDataLoaded({
     this.bookingId = emptyString,
-    this.bookingSlug = emptyString,
+    this.bookingRef = emptyString,
     this.bookingDate = emptyString,
     this.golfClubName = emptyString,
     this.golfClubSlug = emptyString,
     this.teeTimeSlot = emptyString,
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
+    this.playType = '18_holes',
+    this.caddiePreference = 'none',
+    this.buggySharingPreference = 'shared',
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
@@ -39,13 +42,16 @@ class BookingSubmissionSuccessDataLoaded
   }
 
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final String playType;
+  final String caddiePreference;
+  final String buggySharingPreference;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -59,15 +65,20 @@ class BookingSubmissionSuccessDataLoaded
   String get totalCostLabel =>
       CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
 
+  String get paymentMethodLabel => 'Pay At Counter';
+
   BookingSubmissionSuccessDataLoaded copyWith({
     String? bookingId,
-    String? bookingSlug,
+    String? bookingRef,
     String? bookingDate,
     String? golfClubName,
     String? golfClubSlug,
     String? teeTimeSlot,
     double? pricePerPerson,
     String? currency,
+    String? playType,
+    String? caddiePreference,
+    String? buggySharingPreference,
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
@@ -77,13 +88,17 @@ class BookingSubmissionSuccessDataLoaded
   }) {
     return BookingSubmissionSuccessDataLoaded(
       bookingId: bookingId ?? this.bookingId,
-      bookingSlug: bookingSlug ?? this.bookingSlug,
+      bookingRef: bookingRef ?? this.bookingRef,
       bookingDate: bookingDate ?? this.bookingDate,
       golfClubName: golfClubName ?? this.golfClubName,
       golfClubSlug: golfClubSlug ?? this.golfClubSlug,
       teeTimeSlot: teeTimeSlot ?? this.teeTimeSlot,
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
+      playType: playType ?? this.playType,
+      caddiePreference: caddiePreference ?? this.caddiePreference,
+      buggySharingPreference:
+          buggySharingPreference ?? this.buggySharingPreference,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
@@ -101,7 +116,7 @@ sealed class BookingSubmissionSuccessUserIntent extends UserIntent {
 class OnInit extends BookingSubmissionSuccessUserIntent {
   const OnInit({
     required this.bookingId,
-    required this.bookingSlug,
+    required this.bookingRef,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -116,7 +131,7 @@ class OnInit extends BookingSubmissionSuccessUserIntent {
   });
 
   final String bookingId;
-  final String bookingSlug;
+  final String bookingRef;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;

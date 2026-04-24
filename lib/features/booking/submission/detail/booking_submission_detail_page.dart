@@ -4,11 +4,13 @@ import 'package:golf_kakis/features/booking/submission/confirmation/booking_subm
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
     required this.slotId,
     required this.bookingId,
+    required this.bookingRef,
     required this.holdDurationSeconds,
     required this.holdExpiresAt,
     required this.playType,
@@ -19,6 +21,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
     required this.pricePerPerson,
     required this.currency,
     this.initialPlayerCount = 4,
+    this.initialNormalPlayerCount = 4,
+    this.initialSeniorPlayerCount = 0,
     this.caddiePreference = 'none',
     this.buggyType = 'normal',
     this.buggySharingPreference = 'shared',
@@ -31,6 +35,7 @@ class BookingSubmissionDetailPage extends StatefulWidget {
 
   final String slotId;
   final String bookingId;
+  final String bookingRef;
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final String playType;
@@ -41,6 +46,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
   final double pricePerPerson;
   final String currency;
   final int initialPlayerCount;
+  final int initialNormalPlayerCount;
+  final int initialSeniorPlayerCount;
   final String caddiePreference;
   final String buggyType;
   final String buggySharingPreference;
@@ -71,6 +78,7 @@ class _BookingSubmissionDetailPageState
       OnInit(
         slotId: widget.slotId,
         bookingId: widget.bookingId,
+        bookingRef: widget.bookingRef,
         holdDurationSeconds: widget.holdDurationSeconds,
         holdExpiresAt: widget.holdExpiresAt,
         playType: widget.playType,
@@ -81,6 +89,8 @@ class _BookingSubmissionDetailPageState
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
         initialPlayerCount: widget.initialPlayerCount,
+        initialNormalPlayerCount: widget.initialNormalPlayerCount,
+        initialSeniorPlayerCount: widget.initialSeniorPlayerCount,
         caddiePreference: widget.caddiePreference,
         buggyType: widget.buggyType,
         buggySharingPreference: widget.buggySharingPreference,
@@ -108,6 +118,9 @@ class _BookingSubmissionDetailPageState
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionConfirmationPage(
               bookingId: effect.bookingId,
+              bookingRef: effect.bookingRef,
+              holdDurationSeconds: effect.holdDurationSeconds,
+              holdExpiresAt: effect.holdExpiresAt,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               selectedDate: effect.selectedDate,
@@ -118,6 +131,10 @@ class _BookingSubmissionDetailPageState
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,
               playerCount: effect.playerCount,
+              caddiePreference: effect.caddiePreference,
+              buggyType: effect.buggyType,
+              buggySharingPreference: effect.buggySharingPreference,
+              selectedNine: effect.selectedNine,
               caddieCount: effect.caddieCount,
               golfCartCount: effect.golfCartCount,
               playerDetails: effect.playerDetails,
@@ -136,7 +153,12 @@ class _BookingSubmissionDetailPageState
                 FilledButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    Navigator.of(context).maybePop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const BookingSubmissionSlotPage(),
+                      ),
+                      (route) => route.isFirst,
+                    );
                   },
                   child: const Text('OK'),
                 ),
