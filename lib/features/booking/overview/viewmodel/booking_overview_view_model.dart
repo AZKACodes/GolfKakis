@@ -1,30 +1,26 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/list/data/booking_list_repository_impl.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_overview_view_contract.dart';
 
-class BookingOverviewViewModel extends ChangeNotifier
+class BookingOverviewViewModel
+    extends
+        MviViewModel<
+          BookingOverviewUserIntent,
+          BookingOverviewViewState,
+          BookingOverviewNavEffect
+        >
     implements BookingOverviewViewContract {
   BookingOverviewViewModel();
-
-  final StreamController<BookingOverviewNavEffect> _navEffectsController =
-      StreamController<BookingOverviewNavEffect>.broadcast();
-
-  BookingOverviewViewState _viewState = BookingOverviewViewState.initial;
   String? _lastAccessToken;
   bool _lastIsLoggedIn = false;
 
   @override
-  BookingOverviewViewState get viewState => _viewState;
+  BookingOverviewViewState createInitialState() =>
+      BookingOverviewDataLoaded.initial;
 
   @override
-  Stream<BookingOverviewNavEffect> get navEffects =>
-      _navEffectsController.stream;
-
-  @override
-  Future<void> onUserIntent(BookingOverviewUserIntent intent) async {
+  Future<void> handleIntent(BookingOverviewUserIntent intent) async {
     switch (intent) {
       case OnInit():
         await _handleInit(
@@ -32,15 +28,15 @@ class BookingOverviewViewModel extends ChangeNotifier
           accessToken: intent.accessToken,
         );
       case OnBookingSubmissionClick():
-        _navEffectsController.add(const NavigateToBookingSubmission());
+        sendNavEffect(() => const NavigateToBookingSubmission());
       case OnPopularClubClick():
-        _navEffectsController.add(NavigateToGolfClubDetail(intent.club));
+        sendNavEffect(() => NavigateToGolfClubDetail(intent.club));
       case OnBookingListClick():
-        _navEffectsController.add(const NavigateToBookingList());
+        sendNavEffect(() => const NavigateToBookingList());
       case OnUpcomingBookingDetailClick():
-        final booking = _viewState.upcomingBooking;
+        final booking = _currentDataState.upcomingBooking;
         if (booking != null) {
-          _navEffectsController.add(NavigateToBookingDetail(booking));
+          sendNavEffect(() => NavigateToBookingDetail(booking));
         }
     }
   }
@@ -58,8 +54,8 @@ class BookingOverviewViewModel extends ChangeNotifier
     _lastAccessToken = normalizedToken;
 
     if (!isLoggedIn || normalizedToken.isEmpty) {
-      _updateState(
-        _viewState.copyWith(
+      emitViewState(
+        (_) => _currentDataState.copyWith(
           isLoggedIn: false,
           isUpcomingLoading: false,
           clearUpcomingBooking: true,
@@ -68,8 +64,9 @@ class BookingOverviewViewModel extends ChangeNotifier
       return;
     }
 
-    _updateState(
-      _viewState.copyWith(isLoggedIn: true, isUpcomingLoading: true),
+    emitViewState(
+      (_) =>
+          _currentDataState.copyWith(isLoggedIn: true, isUpcomingLoading: true),
     );
 
     try {
@@ -80,8 +77,8 @@ class BookingOverviewViewModel extends ChangeNotifier
       final upcomingBooking = result.bookings.isEmpty
           ? null
           : result.bookings.first;
-      _updateState(
-        _viewState.copyWith(
+      emitViewState(
+        (_) => _currentDataState.copyWith(
           isLoggedIn: true,
           isUpcomingLoading: false,
           upcomingBooking: upcomingBooking,
@@ -89,8 +86,8 @@ class BookingOverviewViewModel extends ChangeNotifier
         ),
       );
     } catch (_) {
-      _updateState(
-        _viewState.copyWith(
+      emitViewState(
+        (_) => _currentDataState.copyWith(
           isLoggedIn: true,
           isUpcomingLoading: false,
           clearUpcomingBooking: true,
@@ -99,14 +96,9 @@ class BookingOverviewViewModel extends ChangeNotifier
     }
   }
 
-  void _updateState(BookingOverviewViewState nextState) {
-    _viewState = nextState;
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _navEffectsController.close();
-    super.dispose();
+  BookingOverviewDataLoaded get _currentDataState {
+    return switch (currentState) {
+      BookingOverviewDataLoaded() => currentState as BookingOverviewDataLoaded,
+    };
   }
 }

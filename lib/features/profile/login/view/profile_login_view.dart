@@ -8,20 +8,12 @@ const double _compactLoginPhoneInputHeight = 54;
 class ProfileLoginView extends StatefulWidget {
   const ProfileLoginView({
     required this.state,
-    required this.onNameChanged,
-    required this.onCountryCodeChanged,
-    required this.onPhoneChanged,
-    required this.onLoginClick,
-    required this.onRegisterClick,
+    required this.onUserIntent,
     super.key,
   });
 
   final ProfileLoginViewState state;
-  final ValueChanged<String> onNameChanged;
-  final ValueChanged<PhoneCountryCodeOption> onCountryCodeChanged;
-  final ValueChanged<String> onPhoneChanged;
-  final VoidCallback onLoginClick;
-  final VoidCallback onRegisterClick;
+  final ValueChanged<ProfileLoginUserIntent> onUserIntent;
 
   @override
   State<ProfileLoginView> createState() => _ProfileLoginViewState();
@@ -31,21 +23,27 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
 
+  ProfileLoginDataLoaded get _loadedState {
+    return switch (widget.state) {
+      ProfileLoginDataLoaded() => widget.state as ProfileLoginDataLoaded,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.state.name);
-    _phoneController = TextEditingController(text: widget.state.phoneNumber);
+    _nameController = TextEditingController(text: _loadedState.name);
+    _phoneController = TextEditingController(text: _loadedState.phoneNumber);
   }
 
   @override
   void didUpdateWidget(covariant ProfileLoginView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_nameController.text != widget.state.name) {
-      _nameController.text = widget.state.name;
+    if (_nameController.text != _loadedState.name) {
+      _nameController.text = _loadedState.name;
     }
-    if (_phoneController.text != widget.state.phoneNumber) {
-      _phoneController.text = widget.state.phoneNumber;
+    if (_phoneController.text != _loadedState.phoneNumber) {
+      _phoneController.text = _loadedState.phoneNumber;
     }
   }
 
@@ -59,6 +57,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final state = _loadedState;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -86,28 +85,28 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   ),
                 ],
               ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
-                          ),
-                          borderRadius: BorderRadius.circular(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
                         ),
-                        child: const Icon(
-                          Icons.person_outline,
-                          color: Colors.white,
-                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    Text(
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
                     'Welcome back',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -121,7 +120,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  if (widget.state.infoMessage != null) ...[
+                  if (state.infoMessage != null)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
@@ -131,19 +130,19 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                         border: Border.all(color: const Color(0xFFFFD58A)),
                       ),
                       child: Text(
-                        widget.state.infoMessage!,
+                        state.infoMessage!,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: const Color(0xFF7A5200),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
                   const SizedBox(height: 14),
                   TextField(
                     controller: _nameController,
                     textInputAction: TextInputAction.next,
-                    onChanged: widget.onNameChanged,
+                    onChanged: (value) =>
+                        widget.onUserIntent(OnNameChanged(value)),
                     decoration: InputDecoration(
                       hintText: 'Name',
                       prefixIcon: const Icon(Icons.person_outline),
@@ -157,12 +156,14 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   ),
                   const SizedBox(height: 14),
                   _LoginPhoneInputRow(
-                    selectedCountryCode: widget.state.countryCode,
+                    selectedCountryCode: state.countryCode,
                     phoneController: _phoneController,
-                    onCountryCodeChanged: widget.onCountryCodeChanged,
-                    onPhoneChanged: widget.onPhoneChanged,
+                    onCountryCodeChanged: (value) =>
+                        widget.onUserIntent(OnCountryCodeChanged(value)),
+                    onPhoneChanged: (value) =>
+                        widget.onUserIntent(OnPhoneChanged(value)),
                   ),
-                  if (widget.state.errorMessage != null) ...[
+                  if (state.errorMessage != null) ...[
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
@@ -173,7 +174,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                         border: Border.all(color: const Color(0xFFE7A1A1)),
                       ),
                       child: Text(
-                        widget.state.errorMessage!,
+                        state.errorMessage!,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: const Color(0xFF8A3D3D),
                           fontWeight: FontWeight.w600,
@@ -185,9 +186,11 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: widget.state.isSubmitting
+                      onPressed: state.isSubmitting
                           ? null
-                          : widget.onLoginClick,
+                          : () => widget.onUserIntent(
+                              const OnLoginClick(visitorId: ''),
+                            ),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -238,13 +241,14 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                         ),
                         const SizedBox(width: 12),
                         TextButton(
-                          onPressed: widget.onRegisterClick,
+                          onPressed: () =>
+                              widget.onUserIntent(const OnRegisterClick()),
                           child: const Text('Register'),
                         ),
                       ],
                     ),
                   ),
-                  if (widget.state.isSubmitting) ...[
+                  if (state.isSubmitting) ...[
                     const SizedBox(height: 18),
                     const LinearProgressIndicator(),
                   ],
@@ -273,30 +277,58 @@ class _LoginPhoneInputRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _LoginCountryCodePickerButton(
-          value: selectedCountryCode,
-          onSelected: onCountryCodeChanged,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 136, maxWidth: 164),
+          child: Container(
+            height: _compactLoginPhoneInputHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F8FC),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<PhoneCountryCodeOption>(
+                value: selectedCountryCode,
+                isExpanded: true,
+                icon: const Icon(Icons.expand_more_rounded),
+                borderRadius: BorderRadius.circular(16),
+                items: PhoneUtil.countryCodeOptions.map((option) {
+                  return DropdownMenuItem<PhoneCountryCodeOption>(
+                    value: option,
+                    child: Text(
+                      option.compactLabel,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    onCountryCodeChanged(value);
+                  }
+                },
+              ),
+            ),
+          ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: SizedBox(
             height: _compactLoginPhoneInputHeight,
             child: TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
               onChanged: onPhoneChanged,
-              textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
-                hintText: 'Phone number',
-                prefixIcon: const Icon(Icons.phone_outlined, size: 20),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 16,
-                ),
+                hintText: 'Phone Number',
+                prefixIcon: const Icon(Icons.phone_outlined),
                 filled: true,
                 fillColor: const Color(0xFFF6F8FC),
                 border: OutlineInputBorder(
@@ -308,145 +340,6 @@ class _LoginPhoneInputRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _LoginCountryCodePickerButton extends StatelessWidget {
-  const _LoginCountryCodePickerButton({
-    required this.value,
-    required this.onSelected,
-  });
-
-  final PhoneCountryCodeOption value;
-  final ValueChanged<PhoneCountryCodeOption> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: 118,
-      height: _compactLoginPhoneInputHeight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _showCountryCodeBottomSheet(context),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F8FC),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    value.compactLabel,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showCountryCodeBottomSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select Country Code',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Choose the dialing code before entering the phone number.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-              ),
-              const SizedBox(height: 14),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: PhoneUtil.countryCodeOptions.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final option = PhoneUtil.countryCodeOptions[index];
-                    final isSelected = option.dialCode == value.dialCode;
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          onSelected(option);
-                        },
-                        child: Ink(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFF0F8F2)
-                                : const Color(0xFFF8F8F6),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF0D7A3A)
-                                  : const Color(0x14000000),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  option.bottomSheetLabel,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Color(0xFF0D7A3A),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

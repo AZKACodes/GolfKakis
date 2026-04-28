@@ -9,8 +9,14 @@ abstract class ProfileLoginViewContract {
   void onUserIntent(ProfileLoginUserIntent intent);
 }
 
-class ProfileLoginViewState extends ViewState {
-  const ProfileLoginViewState({
+// ------ View State ------
+
+sealed class ProfileLoginViewState extends ViewState {
+  const ProfileLoginViewState() : super();
+}
+
+class ProfileLoginDataLoaded extends ProfileLoginViewState {
+  const ProfileLoginDataLoaded({
     required this.name,
     required this.countryCode,
     required this.phoneNumber,
@@ -19,7 +25,7 @@ class ProfileLoginViewState extends ViewState {
     this.infoMessage,
   }) : super();
 
-  static const initial = ProfileLoginViewState(
+  static const initial = ProfileLoginDataLoaded(
     name: '',
     countryCode: PhoneUtil.defaultCountryCodeOption,
     phoneNumber: '',
@@ -34,9 +40,7 @@ class ProfileLoginViewState extends ViewState {
   final String? infoMessage;
 
   bool get canSubmit =>
-      name.trim().isNotEmpty &&
-      phoneNumber.trim().isNotEmpty &&
-      !isSubmitting;
+      name.trim().isNotEmpty && phoneNumber.trim().isNotEmpty && !isSubmitting;
 
   String get fullPhoneNumber {
     final normalized = phoneNumber.trim();
@@ -47,7 +51,7 @@ class ProfileLoginViewState extends ViewState {
     return '${countryCode.dialCode} $normalized';
   }
 
-  ProfileLoginViewState copyWith({
+  ProfileLoginDataLoaded copyWith({
     String? name,
     PhoneCountryCodeOption? countryCode,
     String? phoneNumber,
@@ -57,7 +61,7 @@ class ProfileLoginViewState extends ViewState {
     bool clearErrorMessage = false,
     bool clearInfoMessage = false,
   }) {
-    return ProfileLoginViewState(
+    return ProfileLoginDataLoaded(
       name: name ?? this.name,
       countryCode: countryCode ?? this.countryCode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -69,6 +73,8 @@ class ProfileLoginViewState extends ViewState {
     );
   }
 }
+
+// ------ UserIntent ------
 
 sealed class ProfileLoginUserIntent extends UserIntent {
   const ProfileLoginUserIntent() : super();
@@ -105,6 +111,8 @@ class OnBackClick extends ProfileLoginUserIntent {
 class OnRegisterClick extends ProfileLoginUserIntent {
   const OnRegisterClick();
 }
+
+// ------ NavEffect ------
 
 sealed class ProfileLoginNavEffect extends NavEffect {
   const ProfileLoginNavEffect() : super();

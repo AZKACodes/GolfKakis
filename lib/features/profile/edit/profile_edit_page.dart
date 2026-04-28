@@ -24,28 +24,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileEditViewModel(profile: widget.profile);
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
-      if (effect is ProfileEditNavigateBack) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).maybePop();
-      }
-
-      if (effect is ProfileEditSaved) {
-        if (!mounted) {
-          return;
-        }
-        SessionScope.of(context).updateProfile(
-          fullName: _viewModel.viewState.fullName.trim(),
-          nickname: _viewModel.viewState.nickname.trim(),
-          occupation: _viewModel.viewState.occupation.trim(),
-          email: _viewModel.viewState.email.trim(),
-          phoneNumber: _viewModel.viewState.phoneNumber.trim(),
-          avatarIndex: _viewModel.viewState.avatarIndex,
-        );
-      }
-    });
+    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
 
   @override
@@ -53,6 +32,30 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     _navEffectSubscription?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _handleNavEffect(ProfileEditNavEffect effect) {
+    if (!mounted) {
+      return;
+    }
+
+    switch (effect) {
+      case ProfileEditNavigateBack():
+        Navigator.of(context).maybePop();
+      case ProfileEditSaved():
+        final loadedState = switch (_viewModel.viewState) {
+          ProfileEditDataLoaded() =>
+            _viewModel.viewState as ProfileEditDataLoaded,
+        };
+        SessionScope.of(context).updateProfile(
+          fullName: loadedState.fullName.trim(),
+          nickname: loadedState.nickname.trim(),
+          occupation: loadedState.occupation.trim(),
+          email: loadedState.email.trim(),
+          phoneNumber: loadedState.phoneNumber.trim(),
+          avatarIndex: loadedState.avatarIndex,
+        );
+    }
   }
 
   @override
@@ -72,21 +75,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           body: SafeArea(
             child: ProfileEditView(
               state: _viewModel.viewState,
-              onFullNameChanged: (value) =>
-                  _viewModel.onUserIntent(OnProfileEditFullNameChanged(value)),
-              onNicknameChanged: (value) =>
-                  _viewModel.onUserIntent(OnProfileEditNicknameChanged(value)),
-              onOccupationChanged: (value) => _viewModel.onUserIntent(
-                OnProfileEditOccupationChanged(value),
-              ),
-              onEmailChanged: (value) =>
-                  _viewModel.onUserIntent(OnProfileEditEmailChanged(value)),
-              onPhoneChanged: (value) =>
-                  _viewModel.onUserIntent(OnProfileEditPhoneChanged(value)),
-              onAvatarChanged: (value) =>
-                  _viewModel.onUserIntent(OnProfileEditAvatarChanged(value)),
-              onSaveClick: () =>
-                  _viewModel.onUserIntent(const OnProfileEditSaveClick()),
+              onUserIntent: _viewModel.onUserIntent,
             ),
           ),
         );

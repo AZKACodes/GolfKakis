@@ -7,8 +7,14 @@ abstract class ProfileEditViewContract {
   void onUserIntent(ProfileEditUserIntent intent);
 }
 
-class ProfileEditViewState extends ViewState {
-  const ProfileEditViewState({
+// ------ View State ------
+
+sealed class ProfileEditViewState extends ViewState {
+  const ProfileEditViewState() : super();
+}
+
+class ProfileEditDataLoaded extends ProfileEditViewState {
+  const ProfileEditDataLoaded({
     required this.fullName,
     required this.nickname,
     required this.occupation,
@@ -20,8 +26,8 @@ class ProfileEditViewState extends ViewState {
     this.errorMessage,
   }) : super();
 
-  factory ProfileEditViewState.fromProfile(UserProfileModel profile) {
-    return ProfileEditViewState(
+  factory ProfileEditDataLoaded.fromProfile(UserProfileModel profile) {
+    return ProfileEditDataLoaded(
       fullName: profile.displayName,
       nickname: profile.nickname,
       occupation: profile.occupation,
@@ -48,7 +54,7 @@ class ProfileEditViewState extends ViewState {
       occupation.trim().isNotEmpty &&
       !isSaving;
 
-  ProfileEditViewState copyWith({
+  ProfileEditDataLoaded copyWith({
     String? fullName,
     String? nickname,
     String? occupation,
@@ -61,7 +67,7 @@ class ProfileEditViewState extends ViewState {
     bool clearMessage = false,
     bool clearErrorMessage = false,
   }) {
-    return ProfileEditViewState(
+    return ProfileEditDataLoaded(
       fullName: fullName ?? this.fullName,
       nickname: nickname ?? this.nickname,
       occupation: occupation ?? this.occupation,
@@ -76,6 +82,8 @@ class ProfileEditViewState extends ViewState {
     );
   }
 }
+
+// ------ UserIntent ------
 
 sealed class ProfileEditUserIntent extends UserIntent {
   const ProfileEditUserIntent() : super();
@@ -124,6 +132,8 @@ class OnProfileEditSaveClick extends ProfileEditUserIntent {
 class OnProfileEditBackClick extends ProfileEditUserIntent {
   const OnProfileEditBackClick();
 }
+
+// ------ NavEffect ------
 
 sealed class ProfileEditNavEffect extends NavEffect {
   const ProfileEditNavEffect() : super();

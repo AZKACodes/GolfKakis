@@ -1,28 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 import '../viewmodel/profile_edit_view_contract.dart';
 
 class ProfileEditView extends StatefulWidget {
   const ProfileEditView({
     required this.state,
-    required this.onFullNameChanged,
-    required this.onNicknameChanged,
-    required this.onOccupationChanged,
-    required this.onEmailChanged,
-    required this.onPhoneChanged,
-    required this.onAvatarChanged,
-    required this.onSaveClick,
+    required this.onUserIntent,
     super.key,
   });
 
   final ProfileEditViewState state;
-  final ValueChanged<String> onFullNameChanged;
-  final ValueChanged<String> onNicknameChanged;
-  final ValueChanged<String> onOccupationChanged;
-  final ValueChanged<String> onEmailChanged;
-  final ValueChanged<String> onPhoneChanged;
-  final ValueChanged<int> onAvatarChanged;
-  final VoidCallback onSaveClick;
+  final ValueChanged<ProfileEditUserIntent> onUserIntent;
 
   @override
   State<ProfileEditView> createState() => _ProfileEditViewState();
@@ -35,35 +24,41 @@ class _ProfileEditViewState extends State<ProfileEditView> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
 
+  ProfileEditDataLoaded get _loadedState {
+    return switch (widget.state) {
+      ProfileEditDataLoaded() => widget.state as ProfileEditDataLoaded,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
-    _fullNameController = TextEditingController(text: widget.state.fullName);
-    _nicknameController = TextEditingController(text: widget.state.nickname);
+    _fullNameController = TextEditingController(text: _loadedState.fullName);
+    _nicknameController = TextEditingController(text: _loadedState.nickname);
     _occupationController = TextEditingController(
-      text: widget.state.occupation,
+      text: _loadedState.occupation,
     );
-    _emailController = TextEditingController(text: widget.state.email);
-    _phoneController = TextEditingController(text: widget.state.phoneNumber);
+    _emailController = TextEditingController(text: _loadedState.email);
+    _phoneController = TextEditingController(text: _loadedState.phoneNumber);
   }
 
   @override
   void didUpdateWidget(covariant ProfileEditView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_fullNameController.text != widget.state.fullName) {
-      _fullNameController.text = widget.state.fullName;
+    if (_fullNameController.text != _loadedState.fullName) {
+      _fullNameController.text = _loadedState.fullName;
     }
-    if (_nicknameController.text != widget.state.nickname) {
-      _nicknameController.text = widget.state.nickname;
+    if (_nicknameController.text != _loadedState.nickname) {
+      _nicknameController.text = _loadedState.nickname;
     }
-    if (_occupationController.text != widget.state.occupation) {
-      _occupationController.text = widget.state.occupation;
+    if (_occupationController.text != _loadedState.occupation) {
+      _occupationController.text = _loadedState.occupation;
     }
-    if (_emailController.text != widget.state.email) {
-      _emailController.text = widget.state.email;
+    if (_emailController.text != _loadedState.email) {
+      _emailController.text = _loadedState.email;
     }
-    if (_phoneController.text != widget.state.phoneNumber) {
-      _phoneController.text = widget.state.phoneNumber;
+    if (_phoneController.text != _loadedState.phoneNumber) {
+      _phoneController.text = _loadedState.phoneNumber;
     }
   }
 
@@ -80,6 +75,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final state = _loadedState;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -90,10 +86,12 @@ class _ProfileEditViewState extends State<ProfileEditView> {
             child: Column(
               children: [
                 _EditableAvatar(
-                  initials: _buildInitials(widget.state.fullName),
-                  avatarIndex: widget.state.avatarIndex,
-                  onTap: () => widget.onAvatarChanged(
-                    (widget.state.avatarIndex + 1) % _avatarPalettes.length,
+                  initials: StringUtil.buildInitials(state.fullName),
+                  avatarIndex: state.avatarIndex,
+                  onTap: () => widget.onUserIntent(
+                    OnProfileEditAvatarChanged(
+                      (state.avatarIndex + 1) % _avatarPalettes.length,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -120,10 +118,12 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                   children: List<Widget>.generate(_avatarPalettes.length, (
                     index,
                   ) {
-                    final selected = index == widget.state.avatarIndex;
+                    final selected = index == state.avatarIndex;
                     final palette = _avatarPalettes[index];
                     return InkWell(
-                      onTap: () => widget.onAvatarChanged(index),
+                      onTap: () => widget.onUserIntent(
+                        OnProfileEditAvatarChanged(index),
+                      ),
                       borderRadius: BorderRadius.circular(999),
                       child: Container(
                         width: 52,
@@ -144,7 +144,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                         ),
                         child: Center(
                           child: Text(
-                            _buildInitials(widget.state.fullName),
+                            StringUtil.buildInitials(state.fullName),
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
@@ -163,19 +163,19 @@ class _ProfileEditViewState extends State<ProfileEditView> {
             'Update the details from your registration flow.',
             style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
-          if (widget.state.message != null) ...[
+          if (state.message != null) ...[
             const SizedBox(height: 14),
             _Banner(
-              message: widget.state.message!,
+              message: state.message!,
               color: const Color(0xFFEAF6F0),
               borderColor: const Color(0xFFB8E0CA),
               textColor: const Color(0xFF1E5B4A),
             ),
           ],
-          if (widget.state.errorMessage != null) ...[
+          if (state.errorMessage != null) ...[
             const SizedBox(height: 14),
             _Banner(
-              message: widget.state.errorMessage!,
+              message: state.errorMessage!,
               color: const Color(0xFFFDECEC),
               borderColor: const Color(0xFFE7A1A1),
               textColor: const Color(0xFF8A3D3D),
@@ -186,45 +186,52 @@ class _ProfileEditViewState extends State<ProfileEditView> {
             controller: _fullNameController,
             label: 'Name',
             icon: Icons.person_outline,
-            onChanged: widget.onFullNameChanged,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileEditFullNameChanged(value)),
           ),
           const SizedBox(height: 14),
           _ProfileField(
             controller: _nicknameController,
             label: 'Nickname',
             icon: Icons.tag_faces_outlined,
-            onChanged: widget.onNicknameChanged,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileEditNicknameChanged(value)),
           ),
           const SizedBox(height: 14),
           _ProfileField(
             controller: _occupationController,
             label: 'Occupation',
             icon: Icons.work_outline,
-            onChanged: widget.onOccupationChanged,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileEditOccupationChanged(value)),
           ),
           const SizedBox(height: 14),
           _ProfileField(
             controller: _emailController,
             label: 'Email',
             icon: Icons.alternate_email,
-            onChanged: widget.onEmailChanged,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileEditEmailChanged(value)),
           ),
           const SizedBox(height: 14),
           _ProfileField(
             controller: _phoneController,
             label: 'Phone Number',
             icon: Icons.phone_outlined,
-            onChanged: widget.onPhoneChanged,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileEditPhoneChanged(value)),
           ),
           const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: widget.state.isSaving ? null : widget.onSaveClick,
+              onPressed: state.isSaving
+                  ? null
+                  : () => widget.onUserIntent(const OnProfileEditSaveClick()),
               child: const Text('Save Profile'),
             ),
           ),
-          if (widget.state.isSaving) ...[
+          if (state.isSaving) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(),
           ],
@@ -232,21 +239,6 @@ class _ProfileEditViewState extends State<ProfileEditView> {
       ),
     );
   }
-}
-
-String _buildInitials(String fullName) {
-  final parts = fullName
-      .split(' ')
-      .where((part) => part.trim().isNotEmpty)
-      .toList();
-  if (parts.isEmpty) {
-    return 'U';
-  }
-  if (parts.length == 1) {
-    return parts.first.substring(0, 1).toUpperCase();
-  }
-  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-      .toUpperCase();
 }
 
 class _EditableAvatar extends StatelessWidget {

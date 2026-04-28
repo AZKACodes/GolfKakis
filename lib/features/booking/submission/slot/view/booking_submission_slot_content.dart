@@ -8,6 +8,7 @@ import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking
 import 'package:golf_kakis/features/booking/submission/slot/view/widgets/golf_club_picker_card.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_date_picker_button.dart';
 import 'package:golf_kakis/features/foundation/widgets/card_message.dart';
 
@@ -588,10 +589,6 @@ class _SupportedNinePickerCard extends StatelessWidget {
   }
 
   String _formatLabel(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-
-    return value[0].toUpperCase() + value.substring(1);
+    return StringUtil.capitalizeFirst(value);
   }
 }

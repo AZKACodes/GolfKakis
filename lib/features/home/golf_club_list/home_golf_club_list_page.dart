@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 const double _bottomNavScrollClearance = 136;
 
@@ -319,14 +320,5 @@ class _EmptyState extends StatelessWidget {
 }
 
 String _formatSentenceLabel(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) {
-    return 'Payment at club';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatSentenceLabel(value, fallback: 'Payment at club');
 }

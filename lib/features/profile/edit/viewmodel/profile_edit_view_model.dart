@@ -18,7 +18,7 @@ class ProfileEditViewModel
 
   @override
   ProfileEditViewState createInitialState() {
-    return ProfileEditViewState.fromProfile(_profile);
+    return ProfileEditDataLoaded.fromProfile(_profile);
   }
 
   @override
@@ -26,7 +26,7 @@ class ProfileEditViewModel
     switch (intent) {
       case OnProfileEditFullNameChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             fullName: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -34,7 +34,7 @@ class ProfileEditViewModel
         );
       case OnProfileEditNicknameChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             nickname: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -42,7 +42,7 @@ class ProfileEditViewModel
         );
       case OnProfileEditOccupationChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             occupation: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -50,7 +50,7 @@ class ProfileEditViewModel
         );
       case OnProfileEditEmailChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             email: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -58,7 +58,7 @@ class ProfileEditViewModel
         );
       case OnProfileEditPhoneChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             phoneNumber: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -66,7 +66,7 @@ class ProfileEditViewModel
         );
       case OnProfileEditAvatarChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             avatarIndex: intent.value,
             clearMessage: true,
             clearErrorMessage: true,
@@ -79,10 +79,16 @@ class ProfileEditViewModel
     }
   }
 
+  ProfileEditDataLoaded get _currentDataState {
+    return switch (currentState) {
+      ProfileEditDataLoaded() => currentState as ProfileEditDataLoaded,
+    };
+  }
+
   Future<void> _save() async {
-    if (!currentState.canSave) {
+    if (!_currentDataState.canSave) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           errorMessage: 'Enter your name, nickname, and occupation to save.',
           clearMessage: true,
         ),
@@ -91,7 +97,7 @@ class ProfileEditViewModel
     }
 
     emitViewState(
-      (state) => state.copyWith(
+      (_) => _currentDataState.copyWith(
         isSaving: true,
         clearMessage: true,
         clearErrorMessage: true,
@@ -99,7 +105,7 @@ class ProfileEditViewModel
     );
     await Future<void>.delayed(const Duration(milliseconds: 300));
     emitViewState(
-      (state) => state.copyWith(
+      (_) => _currentDataState.copyWith(
         isSaving: false,
         message: 'Profile updated for this demo session.',
       ),

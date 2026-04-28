@@ -5,14 +5,12 @@ import '../viewmodel/profile_login_otp_view_contract.dart';
 class ProfileLoginOtpView extends StatefulWidget {
   const ProfileLoginOtpView({
     required this.state,
-    required this.onOtpChanged,
-    required this.onVerifyClick,
+    required this.onUserIntent,
     super.key,
   });
 
   final ProfileLoginOtpViewState state;
-  final void Function(int index, String value) onOtpChanged;
-  final VoidCallback onVerifyClick;
+  final ValueChanged<ProfileLoginOtpUserIntent> onUserIntent;
 
   @override
   State<ProfileLoginOtpView> createState() => _ProfileLoginOtpViewState();
@@ -22,12 +20,18 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
+  ProfileLoginOtpDataLoaded get _loadedState {
+    return switch (widget.state) {
+      ProfileLoginOtpDataLoaded() => widget.state as ProfileLoginOtpDataLoaded,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
     _controllers = List<TextEditingController>.generate(
       6,
-      (index) => TextEditingController(text: widget.state.otpDigits[index]),
+      (index) => TextEditingController(text: _loadedState.otpDigits[index]),
     );
     _focusNodes = List<FocusNode>.generate(6, (_) => FocusNode());
   }
@@ -36,8 +40,8 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
   void didUpdateWidget(covariant ProfileLoginOtpView oldWidget) {
     super.didUpdateWidget(oldWidget);
     for (var i = 0; i < _controllers.length; i++) {
-      if (_controllers[i].text != widget.state.otpDigits[i]) {
-        _controllers[i].text = widget.state.otpDigits[i];
+      if (_controllers[i].text != _loadedState.otpDigits[i]) {
+        _controllers[i].text = _loadedState.otpDigits[i];
       }
     }
   }
@@ -54,7 +58,7 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
   }
 
   void _handleChanged(int index, String value) {
-    widget.onOtpChanged(index, value);
+    widget.onUserIntent(OnLoginOtpDigitChanged(index: index, value: value));
     if (value.isNotEmpty && index < _focusNodes.length - 1) {
       _focusNodes[index + 1].requestFocus();
     }
@@ -63,6 +67,7 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final state = _loadedState;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -102,12 +107,12 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'We sent a 6-digit OTP to ${widget.state.phoneNumber}.',
+                      'We sent a 6-digit OTP to ${state.phoneNumber}.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.black54,
                       ),
                     ),
-                    if (widget.state.errorMessage != null) ...[
+                    if (state.errorMessage != null) ...[
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
@@ -118,7 +123,7 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
                           border: Border.all(color: const Color(0xFFE7A1A1)),
                         ),
                         child: Text(
-                          widget.state.errorMessage!,
+                          state.errorMessage!,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: const Color(0xFF8A3D3D),
                             fontWeight: FontWeight.w600,
@@ -131,9 +136,7 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
                       children: List<Widget>.generate(6, (index) {
                         return Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(
-                              right: index == 5 ? 0 : 8,
-                            ),
+                            padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
                             child: TextField(
                               controller: _controllers[index],
                               focusNode: _focusNodes[index],
@@ -163,13 +166,15 @@ class _ProfileLoginOtpViewState extends State<ProfileLoginOtpView> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: widget.state.canVerify
-                            ? widget.onVerifyClick
+                        onPressed: state.canVerify
+                            ? () => widget.onUserIntent(
+                                const OnLoginOtpVerifyClick(visitorId: ''),
+                              )
                             : null,
                         child: const Text('Verify OTP'),
                       ),
                     ),
-                    if (widget.state.isSubmitting) ...[
+                    if (state.isSubmitting) ...[
                       const SizedBox(height: 14),
                       const LinearProgressIndicator(),
                     ],

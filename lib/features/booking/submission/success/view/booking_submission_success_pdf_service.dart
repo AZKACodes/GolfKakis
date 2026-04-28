@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -284,18 +285,7 @@ class BookingSubmissionSuccessPdfService {
   }
 
   static String _formatEnumLabel(String value) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      return '-';
-    }
-
-    return _safeText(
-      normalized
-          .split('_')
-          .where((part) => part.isNotEmpty)
-          .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-          .join(' '),
-    );
+    return _safeText(StringUtil.formatEnumLabel(value, fallback: '-'));
   }
 
   static String _safeText(String value) {

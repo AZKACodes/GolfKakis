@@ -3,51 +3,56 @@ import 'package:golf_kakis/features/booking/overview/viewmodel/booking_overview_
 
 const double _bottomNavScrollClearance = 136;
 
-class BookingOverviewDashboardView extends StatelessWidget {
-  const BookingOverviewDashboardView({
+class BookingOverviewView extends StatelessWidget {
+  const BookingOverviewView({
     required this.state,
-    required this.onBookingSubmissionClick,
-    required this.onBookingListClick,
-    required this.onUpcomingBookingDetailClick,
+    required this.onUserIntent,
     super.key,
   });
 
   final BookingOverviewViewState state;
-  final VoidCallback onBookingSubmissionClick;
-  final VoidCallback onBookingListClick;
-  final VoidCallback onUpcomingBookingDetailClick;
+  final ValueChanged<BookingOverviewUserIntent> onUserIntent;
 
   @override
   Widget build(BuildContext context) {
+    final loadedState = switch (state) {
+      BookingOverviewDataLoaded() => state as BookingOverviewDataLoaded,
+    };
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StartBookingHero(onTap: onBookingSubmissionClick),
+          _StartBookingHero(
+            onTap: () => onUserIntent(const OnBookingSubmissionClick()),
+          ),
           const SizedBox(height: 18),
-          _BookingListTouchpoint(onTap: onBookingListClick),
-          if (state.isLoggedIn) ...[
+          _BookingListTouchpoint(
+            onTap: () => onUserIntent(const OnBookingListClick()),
+          ),
+          if (loadedState.isLoggedIn) ...[
             const SizedBox(height: 18),
             const _SectionTitle(title: 'Upcoming Booking'),
             const SizedBox(height: 10),
-            if (state.isUpcomingLoading)
+            if (loadedState.isUpcomingLoading)
               const _UpcomingBookingLoadingCard()
-            else if (state.upcomingBooking != null)
+            else if (loadedState.upcomingBooking != null)
               _UpcomingCard(
-                course: state.upcomingBooking!.courseName,
-                dateLabel: state.upcomingBooking!.dateLabel,
-                timeLabel: state.upcomingBooking!.teeTimeSlot,
-                playersLabel: state.upcomingBooking!.playersLabel,
+                course: loadedState.upcomingBooking!.courseName,
+                dateLabel: loadedState.upcomingBooking!.dateLabel,
+                timeLabel: loadedState.upcomingBooking!.teeTimeSlot,
+                playersLabel: loadedState.upcomingBooking!.playersLabel,
                 countdownLabel: _startsInLabel(
-                  state.upcomingBooking!.bookingDate,
-                  state.upcomingBooking!.teeTimeSlot,
+                  loadedState.upcomingBooking!.bookingDate,
+                  loadedState.upcomingBooking!.teeTimeSlot,
                 ),
                 checkInStatus: _checkInStatusLabel(
-                  state.upcomingBooking!.bookingDate,
-                  state.upcomingBooking!.teeTimeSlot,
+                  loadedState.upcomingBooking!.bookingDate,
+                  loadedState.upcomingBooking!.teeTimeSlot,
                 ),
-                onOpenDetails: onUpcomingBookingDetailClick,
+                onOpenDetails: () =>
+                    onUserIntent(const OnUpcomingBookingDetailClick()),
               )
             else
               const _EmptyUpcomingCard(),

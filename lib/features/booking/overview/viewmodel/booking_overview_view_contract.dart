@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingOverviewViewContract {
   BookingOverviewViewState get viewState;
@@ -7,26 +8,32 @@ abstract class BookingOverviewViewContract {
   void onUserIntent(BookingOverviewUserIntent intent);
 }
 
-class BookingOverviewViewState {
-  const BookingOverviewViewState({
+// ------ View State ------
+
+sealed class BookingOverviewViewState implements ViewState {
+  const BookingOverviewViewState();
+}
+
+class BookingOverviewDataLoaded extends BookingOverviewViewState {
+  const BookingOverviewDataLoaded({
     this.isLoggedIn = false,
     this.isUpcomingLoading = false,
     this.upcomingBooking,
-  });
+  }) : super();
 
-  static const initial = BookingOverviewViewState();
+  static const initial = BookingOverviewDataLoaded();
 
   final bool isLoggedIn;
   final bool isUpcomingLoading;
   final BookingModel? upcomingBooking;
 
-  BookingOverviewViewState copyWith({
+  BookingOverviewDataLoaded copyWith({
     bool? isLoggedIn,
     bool? isUpcomingLoading,
     BookingModel? upcomingBooking,
     bool clearUpcomingBooking = false,
   }) {
-    return BookingOverviewViewState(
+    return BookingOverviewDataLoaded(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       isUpcomingLoading: isUpcomingLoading ?? this.isUpcomingLoading,
       upcomingBooking: clearUpcomingBooking
@@ -36,7 +43,9 @@ class BookingOverviewViewState {
   }
 }
 
-sealed class BookingOverviewUserIntent {
+// ------ UserIntent ------
+
+sealed class BookingOverviewUserIntent implements UserIntent {
   const BookingOverviewUserIntent();
 }
 
@@ -65,11 +74,9 @@ class OnUpcomingBookingDetailClick extends BookingOverviewUserIntent {
   const OnUpcomingBookingDetailClick();
 }
 
-sealed class NavEffect {
-  const NavEffect();
-}
+// ------ NavEffect ------
 
-sealed class BookingOverviewNavEffect extends NavEffect {
+sealed class BookingOverviewNavEffect implements NavEffect {
   const BookingOverviewNavEffect();
 }
 

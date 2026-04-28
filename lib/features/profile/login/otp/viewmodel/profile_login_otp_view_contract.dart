@@ -7,8 +7,14 @@ abstract class ProfileLoginOtpViewContract {
   void onUserIntent(ProfileLoginOtpUserIntent intent);
 }
 
-class ProfileLoginOtpViewState extends ViewState {
-  const ProfileLoginOtpViewState({
+// ------ View State ------
+
+sealed class ProfileLoginOtpViewState extends ViewState {
+  const ProfileLoginOtpViewState() : super();
+}
+
+class ProfileLoginOtpDataLoaded extends ProfileLoginOtpViewState {
+  const ProfileLoginOtpDataLoaded({
     required this.name,
     required this.phoneNumber,
     required this.otpDigits,
@@ -16,11 +22,11 @@ class ProfileLoginOtpViewState extends ViewState {
     this.errorMessage,
   }) : super();
 
-  factory ProfileLoginOtpViewState.initial({
+  factory ProfileLoginOtpDataLoaded.initial({
     required String name,
     required String phoneNumber,
   }) {
-    return ProfileLoginOtpViewState(
+    return ProfileLoginOtpDataLoaded(
       name: name,
       phoneNumber: phoneNumber,
       otpDigits: const ['', '', '', '', '', ''],
@@ -37,7 +43,7 @@ class ProfileLoginOtpViewState extends ViewState {
   bool get canVerify =>
       otpDigits.every((digit) => digit.trim().isNotEmpty) && !isSubmitting;
 
-  ProfileLoginOtpViewState copyWith({
+  ProfileLoginOtpDataLoaded copyWith({
     String? name,
     String? phoneNumber,
     List<String>? otpDigits,
@@ -45,7 +51,7 @@ class ProfileLoginOtpViewState extends ViewState {
     String? errorMessage,
     bool clearErrorMessage = false,
   }) {
-    return ProfileLoginOtpViewState(
+    return ProfileLoginOtpDataLoaded(
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       otpDigits: otpDigits ?? this.otpDigits,
@@ -56,6 +62,8 @@ class ProfileLoginOtpViewState extends ViewState {
     );
   }
 }
+
+// ------ UserIntent ------
 
 sealed class ProfileLoginOtpUserIntent extends UserIntent {
   const ProfileLoginOtpUserIntent() : super();
@@ -77,6 +85,8 @@ class OnLoginOtpVerifyClick extends ProfileLoginOtpUserIntent {
 class OnLoginOtpBackClick extends ProfileLoginOtpUserIntent {
   const OnLoginOtpBackClick();
 }
+
+// ------ NavEffect ------
 
 sealed class ProfileLoginOtpNavEffect extends NavEffect {
   const ProfileLoginOtpNavEffect() : super();

@@ -25,28 +25,30 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileLoginViewModel();
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) async {
-      if (effect is NavigateBack) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).maybePop();
-      }
+    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
+  }
 
-      if (effect is LoginSucceeded) {
-        if (!mounted) {
-          return;
-        }
+  @override
+  void dispose() {
+    _navEffectSubscription?.cancel();
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleNavEffect(ProfileLoginNavEffect effect) async {
+    if (!mounted) {
+      return;
+    }
+
+    switch (effect) {
+      case NavigateBack():
+        Navigator.of(context).maybePop();
+      case LoginSucceeded():
         SessionScope.of(
           context,
         ).login(username: effect.username, role: effect.role);
         Navigator.of(context).maybePop();
-      }
-
-      if (effect is RequestOtpSucceeded) {
-        if (!mounted) {
-          return;
-        }
+      case RequestOtpSucceeded():
         final result = await Navigator.of(context).push<LoginOtpSuccessResult>(
           MaterialPageRoute<LoginOtpSuccessResult>(
             settings: const RouteSettings(name: _loginOtpRouteName),
@@ -78,12 +80,7 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
           profilePhoneNumber: result.response.user.phoneNumber,
         );
         Navigator.of(context).maybePop();
-      }
-
-      if (effect is RegisterRequested) {
-        if (!mounted) {
-          return;
-        }
+      case RegisterRequested():
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: 'register_method'),
@@ -91,15 +88,7 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
                 const ProfileRegisterMethodPage(requiresOccupation: true),
           ),
         );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _navEffectSubscription?.cancel();
-    _viewModel.dispose();
-    super.dispose();
+    }
   }
 
   @override
@@ -117,17 +106,16 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
           ),
           body: ProfileLoginView(
             state: _viewModel.viewState,
-            onNameChanged: (value) =>
-                _viewModel.onUserIntent(OnNameChanged(value)),
-            onCountryCodeChanged: (value) =>
-                _viewModel.onUserIntent(OnCountryCodeChanged(value)),
-            onPhoneChanged: (value) =>
-                _viewModel.onUserIntent(OnPhoneChanged(value)),
-            onLoginClick: () => _viewModel.onUserIntent(
-              OnLoginClick(visitorId: SessionScope.of(context).deviceId),
-            ),
-            onRegisterClick: () =>
-                _viewModel.onUserIntent(const OnRegisterClick()),
+            onUserIntent: (intent) {
+              switch (intent) {
+                case OnLoginClick():
+                  _viewModel.onUserIntent(
+                    OnLoginClick(visitorId: SessionScope.of(context).deviceId),
+                  );
+                default:
+                  _viewModel.onUserIntent(intent);
+              }
+            },
           ),
         );
       },
