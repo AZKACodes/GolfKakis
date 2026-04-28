@@ -26,7 +26,7 @@ class ProfileLoginOtpViewModel
 
   @override
   ProfileLoginOtpViewState createInitialState() {
-    return ProfileLoginOtpViewState.initial(
+    return ProfileLoginOtpDataLoaded.initial(
       name: _name,
       phoneNumber: _phoneNumber,
     );
@@ -37,11 +37,13 @@ class ProfileLoginOtpViewModel
     switch (intent) {
       case OnLoginOtpDigitChanged():
         final sanitized = intent.value.replaceAll(RegExp(r'[^0-9]'), '');
-        final nextDigits = List<String>.from(currentState.otpDigits);
+        final nextDigits = List<String>.from(_currentDataState.otpDigits);
         nextDigits[intent.index] = sanitized.isEmpty ? '' : sanitized[0];
         emitViewState(
-          (state) =>
-              state.copyWith(otpDigits: nextDigits, clearErrorMessage: true),
+          (_) => _currentDataState.copyWith(
+            otpDigits: nextDigits,
+            clearErrorMessage: true,
+          ),
         );
       case OnLoginOtpVerifyClick():
         await _verifyOtp(visitorId: intent.visitorId);
@@ -50,34 +52,43 @@ class ProfileLoginOtpViewModel
     }
   }
 
+  ProfileLoginOtpDataLoaded get _currentDataState {
+    return switch (currentState) {
+      ProfileLoginOtpDataLoaded() => currentState as ProfileLoginOtpDataLoaded,
+    };
+  }
+
   Future<void> _verifyOtp({required String visitorId}) async {
-    if (!currentState.canVerify) {
+    if (!_currentDataState.canVerify) {
       return;
     }
 
     emitViewState(
-      (state) => state.copyWith(isSubmitting: true, clearErrorMessage: true),
+      (_) => _currentDataState.copyWith(
+        isSubmitting: true,
+        clearErrorMessage: true,
+      ),
     );
     try {
       final response = await _profileApiService.onVerifyOtp(
-        name: currentState.name.trim(),
-        phoneNumber: currentState.phoneNumber.trim(),
-        otp: currentState.otpDigits.join(),
+        name: _currentDataState.name.trim(),
+        phoneNumber: _currentDataState.phoneNumber.trim(),
+        otp: _currentDataState.otpDigits.join(),
         visitorId: visitorId,
       );
 
-      emitViewState((state) => state.copyWith(isSubmitting: false));
+      emitViewState((_) => _currentDataState.copyWith(isSubmitting: false));
       sendNavEffect(() => LoginOtpVerified(response: response));
     } on ApiException catch (error) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           isSubmitting: false,
           errorMessage: error.message,
         ),
       );
     } catch (_) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           isSubmitting: false,
           errorMessage: 'Unable to verify OTP right now.',
         ),

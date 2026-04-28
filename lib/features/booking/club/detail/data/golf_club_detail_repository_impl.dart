@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/home/api/weather_api_service.dart';
 
 import 'golf_club_detail_repository.dart';
@@ -416,14 +417,5 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
 }
 
 String _formatSentenceLabel(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) {
-    return '';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatSentenceLabel(value);
 }

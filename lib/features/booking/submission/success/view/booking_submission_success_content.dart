@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 class BookingSubmissionSuccessContent extends StatelessWidget {
   const BookingSubmissionSuccessContent({required this.state, super.key});
@@ -203,16 +204,7 @@ String _formatMetricValue({required int count, required String preference}) {
 }
 
 String _formatEnumLabel(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatEnumLabel(value, fallback: '-');
 }
 
 class _DetailCard extends StatelessWidget {

@@ -28,59 +28,7 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
   void initState() {
     super.initState();
     _viewModel = BookingOverviewViewModel();
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
-      if (effect is NavigateToBookingSubmission) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const BookingSubmissionSlotPage(),
-          ),
-        );
-      }
-
-      if (effect is NavigateToGolfClubDetail) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => GolfClubDetailPage(
-              clubSlug: effect.club.slug,
-              initialClub: effect.club,
-            ),
-          ),
-        );
-      }
-
-      if (effect is NavigateToBookingList) {
-        if (!mounted) {
-          return;
-        }
-        final session = SessionScope.of(context).state;
-        final isLoggedIn =
-            session.isLoggedIn &&
-            (session.accessToken?.trim().isNotEmpty ?? false);
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                isLoggedIn ? const BookingListPage() : const ProfileLoginPage(),
-          ),
-        );
-      }
-
-      if (effect is NavigateToBookingDetail) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) => BookingDetailPage(booking: effect.booking),
-          ),
-        );
-      }
-    });
+    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
 
   @override
@@ -96,18 +44,54 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
     super.dispose();
   }
 
+  void _handleNavEffect(BookingOverviewNavEffect effect) {
+    if (!mounted) {
+      return;
+    }
+
+    switch (effect) {
+      case NavigateToBookingSubmission():
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const BookingSubmissionSlotPage(),
+          ),
+        );
+      case NavigateToGolfClubDetail():
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => GolfClubDetailPage(
+              clubSlug: effect.club.slug,
+              initialClub: effect.club,
+            ),
+          ),
+        );
+      case NavigateToBookingList():
+        final session = SessionScope.of(context).state;
+        final isLoggedIn =
+            session.isLoggedIn &&
+            (session.accessToken?.trim().isNotEmpty ?? false);
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                isLoggedIn ? const BookingListPage() : const ProfileLoginPage(),
+          ),
+        );
+      case NavigateToBookingDetail():
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => BookingDetailPage(booking: effect.booking),
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: BookingOverviewDashboardView(
+      child: BookingOverviewView(
         state: _viewModel.viewState,
-        onBookingSubmissionClick: () =>
-            _viewModel.onUserIntent(const OnBookingSubmissionClick()),
-        onBookingListClick: () =>
-            _viewModel.onUserIntent(const OnBookingListClick()),
-        onUpcomingBookingDetailClick: () =>
-            _viewModel.onUserIntent(const OnUpcomingBookingDetailClick()),
+        onUserIntent: _viewModel.onUserIntent,
       ),
     );
   }

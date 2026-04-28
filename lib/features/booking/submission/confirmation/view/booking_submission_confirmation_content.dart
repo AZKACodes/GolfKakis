@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
   const BookingSubmissionConfirmationContent({required this.state, super.key});
@@ -295,29 +296,11 @@ String _resolveHoleCount(String teeTimeSlot) {
 }
 
 String _formatEnumLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatEnumLabel(value, fallback: '-');
 }
 
 String _formatSentenceLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatSentenceLabel(value, fallback: '-');
 }
 
 class _ErrorBanner extends StatelessWidget {

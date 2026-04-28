@@ -18,26 +18,28 @@ class ProfileLoginViewModel
   final ProfileApiService _profileApiService;
 
   @override
-  ProfileLoginViewState createInitialState() => ProfileLoginViewState.initial;
+  ProfileLoginViewState createInitialState() => ProfileLoginDataLoaded.initial;
 
   @override
   Future<void> handleIntent(ProfileLoginUserIntent intent) async {
     switch (intent) {
       case OnNameChanged():
         emitViewState(
-          (state) =>
-              state.copyWith(name: intent.value, clearErrorMessage: true),
+          (_) => _currentDataState.copyWith(
+            name: intent.value,
+            clearErrorMessage: true,
+          ),
         );
       case OnCountryCodeChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             countryCode: intent.value,
             clearErrorMessage: true,
           ),
         );
       case OnPhoneChanged():
         emitViewState(
-          (state) => state.copyWith(
+          (_) => _currentDataState.copyWith(
             phoneNumber: intent.value,
             clearErrorMessage: true,
           ),
@@ -51,10 +53,16 @@ class ProfileLoginViewModel
     }
   }
 
+  ProfileLoginDataLoaded get _currentDataState {
+    return switch (currentState) {
+      ProfileLoginDataLoaded() => currentState as ProfileLoginDataLoaded,
+    };
+  }
+
   Future<void> _requestOtp({required String visitorId}) async {
-    if (!currentState.canSubmit) {
+    if (!_currentDataState.canSubmit) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           errorMessage: 'Enter your name and phone number to continue.',
           clearInfoMessage: true,
         ),
@@ -63,7 +71,7 @@ class ProfileLoginViewModel
     }
 
     emitViewState(
-      (state) => state.copyWith(
+      (_) => _currentDataState.copyWith(
         isSubmitting: true,
         clearErrorMessage: true,
         clearInfoMessage: true,
@@ -72,16 +80,16 @@ class ProfileLoginViewModel
 
     try {
       final response = await _profileApiService.onRequestOtp(
-        name: currentState.name.trim(),
-        phoneNumber: currentState.fullPhoneNumber.replaceAll(' ', ''),
+        name: _currentDataState.name.trim(),
+        phoneNumber: _currentDataState.fullPhoneNumber.replaceAll(' ', ''),
         visitorId: visitorId,
       );
 
-      emitViewState((state) => state.copyWith(isSubmitting: false));
+      emitViewState((_) => _currentDataState.copyWith(isSubmitting: false));
       sendNavEffect(() => RequestOtpSucceeded(response: response));
     } on ApiException catch (error) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           isSubmitting: false,
           errorMessage: error.message,
           clearInfoMessage: true,
@@ -89,7 +97,7 @@ class ProfileLoginViewModel
       );
     } catch (_) {
       emitViewState(
-        (state) => state.copyWith(
+        (_) => _currentDataState.copyWith(
           isSubmitting: false,
           errorMessage: 'Unable to request OTP right now.',
           clearInfoMessage: true,

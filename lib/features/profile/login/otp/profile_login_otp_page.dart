@@ -50,25 +50,7 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
       );
     });
 
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
-      if (effect is LoginOtpNavigateBack) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).maybePop();
-      }
-
-      if (effect is LoginOtpVerified) {
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).pop(
-          LoginOtpSuccessResult(
-            response: effect.response,
-          ),
-        );
-      }
-    });
+    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
 
   @override
@@ -76,6 +58,21 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
     _navEffectSubscription?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _handleNavEffect(ProfileLoginOtpNavEffect effect) {
+    if (!mounted) {
+      return;
+    }
+
+    switch (effect) {
+      case LoginOtpNavigateBack():
+        Navigator.of(context).maybePop();
+      case LoginOtpVerified():
+        Navigator.of(
+          context,
+        ).pop(LoginOtpSuccessResult(response: effect.response));
+    }
   }
 
   @override
@@ -94,14 +91,18 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
           ),
           body: ProfileLoginOtpView(
             state: _viewModel.viewState,
-            onOtpChanged: (index, value) => _viewModel.onUserIntent(
-              OnLoginOtpDigitChanged(index: index, value: value),
-            ),
-            onVerifyClick: () => _viewModel.onUserIntent(
-              OnLoginOtpVerifyClick(
-                visitorId: SessionScope.of(context).deviceId,
-              ),
-            ),
+            onUserIntent: (intent) {
+              switch (intent) {
+                case OnLoginOtpVerifyClick():
+                  _viewModel.onUserIntent(
+                    OnLoginOtpVerifyClick(
+                      visitorId: SessionScope.of(context).deviceId,
+                    ),
+                  );
+                default:
+                  _viewModel.onUserIntent(intent);
+              }
+            },
           ),
         );
       },

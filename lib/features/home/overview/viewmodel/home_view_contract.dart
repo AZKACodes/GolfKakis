@@ -1,44 +1,102 @@
+import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
+
 abstract class HomeViewContract {
   HomeViewState get viewState;
   Stream<HomeNavEffect> get navEffects;
   void onUserIntent(HomeUserIntent intent);
 }
 
-class HomeViewState {
-  const HomeViewState({this.message, this.isLoading = false, this.error});
+// ------ View State ------
+
+sealed class HomeViewState implements ViewState {
+  const HomeViewState();
+}
+
+class HomeDataLoaded extends HomeViewState {
+  const HomeDataLoaded({
+    this.message,
+    this.isLoading = false,
+    this.error,
+    this.hotDeals = const <HomeHotDealViewData>[],
+    this.quickBookItems = const <HomeQuickBookViewData>[],
+  }) : super();
 
   final String? message;
   final bool isLoading;
   final String? error;
+  final List<HomeHotDealViewData> hotDeals;
+  final List<HomeQuickBookViewData> quickBookItems;
 
-  HomeViewState copyWith({
+  HomeDataLoaded copyWith({
     String? message,
     bool? isLoading,
     String? error,
+    List<HomeHotDealViewData>? hotDeals,
+    List<HomeQuickBookViewData>? quickBookItems,
     bool clearError = false,
   }) {
-    return HomeViewState(
+    return HomeDataLoaded(
       message: message ?? this.message,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
+      hotDeals: hotDeals ?? this.hotDeals,
+      quickBookItems: quickBookItems ?? this.quickBookItems,
     );
   }
 
-  static const initial = HomeViewState();
+  static const initial = HomeDataLoaded();
 }
 
-sealed class HomeUserIntent {
+// ------ UserIntent ------
+
+sealed class HomeUserIntent implements UserIntent {
   const HomeUserIntent();
 }
 
-class LoadHomeDataIntent extends HomeUserIntent {
-  const LoadHomeDataIntent();
+class OnInitHome extends HomeUserIntent {
+  const OnInitHome();
 }
 
-sealed class NavEffect {
-  const NavEffect();
+class OnNewBookingClick extends HomeUserIntent {
+  const OnNewBookingClick();
 }
 
-sealed class HomeNavEffect extends NavEffect {
+class OnGolfClubListClick extends HomeUserIntent {
+  const OnGolfClubListClick();
+}
+
+class OnBookingListClick extends HomeUserIntent {
+  const OnBookingListClick();
+}
+
+class OnQuickBookClick extends HomeUserIntent {
+  const OnQuickBookClick(this.clubSlug);
+
+  final String clubSlug;
+}
+
+// ------ NavEffect ------
+
+sealed class HomeNavEffect implements NavEffect {
   const HomeNavEffect();
+}
+
+class NavigateToBookingSlotSubmission extends HomeNavEffect {
+  const NavigateToBookingSlotSubmission();
+}
+
+class NavigateToGolfClubList extends HomeNavEffect {
+  const NavigateToGolfClubList();
+}
+
+class NavigateToBookingOverview extends HomeNavEffect {
+  const NavigateToBookingOverview();
+}
+
+class NavigateToQuickBook extends HomeNavEffect {
+  const NavigateToQuickBook(this.clubSlug);
+
+  final String clubSlug;
 }

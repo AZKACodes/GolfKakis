@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
@@ -270,29 +271,11 @@ String _resolveHoleCount(String? playType) {
 }
 
 String _formatSentenceLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatSentenceLabel(value, fallback: '-');
 }
 
 String _formatEnumLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
+  return StringUtil.formatEnumLabel(value, fallback: '-');
 }
 
 String _formatPaymentMethod(String? value) {
