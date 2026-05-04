@@ -12,6 +12,7 @@ class ProfileOverviewView extends StatelessWidget {
     required this.state,
     required this.onRefresh,
     required this.onPrimaryTouchpointClick,
+    required this.onMyGolfKakisClick,
     required this.onLogoutClick,
     super.key,
   });
@@ -19,6 +20,7 @@ class ProfileOverviewView extends StatelessWidget {
   final ProfileOverviewViewState state;
   final Future<void> Function() onRefresh;
   final VoidCallback onPrimaryTouchpointClick;
+  final VoidCallback onMyGolfKakisClick;
   final VoidCallback onLogoutClick;
 
   @override
@@ -43,11 +45,13 @@ class ProfileOverviewView extends StatelessWidget {
         ? _RoleTabbedBody(
             profile: profile,
             onPrimaryTouchpointClick: onPrimaryTouchpointClick,
+            onMyGolfKakisClick: onMyGolfKakisClick,
             onLogoutClick: onLogoutClick,
           )
         : _StandardBody(
             profile: profile,
             onPrimaryTouchpointClick: onPrimaryTouchpointClick,
+            onMyGolfKakisClick: onMyGolfKakisClick,
             onLogoutClick: onLogoutClick,
           );
 
@@ -92,11 +96,13 @@ class _StandardBody extends StatelessWidget {
   const _StandardBody({
     required this.profile,
     required this.onPrimaryTouchpointClick,
+    required this.onMyGolfKakisClick,
     required this.onLogoutClick,
   });
 
   final UserProfileModel profile;
   final VoidCallback onPrimaryTouchpointClick;
+  final VoidCallback onMyGolfKakisClick;
   final VoidCallback onLogoutClick;
 
   @override
@@ -104,6 +110,8 @@ class _StandardBody extends StatelessWidget {
     return Column(
       children: [
         _PrimaryTouchpoint(profile: profile, onTap: onPrimaryTouchpointClick),
+        const SizedBox(height: 16),
+        _MyGolfKakisTouchpoint(onTap: onMyGolfKakisClick),
         const SizedBox(height: 16),
         const _AccountAndPreferencesSection(),
         if (profile.isLoggedIn) ...[
@@ -119,11 +127,13 @@ class _RoleTabbedBody extends StatelessWidget {
   const _RoleTabbedBody({
     required this.profile,
     required this.onPrimaryTouchpointClick,
+    required this.onMyGolfKakisClick,
     required this.onLogoutClick,
   });
 
   final UserProfileModel profile;
   final VoidCallback onPrimaryTouchpointClick;
+  final VoidCallback onMyGolfKakisClick;
   final VoidCallback onLogoutClick;
 
   @override
@@ -152,6 +162,8 @@ class _RoleTabbedBody extends StatelessWidget {
                           profile: profile,
                           onTap: onPrimaryTouchpointClick,
                         ),
+                        const SizedBox(height: 16),
+                        _MyGolfKakisTouchpoint(onTap: onMyGolfKakisClick),
                         const SizedBox(height: 16),
                         _AccountAndPreferencesSection(
                           footer: Padding(
@@ -248,6 +260,24 @@ class _RoleTabbedBody extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _MyGolfKakisTouchpoint extends StatelessWidget {
+  const _MyGolfKakisTouchpoint({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _TouchpointTile(
+      icon: Icons.groups_2_outlined,
+      title: 'My Golf Kakis',
+      subtitle:
+          'See your friend list from contacts and save in-app nicknames for each golfer.',
+      accent: const Color(0xFF00A76F),
+      onTap: onTap,
     );
   }
 }

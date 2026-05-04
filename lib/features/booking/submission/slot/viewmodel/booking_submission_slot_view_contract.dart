@@ -2,6 +2,7 @@ import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
@@ -11,37 +12,6 @@ abstract class BookingSubmissionSlotViewContract {
   BookingSubmissionSlotViewState get viewState;
   Stream<BookingSubmissionSlotNavEffect> get navEffects;
   void onUserIntent(BookingSubmissionSlotUserIntent intent);
-}
-
-enum BookingCaddiePreference {
-  none('none', 'None'),
-  shared('shared', 'Shared'),
-  perPlayer('per_player', 'Per Player');
-
-  const BookingCaddiePreference(this.value, this.label);
-
-  final String value;
-  final String label;
-}
-
-enum BookingBuggyType {
-  normal('normal', 'Normal'),
-  jumbo('jumbo', 'Jumbo');
-
-  const BookingBuggyType(this.value, this.label);
-
-  final String value;
-  final String label;
-}
-
-enum BookingBuggySharingPreference {
-  shared('shared', 'Shared'),
-  mix('mix', 'Mix');
-
-  const BookingBuggySharingPreference(this.value, this.label);
-
-  final String value;
-  final String label;
 }
 
 // =========================
@@ -60,11 +30,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.bookingSlots = const <BookingSlotModel>[],
     this.selectedClubSlug = emptyString,
     this.selectedSupportedNine = emptyString,
-    this.normalPlayerCount = 2,
-    this.seniorPlayerCount = 0,
-    this.caddiePreference = BookingCaddiePreference.none,
-    this.buggyType = BookingBuggyType.normal,
-    this.buggySharingPreference = BookingBuggySharingPreference.shared,
+    this.playerCount = 2,
     DateTime? selectedDate,
     this.selectedSlot,
     this.selectedPeriod = TimePeriod.am,
@@ -74,7 +40,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.visibleSelectedIndex,
     this.canContinue = false,
     this.isLoading = false,
-    this.errorMessage = emptyString,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
        pickerInitialDate = DateUtil.dateOnly(
          pickerInitialDate ?? selectedDate ?? DateTime.now(),
@@ -96,11 +62,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   final List<BookingSlotModel> bookingSlots;
   final String selectedClubSlug;
   final String selectedSupportedNine;
-  final int normalPlayerCount;
-  final int seniorPlayerCount;
-  final BookingCaddiePreference caddiePreference;
-  final BookingBuggyType buggyType;
-  final BookingBuggySharingPreference buggySharingPreference;
+  final int playerCount;
   final DateTime selectedDate;
   final DateTime pickerInitialDate;
   final BookingSlotModel? selectedSlot;
@@ -110,7 +72,9 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   final int? visibleSelectedIndex;
   final bool canContinue;
   final bool isLoading;
-  final String errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String get errorMessage => errorSnackbarMessageModel.message;
 
   GolfClubModel? get selectedGolfClub {
     for (final club in golfClubList) {
@@ -129,11 +93,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
 
   bool get requiresSupportedNineSelection => availableSupportedNines.isNotEmpty;
 
-  bool get canActivateCalendar =>
-      selectedGolfClub != null &&
-      (!requiresSupportedNineSelection || selectedSupportedNine.isNotEmpty);
-
-  int get playerCount => normalPlayerCount + seniorPlayerCount;
+  bool get canActivateCalendar => selectedGolfClub != null;
 
   String get playTypeValue {
     final club = selectedGolfClub;
@@ -142,17 +102,6 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     }
 
     return '18_holes';
-  }
-
-  List<BookingBuggyType> get availableBuggyTypes {
-    if (playerCount > 4) {
-      return const <BookingBuggyType>[
-        BookingBuggyType.normal,
-        BookingBuggyType.jumbo,
-      ];
-    }
-
-    return const <BookingBuggyType>[BookingBuggyType.normal];
   }
 
   String get selectedSlotPriceLabel {
@@ -168,11 +117,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     String? selectedClubSlug,
     String? selectedSupportedNine,
     bool clearSelectedSupportedNine = false,
-    int? normalPlayerCount,
-    int? seniorPlayerCount,
-    BookingCaddiePreference? caddiePreference,
-    BookingBuggyType? buggyType,
-    BookingBuggySharingPreference? buggySharingPreference,
+    int? playerCount,
     DateTime? selectedDate,
     DateTime? pickerInitialDate,
     BookingSlotModel? selectedSlot,
@@ -184,7 +129,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     bool clearVisibleSelectedIndex = false,
     bool? canContinue,
     bool? isLoading,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return BookingSubmissionSlotDataLoaded(
@@ -194,12 +139,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
       selectedSupportedNine: clearSelectedSupportedNine
           ? emptyString
           : (selectedSupportedNine ?? this.selectedSupportedNine),
-      normalPlayerCount: normalPlayerCount ?? this.normalPlayerCount,
-      seniorPlayerCount: seniorPlayerCount ?? this.seniorPlayerCount,
-      caddiePreference: caddiePreference ?? this.caddiePreference,
-      buggyType: buggyType ?? this.buggyType,
-      buggySharingPreference:
-          buggySharingPreference ?? this.buggySharingPreference,
+      playerCount: playerCount ?? this.playerCount,
       selectedDate: selectedDate ?? this.selectedDate,
       pickerInitialDate: pickerInitialDate ?? this.pickerInitialDate,
       selectedSlot: clearSelectedSlot
@@ -214,9 +154,9 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
           : (visibleSelectedIndex ?? this.visibleSelectedIndex),
       canContinue: canContinue ?? this.canContinue,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: clearErrorMessage
-          ? emptyString
-          : (errorMessage ?? this.errorMessage),
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
     );
   }
 }
@@ -260,36 +200,6 @@ class OnPlayerCountChanged extends BookingSubmissionSlotUserIntent {
   const OnPlayerCountChanged(this.value);
 
   final int value;
-}
-
-class OnNormalPlayerCountChanged extends BookingSubmissionSlotUserIntent {
-  const OnNormalPlayerCountChanged(this.value);
-
-  final int value;
-}
-
-class OnSeniorPlayerCountChanged extends BookingSubmissionSlotUserIntent {
-  const OnSeniorPlayerCountChanged(this.value);
-
-  final int value;
-}
-
-class OnSelectCaddiePreference extends BookingSubmissionSlotUserIntent {
-  const OnSelectCaddiePreference(this.value);
-
-  final BookingCaddiePreference value;
-}
-
-class OnSelectBuggyType extends BookingSubmissionSlotUserIntent {
-  const OnSelectBuggyType(this.value);
-
-  final BookingBuggyType value;
-}
-
-class OnSelectBuggySharingPreference extends BookingSubmissionSlotUserIntent {
-  const OnSelectBuggySharingPreference(this.value);
-
-  final BookingBuggySharingPreference value;
 }
 
 class OnSelectDate extends BookingSubmissionSlotUserIntent {
@@ -341,9 +251,6 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
     required this.pricePerPerson,
     required this.currency,
     required this.playerCount,
-    required this.caddiePreference,
-    required this.buggyType,
-    required this.buggySharingPreference,
     this.selectedNine,
     this.guestId,
   });
@@ -357,9 +264,6 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   final double pricePerPerson;
   final String currency;
   final int playerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
   final String? guestId;
 }

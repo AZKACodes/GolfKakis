@@ -4,6 +4,7 @@ import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submi
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
@@ -50,9 +51,6 @@ class BookingSubmissionConfirmationViewModel
             hostName: intent.hostName,
             hostPhoneNumber: intent.hostPhoneNumber,
             playerCount: intent.playerCount,
-            caddiePreference: intent.caddiePreference,
-            buggyType: intent.buggyType,
-            buggySharingPreference: intent.buggySharingPreference,
             selectedNine: intent.selectedNine,
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
@@ -92,7 +90,9 @@ class BookingSubmissionConfirmationViewModel
         return current.copyWith(
           isHoldExpired: true,
           remainingHoldSeconds: 0,
-          errorMessage: 'Your booking session has expired. Please start again.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Your booking session has expired. Please start again.',
+          ),
         );
       });
       if (!_hasShownExpiryDialog) {
@@ -121,8 +121,10 @@ class BookingSubmissionConfirmationViewModel
                 emitViewState((state) {
                   return latest.copyWith(
                     isSubmitting: false,
-                    errorMessage:
-                        'Booking submission succeeded without a booking ID.',
+                    errorSnackbarMessageModel: const SnackbarMessageModel(
+                      message:
+                          'Booking submission succeeded without a booking ID.',
+                    ),
                   );
                 });
                 return;
@@ -155,9 +157,11 @@ class BookingSubmissionConfirmationViewModel
               emitViewState((state) {
                 return getCurrentAsLoaded().copyWith(
                   isSubmitting: false,
-                  errorMessage: result.apiMessage.isEmpty
-                      ? 'Failed to submit booking. Please try again.'
-                      : result.apiMessage,
+                  errorSnackbarMessageModel: SnackbarMessageModel(
+                    message: result.apiMessage.isEmpty
+                        ? 'Failed to submit booking. Please try again.'
+                        : result.apiMessage,
+                  ),
                 );
               });
             default:
@@ -171,9 +175,8 @@ class BookingSubmissionConfirmationViewModel
   ) {
     return BookingSubmissionRequestModel(
       bookingRef: current.bookingRef,
-      caddieArrangement: current.caddiePreference,
-      buggyType: current.buggyType,
-      buggySharingPreference: current.buggySharingPreference,
+      caddieCount: current.caddieCount,
+      golfCartCount: current.golfCartCount,
       playerDetails: _buildPlayerDetails(current),
       acknowledgedTerms: true,
     );
@@ -185,7 +188,7 @@ class BookingSubmissionConfirmationViewModel
     return current.playerDetails.indexed.map((entry) {
       final index = entry.$1;
       final player = entry.$2;
-      return player.copyWith(category: 'normal', isHost: index == 0);
+      return player.copyWith(isHost: index == 0);
     }).toList();
   }
 

@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/edit/profile_edit_page.dart';
+import 'package:golf_kakis/features/profile/friends/profile_friends_page.dart';
 import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
-import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository_impl.dart';
+import 'package:golf_kakis/features/profile/overview/domain/profile_overview_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/overview/view/profile_overview_view.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_contract.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_model.dart';
@@ -25,7 +26,7 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileOverviewViewModel(
-      repository: ProfileOverviewRepositoryImpl(),
+      useCase: const ProfileOverviewUseCaseImpl(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is LogoutRequested) {
@@ -56,6 +57,21 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
             builder: (_) => ProfileEditPage(profile: profile),
+          ),
+        );
+      }
+
+      if (effect is MyGolfKakisRequested) {
+        if (!mounted) {
+          return;
+        }
+        final session = SessionScope.of(context).state;
+        final ownerId = session.authUserId?.trim().isNotEmpty == true
+            ? session.authUserId!.trim()
+            : session.deviceId;
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ProfileFriendsPage(ownerId: ownerId),
           ),
         );
       }
@@ -91,6 +107,8 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
             onRefresh: () => _viewModel.refresh(sessionState),
             onPrimaryTouchpointClick: () =>
                 _viewModel.onUserIntent(const OnPrimaryTouchpointClick()),
+            onMyGolfKakisClick: () =>
+                _viewModel.onUserIntent(const OnMyGolfKakisTouchpointClick()),
             onLogoutClick: () => _viewModel.onUserIntent(const OnLogoutClick()),
           ),
         );

@@ -3,23 +3,28 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/register/domain/profile_register_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/register/otp/view/profile_register_otp_view.dart';
 import 'package:golf_kakis/features/profile/register/otp/viewmodel/profile_register_otp_view_contract.dart';
 import 'package:golf_kakis/features/profile/register/otp/viewmodel/profile_register_otp_view_model.dart';
 
 class ProfileRegisterOtpPage extends StatefulWidget {
   const ProfileRegisterOtpPage({
-    required this.name,
+    required this.username,
     required this.phoneNumber,
-    required this.password,
+    required this.fullName,
+    required this.nickname,
+    required this.occupation,
     required this.requestMessage,
     this.requiresOccupation = true,
     super.key,
   });
 
-  final String name;
+  final String username;
   final String phoneNumber;
-  final String password;
+  final String fullName;
+  final String nickname;
+  final String occupation;
   final String requestMessage;
   final bool requiresOccupation;
 
@@ -35,10 +40,13 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileRegisterOtpViewModel(
-      name: widget.name,
+      username: widget.username,
       phoneNumber: widget.phoneNumber,
-      password: widget.password,
+      fullName: widget.fullName,
+      nickname: widget.nickname,
+      occupation: widget.occupation,
       requiresOccupation: widget.requiresOccupation,
+      useCase: ProfileRegisterUseCaseImpl.create(),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -62,13 +70,23 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
         Navigator.of(context).maybePop();
       }
 
-      if (effect is RegisterOtpNavigateToAbout) {
+      if (effect is RegisterOtpCompleted) {
         if (!mounted) {
           return;
         }
 
+        final fallbackFullName = effect.fullName.isNotEmpty
+            ? effect.fullName
+            : effect.username;
+        final fallbackNickname = effect.nickname.isNotEmpty
+            ? effect.nickname
+            : effect.username;
+        final fallbackOccupation = effect.occupation.isNotEmpty
+            ? effect.occupation
+            : 'Golfer';
+
         SessionScope.of(context).login(
-          username: effect.response.user.name,
+          username: effect.username,
           role: UserRole.user,
           accessToken: effect.response.accessToken,
           authUserId: effect.response.user.userId,
@@ -76,8 +94,12 @@ class _ProfileRegisterOtpPageState extends State<ProfileRegisterOtpPage> {
           isPhoneVerified: effect.response.user.isPhoneVerified,
           authCreatedAt: effect.response.user.createdAt,
           authUpdatedAt: effect.response.user.updatedAt,
-          profileFullName: effect.response.user.name,
-          profilePhoneNumber: effect.response.user.phoneNumber,
+          profileFullName: fallbackFullName,
+          profileNickname: fallbackNickname,
+          profileOccupation: fallbackOccupation,
+          profilePhoneNumber: effect.response.user.phoneNumber.isNotEmpty
+              ? effect.response.user.phoneNumber
+              : effect.phoneNumber,
         );
         Navigator.of(context, rootNavigator: true).popUntil(
           (route) => !_registerRouteNames.contains(route.settings.name),
@@ -129,4 +151,5 @@ const Set<String> _registerRouteNames = <String>{
   'register_method',
   'register_otp',
   'register_details',
+  'register_phone',
 };

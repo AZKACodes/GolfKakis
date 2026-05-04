@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
-import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
   const BookingSubmissionConfirmationContent({required this.state, super.key});
@@ -123,14 +122,6 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                 const SizedBox(height: 16),
                 _InfoRow(label: 'Host', value: state.hostName),
                 _InfoRow(label: 'Phone', value: state.hostPhoneNumber),
-                _InfoRow(
-                  label: 'Starting Course',
-                  value: _formatSentenceLabel(state.selectedNine),
-                ),
-                _InfoRow(
-                  label: 'Buggy Type',
-                  value: _formatEnumLabel(state.buggyType),
-                ),
                 const SizedBox(height: 12),
                 _RoundConfigurationTabs(state: state),
               ],
@@ -234,6 +225,10 @@ class _PlayerDetailsTab extends StatelessWidget {
             label: 'Player ${i + 1}',
             value: state.playerDetails[i].name,
           ),
+          _InfoRow(
+            label: 'Category',
+            value: _playerCategoryLabel(state.playerDetails[i].category),
+          ),
           _InfoRow(label: 'Phone', value: state.playerDetails[i].phoneNumber),
           if (i != state.playerDetails.length - 1) const Divider(height: 20),
         ],
@@ -295,12 +290,17 @@ String _resolveHoleCount(String teeTimeSlot) {
   return eighteenHoleSlots.contains(teeTimeSlot) ? '18' : '9';
 }
 
-String _formatEnumLabel(String? value) {
-  return StringUtil.formatEnumLabel(value, fallback: '-');
-}
-
-String _formatSentenceLabel(String? value) {
-  return StringUtil.formatSentenceLabel(value, fallback: '-');
+String _playerCategoryLabel(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'senior':
+    case 'senior_citizen':
+      return 'Senior Citizen';
+    case 'junior':
+      return 'Junior';
+    case 'normal':
+    default:
+      return 'Normal';
+  }
 }
 
 class _ErrorBanner extends StatelessWidget {

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/club/detail/data/golf_club_detail_repository_impl.dart';
 import 'package:golf_kakis/features/booking/club/detail/data/local_golf_club_display_content.dart';
+import 'package:golf_kakis/features/booking/club/detail/domain/golf_club_detail_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/club/detail/view/golf_club_detail_view.dart';
 import 'package:golf_kakis/features/booking/club/detail/viewmodel/golf_club_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/club/detail/viewmodel/golf_club_detail_view_model.dart';
@@ -34,7 +34,7 @@ class _GolfClubDetailPageState extends State<GolfClubDetailPage> {
     _viewModel = GolfClubDetailViewModel(
       clubSlug: widget.clubSlug,
       initialClub: widget.initialClub,
-      repository: GolfClubDetailRepositoryImpl(),
+      useCase: const GolfClubDetailUseCaseImpl(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is NavigateBack) {

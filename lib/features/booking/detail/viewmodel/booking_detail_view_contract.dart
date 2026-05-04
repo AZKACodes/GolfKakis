@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingDetailViewContract {
@@ -12,7 +13,7 @@ class BookingDetailViewState extends ViewState {
     required this.booking,
     required this.isLoading,
     required this.isDeleting,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory BookingDetailViewState.initial(BookingModel booking) {
@@ -26,22 +27,26 @@ class BookingDetailViewState extends ViewState {
   final BookingModel booking;
   final bool isLoading;
   final bool isDeleting;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   BookingDetailViewState copyWith({
     BookingModel? booking,
     bool? isLoading,
     bool? isDeleting,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return BookingDetailViewState(
       booking: booking ?? this.booking,
       isLoading: isLoading ?? this.isLoading,
       isDeleting: isDeleting ?? this.isDeleting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }

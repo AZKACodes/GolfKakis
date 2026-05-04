@@ -1,7 +1,8 @@
 import 'package:golf_kakis/features/foundation/network/network.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../../domain/profile_register_use_case.dart';
 import 'profile_register_otp_view_contract.dart';
 
 class ProfileRegisterOtpViewModel
@@ -13,22 +14,28 @@ class ProfileRegisterOtpViewModel
         >
     implements ProfileRegisterOtpViewContract {
   ProfileRegisterOtpViewModel({
-    required String name,
+    required String username,
     required String phoneNumber,
-    required String password,
+    required String fullName,
+    required String nickname,
+    required String occupation,
     bool requiresOccupation = true,
-    ProfileApiService? profileApiService,
-  }) : _name = name,
+    required ProfileRegisterUseCase useCase,
+  }) : _username = username,
        _phoneNumber = phoneNumber,
-       _password = password,
+       _fullName = fullName,
+       _nickname = nickname,
+       _occupation = occupation,
        _requiresOccupation = requiresOccupation,
-       _profileApiService = profileApiService ?? ProfileApiService();
+       _useCase = useCase;
 
-  final String _name;
+  final String _username;
   final String _phoneNumber;
-  final String _password;
+  final String _fullName;
+  final String _nickname;
+  final String _occupation;
   final bool _requiresOccupation;
-  final ProfileApiService _profileApiService;
+  final ProfileRegisterUseCase _useCase;
 
   @override
   ProfileRegisterOtpViewState createInitialState() {
@@ -57,7 +64,9 @@ class ProfileRegisterOtpViewModel
     if (!currentState.canContinue) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage: 'Enter the 6-digit OTP to continue the demo flow.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Enter the 6-digit OTP to continue the demo flow.',
+          ),
         ),
       );
       return;
@@ -67,8 +76,8 @@ class ProfileRegisterOtpViewModel
       (state) => state.copyWith(isSubmitting: true, clearErrorMessage: true),
     );
     try {
-      final response = await _profileApiService.onVerifyOtp(
-        name: _name.trim(),
+      final response = await _useCase.verifyOtp(
+        username: _username.trim(),
         phoneNumber: currentState.phoneNumber.trim(),
         otp: currentState.otpDigits.join(),
         visitorId: visitorId,
@@ -76,9 +85,13 @@ class ProfileRegisterOtpViewModel
 
       emitViewState((state) => state.copyWith(isSubmitting: false));
       sendNavEffect(
-        () => RegisterOtpNavigateToAbout(
+        () => RegisterOtpCompleted(
           response: response,
-          password: _password,
+          username: _username.trim(),
+          phoneNumber: currentState.phoneNumber.trim(),
+          fullName: _fullName.trim(),
+          nickname: _nickname.trim(),
+          occupation: _occupation.trim(),
           requiresOccupation: _requiresOccupation,
         ),
       );
@@ -86,14 +99,18 @@ class ProfileRegisterOtpViewModel
       emitViewState(
         (state) => state.copyWith(
           isSubmitting: false,
-          errorMessage: error.message,
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: error.message,
+          ),
         ),
       );
     } catch (_) {
       emitViewState(
         (state) => state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to verify OTP right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to verify OTP right now.',
+          ),
         ),
       );
     }

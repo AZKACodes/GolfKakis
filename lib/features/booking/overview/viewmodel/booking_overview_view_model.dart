@@ -1,6 +1,6 @@
-import 'package:golf_kakis/features/booking/list/data/booking_list_repository_impl.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/booking_overview_use_case.dart';
 import 'booking_overview_view_contract.dart';
 
 class BookingOverviewViewModel
@@ -11,9 +11,17 @@ class BookingOverviewViewModel
           BookingOverviewNavEffect
         >
     implements BookingOverviewViewContract {
-  BookingOverviewViewModel();
+  BookingOverviewViewModel(this._useCase);
+  final BookingOverviewUseCase _useCase;
+
   String? _lastAccessToken;
   bool _lastIsLoggedIn = false;
+
+  BookingOverviewDataLoaded get _currentDataState {
+    return switch (currentState) {
+      BookingOverviewDataLoaded() => currentState as BookingOverviewDataLoaded,
+    };
+  }
 
   @override
   BookingOverviewViewState createInitialState() =>
@@ -70,13 +78,9 @@ class BookingOverviewViewModel
     );
 
     try {
-      final repository = BookingListRepositoryImpl(
+      final upcomingBooking = await _useCase.onFetchUpcomingBooking(
         accessToken: normalizedToken,
       );
-      final result = await repository.onFetchUpcomingBookingList();
-      final upcomingBooking = result.bookings.isEmpty
-          ? null
-          : result.bookings.first;
       emitViewState(
         (_) => _currentDataState.copyWith(
           isLoggedIn: true,
@@ -94,11 +98,5 @@ class BookingOverviewViewModel
         ),
       );
     }
-  }
-
-  BookingOverviewDataLoaded get _currentDataState {
-    return switch (currentState) {
-      BookingOverviewDataLoaded() => currentState as BookingOverviewDataLoaded,
-    };
   }
 }

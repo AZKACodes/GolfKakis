@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/home/golf_club_list/home_golf_club_list_page.dart';
+import 'package:golf_kakis/features/home/overview/domain/home_overview_use_case_impl.dart';
 
 import 'view/home_overview_view.dart';
 import 'viewmodel/home_view_contract.dart';
@@ -24,7 +25,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
   void initState() {
     super.initState();
 
-    _viewModel = HomeViewModel.create();
+    _viewModel = HomeViewModel(HomeOverviewUseCaseImpl.create());
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,14 +73,21 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    await _viewModel.handleIntent(const OnRefreshHome());
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return HomeView(
-          state: _viewModel.viewState,
-          onUserIntent: _viewModel.onUserIntent,
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: HomeView(
+            state: _viewModel.viewState,
+            onUserIntent: _viewModel.onUserIntent,
+          ),
         );
       },
     );

@@ -11,19 +11,21 @@ class ProfileRegisterDetailsViewModel
         >
     implements ProfileRegisterDetailsViewContract {
   ProfileRegisterDetailsViewModel({
-    required String phoneNumber,
+    required String username,
     required String password,
     required bool requiresOccupation,
-  }) : _phoneNumber = phoneNumber,
+  }) : _username = username,
+       _password = password,
        _requiresOccupation = requiresOccupation;
 
-  final String _phoneNumber;
+  final String _username;
+  final String _password;
   final bool _requiresOccupation;
 
   @override
   ProfileRegisterDetailsViewState createInitialState() {
     return ProfileRegisterDetailsViewState.initial(
-      phoneNumber: _phoneNumber,
+      username: _username,
       requiresOccupation: _requiresOccupation,
     );
   }
@@ -31,55 +33,30 @@ class ProfileRegisterDetailsViewModel
   @override
   Future<void> handleIntent(ProfileRegisterDetailsUserIntent intent) async {
     switch (intent) {
-      case OnRegisterNameChanged():
-        emitViewState(
-          (state) =>
-              state.copyWith(name: intent.value, clearErrorMessage: true),
-        );
+      case OnRegisterFullNameChanged():
+        emitViewState((state) => state.copyWith(fullName: intent.value));
       case OnRegisterNicknameChanged():
-        emitViewState(
-          (state) =>
-              state.copyWith(nickname: intent.value, clearErrorMessage: true),
-        );
+        emitViewState((state) => state.copyWith(nickname: intent.value));
       case OnRegisterOccupationChanged():
-        emitViewState(
-          (state) =>
-              state.copyWith(occupation: intent.value, clearErrorMessage: true),
-        );
-      case OnRegisterDetailsSubmitClick():
-        await _submit();
+        emitViewState((state) => state.copyWith(occupation: intent.value));
+      case OnRegisterDetailsContinueClick():
+        _goToPhone();
+      case OnRegisterDetailsSkipClick():
+        _goToPhone(skip: true);
       case OnRegisterDetailsBackClick():
         sendNavEffect(() => const RegisterDetailsNavigateBack());
     }
   }
 
-  Future<void> _submit() async {
-    if (!currentState.canSubmit) {
-      emitViewState(
-        (state) => state.copyWith(
-          errorMessage: currentState.requiresOccupation
-              ? 'Enter your name, username, and occupation to continue.'
-              : 'Enter your name and username to continue.',
-        ),
-      );
-      return;
-    }
-
-    emitViewState(
-      (state) => state.copyWith(isSubmitting: true, clearErrorMessage: true),
-    );
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    emitViewState((state) => state.copyWith(isSubmitting: false));
+  void _goToPhone({bool skip = false}) {
     sendNavEffect(
-      () => RegisterDetailsCompleted(
-        fullName: currentState.name.trim(),
-        nickname: currentState.nickname.trim(),
-        occupation: currentState.requiresOccupation
-            ? currentState.occupation.trim()
-            : 'Golfer',
-        email:
-            '${currentState.nickname.trim().toLowerCase().replaceAll(' ', '.')}@golfkakis.app',
-        phoneNumber: currentState.phoneNumber,
+      () => RegisterDetailsNavigateToPhone(
+        username: currentState.username,
+        password: _password,
+        fullName: skip ? '' : currentState.fullName.trim(),
+        nickname: skip ? '' : currentState.nickname.trim(),
+        occupation: skip ? '' : currentState.occupation.trim(),
+        requiresOccupation: currentState.requiresOccupation,
       ),
     );
   }

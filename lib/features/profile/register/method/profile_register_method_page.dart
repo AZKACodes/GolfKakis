@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/register/details/profile_register_details_page.dart';
 import 'package:golf_kakis/features/profile/register/method/view/profile_register_method_view.dart';
 import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_register_method_view_contract.dart';
 import 'package:golf_kakis/features/profile/register/method/viewmodel/profile_register_method_view_model.dart';
-import 'package:golf_kakis/features/profile/register/otp/profile_register_otp_page.dart';
 
 class ProfileRegisterMethodPage extends StatefulWidget {
   const ProfileRegisterMethodPage({this.requiresOccupation = true, super.key});
@@ -33,20 +32,16 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
         Navigator.of(context).maybePop();
       }
 
-      if (effect is RegisterMethodNavigateToOtp) {
+      if (effect is RegisterMethodNavigateToAbout) {
         if (!mounted) {
           return;
         }
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            settings: const RouteSettings(name: _registerOtpRouteName),
-            builder: (_) => ProfileRegisterOtpPage(
-              name: effect.response.name,
-              phoneNumber: effect.response.normalizedPhoneNumber.isNotEmpty
-                  ? effect.response.normalizedPhoneNumber
-                  : effect.response.phoneNumber,
+            settings: const RouteSettings(name: _registerDetailsRouteName),
+            builder: (_) => ProfileRegisterDetailsPage(
+              username: effect.username,
               password: effect.password,
-              requestMessage: effect.response.message,
               requiresOccupation: widget.requiresOccupation,
             ),
           ),
@@ -78,17 +73,15 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
           ),
           body: ProfileRegisterMethodView(
             state: _viewModel.viewState,
-            onNameChanged: (value) =>
-                _viewModel.onUserIntent(OnRegisterNameChanged(value)),
-            onCountryCodeSelected: (value) =>
-                _viewModel.onUserIntent(OnRegisterCountryCodeSelected(value)),
-            onPhoneChanged: (value) =>
-                _viewModel.onUserIntent(OnRegisterPhoneChanged(value)),
-            onContinueClick: () => _viewModel.onUserIntent(
-              OnRegisterMethodContinueClick(
-                visitorId: SessionScope.of(context).deviceId,
-              ),
+            onUsernameChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterUsernameChanged(value)),
+            onPasswordChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterPasswordChanged(value)),
+            onConfirmPasswordChanged: (value) => _viewModel.onUserIntent(
+              OnRegisterConfirmPasswordChanged(value),
             ),
+            onContinueClick: () =>
+                _viewModel.onUserIntent(const OnRegisterMethodContinueClick()),
           ),
         );
       },
@@ -96,4 +89,4 @@ class _ProfileRegisterMethodPageState extends State<ProfileRegisterMethodPage> {
   }
 }
 
-const String _registerOtpRouteName = 'register_otp';
+const String _registerDetailsRouteName = 'register_details';

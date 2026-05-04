@@ -1,7 +1,8 @@
-import 'package:golf_kakis/features/booking/detail/data/booking_detail_repository.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/booking_detail_use_case.dart';
 import 'booking_detail_view_contract.dart';
 
 class BookingDetailViewModel
@@ -14,12 +15,15 @@ class BookingDetailViewModel
     implements BookingDetailViewContract {
   BookingDetailViewModel({
     required BookingModel initialBooking,
-    required BookingDetailRepository repository,
+    required BookingDetailUseCase useCase,
+    required String accessToken,
   }) : _initialBooking = initialBooking,
-       _repository = repository;
+       _useCase = useCase,
+       _accessToken = accessToken;
 
   final BookingModel _initialBooking;
-  final BookingDetailRepository _repository;
+  final BookingDetailUseCase _useCase;
+  final String _accessToken;
 
   @override
   BookingDetailViewState createInitialState() {
@@ -52,7 +56,8 @@ class BookingDetailViewModel
     );
 
     try {
-      final result = await _repository.onFetchBookingDetail(
+      final result = await _useCase.fetchBookingDetail(
+        accessToken: _accessToken,
         booking: currentState.booking,
       );
       emitViewState(
@@ -66,7 +71,9 @@ class BookingDetailViewModel
       emitViewState(
         (state) => state.copyWith(
           isLoading: false,
-          errorMessage: 'Unable to load booking details right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to load booking details right now.',
+          ),
         ),
       );
     }
@@ -78,14 +85,19 @@ class BookingDetailViewModel
     );
 
     try {
-      await _repository.onDeleteBooking(booking: currentState.booking);
+      await _useCase.deleteBooking(
+        accessToken: _accessToken,
+        booking: currentState.booking,
+      );
       emitViewState((state) => state.copyWith(isDeleting: false));
       sendNavEffect(() => const NavigateBack());
     } catch (_) {
       emitViewState(
         (state) => state.copyWith(
           isDeleting: false,
-          errorMessage: 'Unable to delete this booking right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to delete this booking right now.',
+          ),
         ),
       );
     }

@@ -1,7 +1,7 @@
-import 'package:golf_kakis/features/booking/club/detail/data/golf_club_detail_repository.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/golf_club_detail_use_case.dart';
 import 'golf_club_detail_view_contract.dart';
 
 class GolfClubDetailViewModel
@@ -15,7 +15,7 @@ class GolfClubDetailViewModel
   GolfClubDetailViewModel({
     required String clubSlug,
     GolfClubModel? initialClub,
-    required GolfClubDetailRepository repository,
+    required GolfClubDetailUseCase useCase,
   }) : _clubSlug = clubSlug,
        _initialClub =
            initialClub ??
@@ -26,11 +26,11 @@ class GolfClubDetailViewModel
              address: '',
              noOfHoles: 18,
            ),
-       _repository = repository;
+       _useCase = useCase;
 
   final String _clubSlug;
   final GolfClubModel _initialClub;
-  final GolfClubDetailRepository _repository;
+  final GolfClubDetailUseCase _useCase;
 
   @override
   GolfClubDetailViewState createInitialState() {
@@ -56,7 +56,7 @@ class GolfClubDetailViewModel
     );
 
     try {
-      final result = await _repository.onFetchGolfClubDetail(
+      final result = await _useCase.fetchGolfClubDetail(
         slug: _clubSlug,
         initialClub: _initialClub,
       );

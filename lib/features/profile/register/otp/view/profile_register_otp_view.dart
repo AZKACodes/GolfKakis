@@ -131,9 +131,7 @@ class _ProfileRegisterOtpViewState extends State<ProfileRegisterOtpView> {
                       children: List<Widget>.generate(6, (index) {
                         return Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(
-                              right: index == 5 ? 0 : 8,
-                            ),
+                            padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
                             child: TextField(
                               controller: _controllers[index],
                               focusNode: _focusNodes[index],

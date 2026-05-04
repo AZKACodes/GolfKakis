@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
-import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
@@ -92,71 +92,9 @@ class BookingSubmissionSlotViewModel
         emitViewState((state) {
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
-              normalPlayerCount: intent.value.clamp(2, 6),
-              seniorPlayerCount: 0,
+              playerCount: intent.value.clamp(2, 6),
               clearSelectedSlot: true,
               clearVisibleSelectedIndex: true,
-              clearErrorMessage: true,
-            ),
-          );
-        });
-      case OnNormalPlayerCountChanged():
-        emitViewState((state) {
-          final current = getCurrentAsLoaded();
-          return _derivePresentationState(
-            current.copyWith(
-              normalPlayerCount: intent.value.clamp(
-                0,
-                6 - current.seniorPlayerCount,
-              ),
-              clearSelectedSlot: true,
-              clearVisibleSelectedIndex: true,
-              clearErrorMessage: true,
-            ),
-          );
-        });
-      case OnSeniorPlayerCountChanged():
-        emitViewState((state) {
-          final current = getCurrentAsLoaded();
-          return _derivePresentationState(
-            current.copyWith(
-              seniorPlayerCount: intent.value.clamp(
-                0,
-                6 - current.normalPlayerCount,
-              ),
-              clearSelectedSlot: true,
-              clearVisibleSelectedIndex: true,
-              clearErrorMessage: true,
-            ),
-          );
-        });
-      case OnSelectCaddiePreference():
-        final current = getCurrentAsLoaded();
-        final lockedCaddiePreference = _lockedCaddiePreferenceForSlot(
-          current.selectedSlot,
-        );
-        emitViewState((state) {
-          return _derivePresentationState(
-            current.copyWith(
-              caddiePreference: lockedCaddiePreference ?? intent.value,
-              clearErrorMessage: true,
-            ),
-          );
-        });
-      case OnSelectBuggyType():
-        emitViewState((state) {
-          return _derivePresentationState(
-            getCurrentAsLoaded().copyWith(
-              buggyType: intent.value,
-              clearErrorMessage: true,
-            ),
-          );
-        });
-      case OnSelectBuggySharingPreference():
-        emitViewState((state) {
-          return _derivePresentationState(
-            getCurrentAsLoaded().copyWith(
-              buggySharingPreference: intent.value,
               clearErrorMessage: true,
             ),
           );
@@ -172,7 +110,6 @@ class BookingSubmissionSlotViewModel
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
               selectedSlot: intent.slot,
-              buggyType: _buggyTypeForSlot(intent.slot),
               clearErrorMessage: true,
             ),
           );
@@ -208,12 +145,7 @@ class BookingSubmissionSlotViewModel
             pricePerPerson: selectedSlot.price,
             currency: selectedSlot.currency,
             playerCount: current.playerCount,
-            caddiePreference: current.caddiePreference.value,
-            buggyType: current.buggyType.value,
-            buggySharingPreference: current.buggySharingPreference.value,
-            selectedNine: current.selectedSupportedNine.isEmpty
-                ? null
-                : current.selectedSupportedNine,
+            selectedNine: null,
           ),
         );
     }
@@ -270,7 +202,9 @@ class BookingSubmissionSlotViewModel
                 golfClubList: const <GolfClubModel>[],
                 selectedClubSlug: emptyString,
                 isLoading: false,
-                errorMessage: message,
+                errorSnackbarMessageModel: SnackbarMessageModel(
+                  message: message,
+                ),
               ),
             );
           });
@@ -350,9 +284,7 @@ class BookingSubmissionSlotViewModel
           clubSlug: clubSlug,
           date: DateUtil.formatApiDate(date),
           playType: requestState.playTypeValue,
-          selectedNine: requestState.selectedSupportedNine.isEmpty
-              ? null
-              : requestState.selectedSupportedNine,
+          selectedNine: null,
         )
         .listen((result) {
           switch (result.status) {
@@ -378,7 +310,9 @@ class BookingSubmissionSlotViewModel
                   getCurrentAsLoaded().copyWith(
                     bookingSlots: const <BookingSlotModel>[],
                     isLoading: false,
-                    errorMessage: message,
+                    errorSnackbarMessageModel: SnackbarMessageModel(
+                      message: message,
+                    ),
                   ),
                 );
               });
@@ -411,18 +345,7 @@ class BookingSubmissionSlotViewModel
     BookingSubmissionSlotDataLoaded state,
   ) {
     final today = DateUtil.dateOnly(DateTime.now());
-    final normalizedSeniorPlayerCount = state.seniorPlayerCount.clamp(0, 6);
-    final maxNormalPlayerCount = 6 - normalizedSeniorPlayerCount;
-    var normalizedNormalPlayerCount = state.normalPlayerCount.clamp(
-      0,
-      maxNormalPlayerCount,
-    );
-    if (normalizedNormalPlayerCount + normalizedSeniorPlayerCount < 2) {
-      normalizedNormalPlayerCount = (2 - normalizedSeniorPlayerCount).clamp(
-        0,
-        maxNormalPlayerCount,
-      );
-    }
+    final normalizedPlayerCount = state.playerCount.clamp(2, 6);
     final visibleSlots = state.bookingSlots
         .where((slot) => _isSlotInSelectedPeriod(slot, state.selectedPeriod))
         .toList();
@@ -436,30 +359,19 @@ class BookingSubmissionSlotViewModel
         availableSupportedNines.contains(state.selectedSupportedNine)
         ? state.selectedSupportedNine
         : emptyString;
-    final teeTime = state.selectedSlot == null
-        ? null
-        : TeeTimeSlot.fromLabel(state.selectedSlot!.time);
-    final shouldForceSharedCaddie =
-        teeTime?.requiresSharedCaddieAndJumboBuggy == true;
-    final buggyType = state.selectedSlot == null
-        ? BookingBuggyType.normal
-        : _buggyTypeForSlot(state.selectedSlot!);
-    final caddiePreference = shouldForceSharedCaddie
-        ? BookingCaddiePreference.shared
-        : state.caddiePreference;
     final overCapacityIndices = visibleSlots.indexed
-        .where((entry) => entry.$2.remainingPlayerCapacity < state.playerCount)
+        .where(
+          (entry) => entry.$2.remainingPlayerCapacity < normalizedPlayerCount,
+        )
         .map((entry) => entry.$1)
         .toSet();
     final selectedSlotFitsCapacity =
-        (state.selectedSlot?.remainingPlayerCapacity ?? 0) >= state.playerCount;
+        (state.selectedSlot?.remainingPlayerCapacity ?? 0) >=
+        normalizedPlayerCount;
 
     return state.copyWith(
-      normalPlayerCount: normalizedNormalPlayerCount,
-      seniorPlayerCount: normalizedSeniorPlayerCount,
+      playerCount: normalizedPlayerCount,
       selectedSupportedNine: selectedSupportedNine,
-      buggyType: buggyType,
-      caddiePreference: caddiePreference,
       selectedDate: DateUtil.dateOnly(state.selectedDate),
       pickerInitialDate: state.selectedDate.isBefore(today)
           ? today
@@ -482,17 +394,6 @@ class BookingSubmissionSlotViewModel
     );
   }
 
-  BookingBuggyType _buggyTypeForSlot(BookingSlotModel slot) {
-    final teeTime = TeeTimeSlot.fromLabel(slot.time);
-    if (teeTime == null) {
-      return BookingBuggyType.normal;
-    }
-
-    return teeTime.requiresSharedCaddieAndJumboBuggy
-        ? BookingBuggyType.jumbo
-        : BookingBuggyType.normal;
-  }
-
   bool _isSlotInSelectedPeriod(BookingSlotModel slot, TimePeriod period) {
     final slotPeriod = _periodForSlot(slot);
     return slotPeriod == null || slotPeriod == period;
@@ -510,17 +411,6 @@ class BookingSubmissionSlotViewModel
     final startAt = slot.startAt;
     if (startAt != null) {
       return startAt.toLocal().hour < 12 ? TimePeriod.am : TimePeriod.pm;
-    }
-
-    return null;
-  }
-
-  BookingCaddiePreference? _lockedCaddiePreferenceForSlot(
-    BookingSlotModel? slot,
-  ) {
-    final teeTime = slot == null ? null : TeeTimeSlot.fromLabel(slot.time);
-    if (teeTime?.requiresSharedCaddieAndJumboBuggy == true) {
-      return BookingCaddiePreference.shared;
     }
 
     return null;

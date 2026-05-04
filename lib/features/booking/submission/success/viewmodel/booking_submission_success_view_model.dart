@@ -171,18 +171,6 @@ class BookingSubmissionSuccessViewModel
       playType:
           _readString(data, const <String>['playType', 'play_type']) ??
           current.playType,
-      caddiePreference:
-          _readString(data, const <String>[
-            'caddieArrangement',
-            'caddie_arrangement',
-          ]) ??
-          current.caddiePreference,
-      buggySharingPreference:
-          _readString(data, const <String>[
-            'buggySharingPreference',
-            'buggy_sharing_preference',
-          ]) ??
-          current.buggySharingPreference,
       hostName:
           _readString(data, const <String>['hostName', 'host_name']) ??
           current.hostName,

@@ -15,9 +15,8 @@ class BookingHoldRequestModel {
     this.playerCount,
     this.normalPlayerCount,
     this.seniorPlayerCount = 0,
-    this.caddieArrangement = 'none',
-    this.buggyType = 'normal',
-    this.buggySharingPreference = 'shared',
+    this.caddieCount = 0,
+    this.golfCartCount = 0,
     this.paymentMethod = 'pay_counter',
   });
 
@@ -35,9 +34,8 @@ class BookingHoldRequestModel {
   final int? playerCount;
   final int? normalPlayerCount;
   final int seniorPlayerCount;
-  final String caddieArrangement;
-  final String buggyType;
-  final String buggySharingPreference;
+  final int caddieCount;
+  final int golfCartCount;
   final String paymentMethod;
   final String source;
 

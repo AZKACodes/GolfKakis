@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 
 import '../viewmodel/profile_login_view_contract.dart';
-
-const double _compactLoginPhoneInputHeight = 54;
 
 class ProfileLoginView extends StatefulWidget {
   const ProfileLoginView({
@@ -20,8 +17,8 @@ class ProfileLoginView extends StatefulWidget {
 }
 
 class _ProfileLoginViewState extends State<ProfileLoginView> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
 
   ProfileLoginDataLoaded get _loadedState {
     return switch (widget.state) {
@@ -32,25 +29,25 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: _loadedState.name);
-    _phoneController = TextEditingController(text: _loadedState.phoneNumber);
+    _usernameController = TextEditingController(text: _loadedState.username);
+    _passwordController = TextEditingController(text: _loadedState.password);
   }
 
   @override
   void didUpdateWidget(covariant ProfileLoginView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_nameController.text != _loadedState.name) {
-      _nameController.text = _loadedState.name;
+    if (_usernameController.text != _loadedState.username) {
+      _usernameController.text = _loadedState.username;
     }
-    if (_phoneController.text != _loadedState.phoneNumber) {
-      _phoneController.text = _loadedState.phoneNumber;
+    if (_passwordController.text != _loadedState.password) {
+      _passwordController.text = _loadedState.password;
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -100,7 +97,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: const Icon(
-                        Icons.person_outline,
+                        Icons.lock_person_outlined,
                         color: Colors.white,
                       ),
                     ),
@@ -114,38 +111,38 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Sign in to continue with your account.',
+                    'Log in with your username and password, then verify the OTP sent to your phone.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.black54,
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  if (state.infoMessage != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF6E8),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFFFD58A)),
-                      ),
-                      child: Text(
-                        state.infoMessage!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF7A5200),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  if (state.infoMessage != null) ...[
+                    const SizedBox(height: 14),
+                    _InlineBanner(
+                      message: state.infoMessage!,
+                      backgroundColor: const Color(0xFFFFF6E8),
+                      borderColor: const Color(0xFFFFD58A),
+                      textColor: const Color(0xFF7A5200),
                     ),
-                  const SizedBox(height: 14),
+                  ],
+                  if (state.errorMessage != null) ...[
+                    const SizedBox(height: 14),
+                    _InlineBanner(
+                      message: state.errorMessage!,
+                      backgroundColor: const Color(0xFFFDECEC),
+                      borderColor: const Color(0xFFE7A1A1),
+                      textColor: const Color(0xFF8A3D3D),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
                   TextField(
-                    controller: _nameController,
+                    controller: _usernameController,
                     textInputAction: TextInputAction.next,
                     onChanged: (value) =>
-                        widget.onUserIntent(OnNameChanged(value)),
+                        widget.onUserIntent(OnUsernameChanged(value)),
                     decoration: InputDecoration(
-                      hintText: 'Name',
-                      prefixIcon: const Icon(Icons.person_outline),
+                      hintText: 'Username',
+                      prefixIcon: const Icon(Icons.alternate_email_rounded),
                       filled: true,
                       fillColor: const Color(0xFFF6F8FC),
                       border: OutlineInputBorder(
@@ -155,33 +152,23 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _LoginPhoneInputRow(
-                    selectedCountryCode: state.countryCode,
-                    phoneController: _phoneController,
-                    onCountryCodeChanged: (value) =>
-                        widget.onUserIntent(OnCountryCodeChanged(value)),
-                    onPhoneChanged: (value) =>
-                        widget.onUserIntent(OnPhoneChanged(value)),
-                  ),
-                  if (state.errorMessage != null) ...[
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDECEC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE7A1A1)),
-                      ),
-                      child: Text(
-                        state.errorMessage!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF8A3D3D),
-                          fontWeight: FontWeight.w600,
-                        ),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onChanged: (value) =>
+                        widget.onUserIntent(OnPasswordChanged(value)),
+                    decoration: InputDecoration(
+                      hintText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F8FC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
                     ),
-                  ],
+                  ),
                   const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
@@ -197,7 +184,7 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
-                      child: const Text('Request OTP'),
+                      child: const Text('Continue to OTP'),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -262,84 +249,36 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
   }
 }
 
-class _LoginPhoneInputRow extends StatelessWidget {
-  const _LoginPhoneInputRow({
-    required this.selectedCountryCode,
-    required this.phoneController,
-    required this.onCountryCodeChanged,
-    required this.onPhoneChanged,
+class _InlineBanner extends StatelessWidget {
+  const _InlineBanner({
+    required this.message,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.textColor,
   });
 
-  final PhoneCountryCodeOption selectedCountryCode;
-  final TextEditingController phoneController;
-  final ValueChanged<PhoneCountryCodeOption> onCountryCodeChanged;
-  final ValueChanged<String> onPhoneChanged;
+  final String message;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 136, maxWidth: 164),
-          child: Container(
-            height: _compactLoginPhoneInputHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F8FC),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<PhoneCountryCodeOption>(
-                value: selectedCountryCode,
-                isExpanded: true,
-                icon: const Icon(Icons.expand_more_rounded),
-                borderRadius: BorderRadius.circular(16),
-                items: PhoneUtil.countryCodeOptions.map((option) {
-                  return DropdownMenuItem<PhoneCountryCodeOption>(
-                    value: option,
-                    child: Text(
-                      option.compactLabel,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    onCountryCodeChanged(value);
-                  }
-                },
-              ),
-            ),
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w600,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SizedBox(
-            height: _compactLoginPhoneInputHeight,
-            child: TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              onChanged: onPhoneChanged,
-              decoration: InputDecoration(
-                hintText: 'Phone Number',
-                prefixIcon: const Icon(Icons.phone_outlined),
-                filled: true,
-                fillColor: const Color(0xFFF6F8FC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

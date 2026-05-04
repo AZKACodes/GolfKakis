@@ -1,3 +1,4 @@
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
@@ -12,7 +13,7 @@ class ProfileRegisterOtpViewState extends ViewState {
     required this.phoneNumber,
     required this.otpDigits,
     required this.isSubmitting,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory ProfileRegisterOtpViewState.initial({required String phoneNumber}) {
@@ -26,7 +27,11 @@ class ProfileRegisterOtpViewState extends ViewState {
   final String phoneNumber;
   final List<String> otpDigits;
   final bool isSubmitting;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   bool get canContinue =>
       otpDigits.every((digit) => digit.trim().isNotEmpty) && !isSubmitting;
@@ -36,16 +41,16 @@ class ProfileRegisterOtpViewState extends ViewState {
     String? phoneNumber,
     List<String>? otpDigits,
     bool? isSubmitting,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return ProfileRegisterOtpViewState(
       phoneNumber: phoneNumber ?? this.phoneNumber,
       otpDigits: otpDigits ?? this.otpDigits,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }
@@ -79,14 +84,22 @@ class RegisterOtpNavigateBack extends ProfileRegisterOtpNavEffect {
   const RegisterOtpNavigateBack();
 }
 
-class RegisterOtpNavigateToAbout extends ProfileRegisterOtpNavEffect {
-  const RegisterOtpNavigateToAbout({
+class RegisterOtpCompleted extends ProfileRegisterOtpNavEffect {
+  const RegisterOtpCompleted({
     required this.response,
-    required this.password,
+    required this.username,
+    required this.phoneNumber,
+    required this.fullName,
+    required this.nickname,
+    required this.occupation,
     required this.requiresOccupation,
   });
 
   final VerifyOtpResponse response;
-  final String password;
+  final String username;
+  final String phoneNumber;
+  final String fullName;
+  final String nickname;
+  final String occupation;
   final bool requiresOccupation;
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/detail/booking_detail_page.dart';
 import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/club/detail/golf_club_detail_page.dart';
+import 'package:golf_kakis/features/booking/overview/domain/booking_overview_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
@@ -27,7 +28,8 @@ class _BookingOverviewPageState extends State<BookingOverviewPage> {
   @override
   void initState() {
     super.initState();
-    _viewModel = BookingOverviewViewModel();
+
+    _viewModel = BookingOverviewViewModel(BookingOverviewUseCaseImpl.create());
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
 

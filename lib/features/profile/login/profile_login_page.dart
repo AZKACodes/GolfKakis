@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/login/domain/profile_login_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/login/otp/profile_login_otp_page.dart';
 import 'package:golf_kakis/features/profile/register/method/profile_register_method_page.dart';
 
@@ -24,7 +24,9 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ProfileLoginViewModel();
+    _viewModel = ProfileLoginViewModel(
+      useCase: ProfileLoginUseCaseImpl.create(),
+    );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
 
@@ -43,17 +45,12 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
     switch (effect) {
       case NavigateBack():
         Navigator.of(context).maybePop();
-      case LoginSucceeded():
-        SessionScope.of(
-          context,
-        ).login(username: effect.username, role: effect.role);
-        Navigator.of(context).maybePop();
       case RequestOtpSucceeded():
         final result = await Navigator.of(context).push<LoginOtpSuccessResult>(
           MaterialPageRoute<LoginOtpSuccessResult>(
             settings: const RouteSettings(name: _loginOtpRouteName),
             builder: (_) => ProfileLoginOtpPage(
-              name: effect.response.name,
+              username: effect.username,
               phoneNumber: effect.response.normalizedPhoneNumber.isNotEmpty
                   ? effect.response.normalizedPhoneNumber
                   : effect.response.phoneNumber,
@@ -68,15 +65,17 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
         }
 
         SessionScope.of(context).login(
-          username: result.response.user.name,
-          role: UserRole.user,
+          username: result.username,
+          role: result.role,
           accessToken: result.response.accessToken,
           authUserId: result.response.user.userId,
           authId: result.response.user.authId,
           isPhoneVerified: result.response.user.isPhoneVerified,
           authCreatedAt: result.response.user.createdAt,
           authUpdatedAt: result.response.user.updatedAt,
-          profileFullName: result.response.user.name,
+          profileFullName: result.response.user.name.isNotEmpty
+              ? result.response.user.name
+              : result.username,
           profilePhoneNumber: result.response.user.phoneNumber,
         );
         Navigator.of(context).maybePop();

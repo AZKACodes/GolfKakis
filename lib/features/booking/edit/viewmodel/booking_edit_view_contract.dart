@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingEditViewContract {
@@ -12,7 +13,7 @@ class BookingEditViewState extends ViewState {
     required this.booking,
     required this.canSave,
     required this.isSaving,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory BookingEditViewState.initial(BookingModel booking) {
@@ -26,13 +27,17 @@ class BookingEditViewState extends ViewState {
   final BookingModel booking;
   final bool canSave;
   final bool isSaving;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   BookingEditViewState copyWith({
     BookingModel? booking,
     bool? canSave,
     bool? isSaving,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     final nextBooking = booking ?? this.booking;
@@ -40,9 +45,9 @@ class BookingEditViewState extends ViewState {
       booking: nextBooking,
       canSave: canSave ?? _canSave(nextBooking),
       isSaving: isSaving ?? this.isSaving,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 

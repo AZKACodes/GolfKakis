@@ -1,16 +1,19 @@
 const String emptyString = '';
+const bool emptyBool = false;
+const int emptyInt = 0;
+const double emptyDouble = 0;
 
 String stringEmptyValue() => emptyString;
 
-int intEmptyValue() => 0;
+int intEmptyValue() => emptyInt;
 
-double floatEmptyValue() => 0;
+double floatEmptyValue() => emptyDouble;
 
-double doubleEmptyValue() => 0;
+double doubleEmptyValue() => emptyDouble;
 
-bool booleanEmptyValue() => false;
+bool booleanEmptyValue() => emptyBool;
 
-int longEmptyValue() => 0;
+int longEmptyValue() => emptyInt;
 
 List<T> emptyListValue<T>() => <T>[];
 

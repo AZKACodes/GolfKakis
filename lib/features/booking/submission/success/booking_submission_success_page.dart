@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_view.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
@@ -55,7 +54,7 @@ class _BookingSubmissionSuccessPageState
     super.initState();
     UserUtil.clearBookingUUID();
     _viewModel = BookingSubmissionSuccessViewModel(
-      BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
+      BookingSubmissionSlotUseCaseImpl.create(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(

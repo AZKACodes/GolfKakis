@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/view/booking_submission_confirmation_view.dart';
@@ -26,9 +25,6 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
-    required this.caddiePreference,
-    required this.buggyType,
-    required this.buggySharingPreference,
     this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
@@ -50,9 +46,6 @@ class BookingSubmissionConfirmationPage extends StatefulWidget {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
@@ -73,7 +66,7 @@ class _BookingSubmissionConfirmationPageState
   void initState() {
     super.initState();
     _viewModel = BookingSubmissionConfirmationViewModel(
-      BookingSubmissionSlotUseCaseImpl(BookingSubmissionSlotRepositoryImpl()),
+      BookingSubmissionSlotUseCaseImpl.create(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
@@ -91,9 +84,6 @@ class _BookingSubmissionConfirmationPageState
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
         playerCount: widget.playerCount,
-        caddiePreference: widget.caddiePreference,
-        buggyType: widget.buggyType,
-        buggySharingPreference: widget.buggySharingPreference,
         selectedNine: widget.selectedNine,
         caddieCount: widget.caddieCount,
         golfCartCount: widget.golfCartCount,

@@ -100,11 +100,6 @@ class BookingDetailView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                _InfoRow(
-                  label: 'Starting Course',
-                  value: _formatSentenceLabel(booking.selectedNine),
-                ),
                 const SizedBox(height: 12),
                 _RoundConfigurationTabs(booking: booking),
               ],

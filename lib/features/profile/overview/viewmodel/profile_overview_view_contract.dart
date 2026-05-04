@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -13,7 +14,7 @@ class ProfileOverviewViewState extends ViewState {
     required this.isLoading,
     required this.isUsingFallback,
     this.profile,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   static const initial = ProfileOverviewViewState(
@@ -24,22 +25,26 @@ class ProfileOverviewViewState extends ViewState {
   final bool isLoading;
   final bool isUsingFallback;
   final UserProfileModel? profile;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   ProfileOverviewViewState copyWith({
     bool? isLoading,
     bool? isUsingFallback,
     UserProfileModel? profile,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return ProfileOverviewViewState(
       isLoading: isLoading ?? this.isLoading,
       isUsingFallback: isUsingFallback ?? this.isUsingFallback,
       profile: profile ?? this.profile,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }
@@ -68,6 +73,10 @@ class OnPrimaryTouchpointClick extends ProfileOverviewUserIntent {
   const OnPrimaryTouchpointClick();
 }
 
+class OnMyGolfKakisTouchpointClick extends ProfileOverviewUserIntent {
+  const OnMyGolfKakisTouchpointClick();
+}
+
 sealed class ProfileOverviewNavEffect extends NavEffect {
   const ProfileOverviewNavEffect() : super();
 }
@@ -82,4 +91,8 @@ class LoginRequested extends ProfileOverviewNavEffect {
 
 class EditProfileRequested extends ProfileOverviewNavEffect {
   const EditProfileRequested();
+}
+
+class MyGolfKakisRequested extends ProfileOverviewNavEffect {
+  const MyGolfKakisRequested();
 }

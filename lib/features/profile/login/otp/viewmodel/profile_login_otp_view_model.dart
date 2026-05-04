@@ -1,7 +1,8 @@
 import 'package:golf_kakis/features/foundation/network/network.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../../domain/profile_login_use_case.dart';
 import 'profile_login_otp_view_contract.dart';
 
 class ProfileLoginOtpViewModel
@@ -13,21 +14,21 @@ class ProfileLoginOtpViewModel
         >
     implements ProfileLoginOtpViewContract {
   ProfileLoginOtpViewModel({
-    required String name,
+    required String username,
     required String phoneNumber,
-    ProfileApiService? profileApiService,
-  }) : _name = name,
+    required ProfileLoginUseCase useCase,
+  }) : _username = username,
        _phoneNumber = phoneNumber,
-       _profileApiService = profileApiService ?? ProfileApiService();
+       _useCase = useCase;
 
-  final String _name;
+  final String _username;
   final String _phoneNumber;
-  final ProfileApiService _profileApiService;
+  final ProfileLoginUseCase _useCase;
 
   @override
   ProfileLoginOtpViewState createInitialState() {
     return ProfileLoginOtpDataLoaded.initial(
-      name: _name,
+      username: _username,
       phoneNumber: _phoneNumber,
     );
   }
@@ -70,27 +71,36 @@ class ProfileLoginOtpViewModel
       ),
     );
     try {
-      final response = await _profileApiService.onVerifyOtp(
-        name: _currentDataState.name.trim(),
+      final response = await _useCase.verifyOtp(
+        username: _currentDataState.username.trim(),
         phoneNumber: _currentDataState.phoneNumber.trim(),
         otp: _currentDataState.otpDigits.join(),
         visitorId: visitorId,
       );
 
       emitViewState((_) => _currentDataState.copyWith(isSubmitting: false));
-      sendNavEffect(() => LoginOtpVerified(response: response));
+      sendNavEffect(
+        () => LoginOtpVerified(
+          response: response,
+          username: _currentDataState.username.trim(),
+        ),
+      );
     } on ApiException catch (error) {
       emitViewState(
         (_) => _currentDataState.copyWith(
           isSubmitting: false,
-          errorMessage: error.message,
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: error.message,
+          ),
         ),
       );
     } catch (_) {
       emitViewState(
         (_) => _currentDataState.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to verify OTP right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to verify OTP right now.',
+          ),
         ),
       );
     }

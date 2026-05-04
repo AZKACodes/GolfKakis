@@ -1,21 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
-import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/register/phone/profile_register_phone_page.dart';
 import 'package:golf_kakis/features/profile/register/details/view/profile_register_details_view.dart';
 import 'package:golf_kakis/features/profile/register/details/viewmodel/profile_register_details_view_contract.dart';
 import 'package:golf_kakis/features/profile/register/details/viewmodel/profile_register_details_view_model.dart';
 
 class ProfileRegisterDetailsPage extends StatefulWidget {
   const ProfileRegisterDetailsPage({
-    required this.phoneNumber,
+    required this.username,
     required this.password,
     this.requiresOccupation = true,
     super.key,
   });
 
-  final String phoneNumber;
+  final String username;
   final String password;
   final bool requiresOccupation;
 
@@ -33,7 +32,7 @@ class _ProfileRegisterDetailsPageState
   void initState() {
     super.initState();
     _viewModel = ProfileRegisterDetailsViewModel(
-      phoneNumber: widget.phoneNumber,
+      username: widget.username,
       password: widget.password,
       requiresOccupation: widget.requiresOccupation,
     );
@@ -45,22 +44,22 @@ class _ProfileRegisterDetailsPageState
         Navigator.of(context).maybePop();
       }
 
-      if (effect is RegisterDetailsCompleted) {
+      if (effect is RegisterDetailsNavigateToPhone) {
         if (!mounted) {
           return;
         }
-        SessionScope.of(context).login(
-          username: effect.fullName,
-          role: UserRole.user,
-          profileFullName: effect.fullName,
-          profileNickname: effect.nickname,
-          profileOccupation: effect.occupation,
-          profileEmail: effect.email,
-          profilePhoneNumber: effect.phoneNumber,
-          profileAvatarIndex: 0,
-        );
-        Navigator.of(context, rootNavigator: true).popUntil(
-          (route) => !_registerRouteNames.contains(route.settings.name),
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            settings: const RouteSettings(name: _registerPhoneRouteName),
+            builder: (_) => ProfileRegisterPhonePage(
+              username: effect.username,
+              password: effect.password,
+              fullName: effect.fullName,
+              nickname: effect.nickname,
+              occupation: effect.occupation,
+              requiresOccupation: effect.requiresOccupation,
+            ),
+          ),
         );
       }
     });
@@ -86,17 +85,26 @@ class _ProfileRegisterDetailsPageState
                   _viewModel.onUserIntent(const OnRegisterDetailsBackClick()),
               icon: const Icon(Icons.arrow_back),
             ),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    _viewModel.onUserIntent(const OnRegisterDetailsSkipClick()),
+                child: const Text('Skip'),
+              ),
+            ],
           ),
           body: ProfileRegisterDetailsView(
             state: _viewModel.viewState,
-            onNameChanged: (value) =>
-                _viewModel.onUserIntent(OnRegisterNameChanged(value)),
+            onFullNameChanged: (value) =>
+                _viewModel.onUserIntent(OnRegisterFullNameChanged(value)),
             onNicknameChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterNicknameChanged(value)),
             onOccupationChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterOccupationChanged(value)),
-            onSubmitClick: () =>
-                _viewModel.onUserIntent(const OnRegisterDetailsSubmitClick()),
+            onContinueClick: () =>
+                _viewModel.onUserIntent(const OnRegisterDetailsContinueClick()),
+            onSkipClick: () =>
+                _viewModel.onUserIntent(const OnRegisterDetailsSkipClick()),
           ),
         );
       },
@@ -104,8 +112,4 @@ class _ProfileRegisterDetailsPageState
   }
 }
 
-const Set<String> _registerRouteNames = <String>{
-  'register_method',
-  'register_otp',
-  'register_details',
-};
+const String _registerPhoneRouteName = 'register_phone';

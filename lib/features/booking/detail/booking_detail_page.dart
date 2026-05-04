@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/detail/data/booking_detail_repository_impl.dart';
+import 'package:golf_kakis/features/booking/detail/domain/booking_detail_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/edit/booking_edit_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
@@ -34,7 +34,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         SessionScope.of(context).state.accessToken?.trim() ?? '';
     _viewModel = BookingDetailViewModel(
       initialBooking: widget.booking,
-      repository: BookingDetailRepositoryImpl(accessToken: accessToken),
+      useCase: const BookingDetailUseCaseImpl(),
+      accessToken: accessToken,
     );
     _navEffectSubscription = _viewModel!.navEffects.listen((effect) async {
       if (effect is NavigateBack) {

@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:golf_kakis/features/booking/list/data/booking_list_repository.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/booking_list_use_case.dart';
 import 'booking_list_view_contract.dart';
 
 class BookingListViewModel
@@ -13,10 +13,14 @@ class BookingListViewModel
           BookingListNavEffect
         >
     implements BookingListViewContract {
-  BookingListViewModel({required BookingListRepository repository})
-    : _repository = repository;
+  BookingListViewModel({
+    required BookingListUseCase useCase,
+    required String accessToken,
+  }) : _useCase = useCase,
+       _accessToken = accessToken;
 
-  final BookingListRepository _repository;
+  final BookingListUseCase _useCase;
+  final String _accessToken;
 
   @override
   BookingListViewState createInitialState() {
@@ -71,9 +75,12 @@ class BookingListViewModel
 
     try {
       final data = switch (tab) {
-        BookingListTab.upcoming =>
-          await _repository.onFetchUpcomingBookingList(),
-        BookingListTab.past => await _repository.onFetchPastBookingList(),
+        BookingListTab.upcoming => await _useCase.fetchUpcomingBookingList(
+          accessToken: _accessToken,
+        ),
+        BookingListTab.past => await _useCase.fetchPastBookingList(
+          accessToken: _accessToken,
+        ),
       };
 
       emitViewState((state) {
