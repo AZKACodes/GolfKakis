@@ -1,42 +1,80 @@
-import '../../../booking/api/booking_api_service.dart';
-import '../../../foundation/model/booking/golf_club_model.dart';
+import '../../../foundation/model/home/home_advertisement_item.dart';
 import '../../../foundation/model/home/home_hot_deal_item.dart';
-import '../../../foundation/model/home/home_quick_book_item.dart';
 import '../../../foundation/model/home/home_smart_rebook_item.dart';
+import '../../../foundation/model/home/home_user_details_item.dart';
 import '../../../foundation/model/home/home_weather_summary.dart';
 import '../../../foundation/network/network.dart';
 import '../../api/home_api_service.dart';
+import '../../../profile/api/profile_api_service.dart';
 import 'home_repository.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl({
     ApiClient? apiClient,
     HomeApiService? apiService,
-    BookingApiService? bookingApiService,
+    ProfileApiService? profileApiService,
   }) : _apiService = apiService ?? HomeApiService(apiClient: apiClient),
-       _bookingApiService =
-           bookingApiService ?? BookingApiService(apiClient: apiClient);
+       _profileApiService =
+           profileApiService ?? ProfileApiService(apiClient: apiClient);
 
   final HomeApiService _apiService;
-  final BookingApiService _bookingApiService;
+  final ProfileApiService _profileApiService;
 
   @override
-  Future<String> onFetchWelcomeMessage() async {
-    final response = await _apiService.getHello();
-
-    if (response is String) {
-      return _sanitizeWelcomeMessage(response);
-    }
-
-    if (response is Map<String, dynamic>) {
-      final dynamic message =
-          response['message'] ?? response['hello'] ?? response['greeting'];
-      if (message is String && message.trim().isNotEmpty) {
-        return _sanitizeWelcomeMessage(message);
+  Future<HomeUserDetailsItem?> onFetchUserDetails({
+    required String accessToken,
+  }) async {
+    try {
+      final response = await _apiService.getHomeUserDetails(
+        accessToken: accessToken,
+      );
+      final parsed = _parseUserDetailsResponse(response);
+      if (parsed != null) {
+        return parsed;
       }
+    } catch (_) {
+      // Temporary fallback while the dedicated home overview endpoint is pending.
     }
 
-    return '';
+    try {
+      final authUser = await _profileApiService.onFetchUserDetails(
+        accessToken: accessToken,
+      );
+      if (authUser.name.trim().isEmpty) {
+        return null;
+      }
+      return HomeUserDetailsItem(displayName: authUser.name, avatarIndex: 0);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<HomeAdvertisementItem>> onFetchAdvertisementList() async {
+    try {
+      final response = await _apiService.getAdvertisementList();
+      final parsedItems = _parseAdvertisementItems(response);
+      if (parsedItems.isNotEmpty) {
+        return parsedItems;
+      }
+    } catch (_) {
+      // Fall back to seeded advertisement content until backend wiring is ready.
+    }
+    return _fallbackAdvertisements;
+  }
+
+  @override
+  Future<List<HomeHotDealItem>> onFetchDealsList() async {
+    try {
+      final response = await _apiService.getDealsList();
+      final parsedItems = _parseHotDealItems(response);
+      if (parsedItems.isNotEmpty) {
+        return parsedItems;
+      }
+    } catch (_) {
+      // Fall back to seeded deals until backend wiring is ready.
+    }
+    return _fallbackHotDeals;
   }
 
   @override
@@ -57,28 +95,6 @@ class HomeRepositoryImpl implements HomeRepository {
       // Fall back to seeded club deals for demo-friendly home content.
     }
     return _fallbackHotDeals;
-  }
-
-  @override
-  Future<List<HomeQuickBookItem>> onFetchQuickBookItems() async {
-    try {
-      final clubListResponse = await _bookingApiService.onFetchGolfClubList();
-      final clubs = _parseGolfClubList(clubListResponse);
-      if (clubs.isEmpty) {
-        return const <HomeQuickBookItem>[];
-      }
-
-      final seedClub = clubs.first;
-      final quickBookResponse = await _bookingApiService.onQuickBook(
-        golfClubSlug: seedClub.slug,
-        maxResults: 3,
-        searchDays: 7,
-      );
-
-      return _parseQuickBookItems(quickBookResponse);
-    } catch (_) {
-      return const <HomeQuickBookItem>[];
-    }
   }
 
   @override
@@ -125,6 +141,30 @@ class HomeRepositoryImpl implements HomeRepository {
     } catch (_) {
       return null;
     }
+  }
+
+  List<HomeAdvertisementItem> _parseAdvertisementItems(dynamic response) {
+    final items = _extractList(response, const <String>[
+      'data',
+      'items',
+      'advertisements',
+      'ads',
+    ]);
+
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => HomeAdvertisementItem(
+            tag: item['tag']?.toString() ?? item['label']?.toString() ?? 'Ad',
+            title: item['title']?.toString() ?? '',
+            subtitle:
+                item['subtitle']?.toString() ??
+                item['description']?.toString() ??
+                '',
+          ),
+        )
+        .where((item) => item.title.trim().isNotEmpty)
+        .toList();
   }
 
   List<HomeSmartRebookItem> _parseSmartRebookItems(dynamic response) {
@@ -178,100 +218,29 @@ class HomeRepositoryImpl implements HomeRepository {
         .toList();
   }
 
-  List<HomeQuickBookItem> _parseQuickBookItems(dynamic response) {
+  HomeUserDetailsItem? _parseUserDetailsResponse(dynamic response) {
     if (response is! Map<String, dynamic>) {
-      return const <HomeQuickBookItem>[];
+      return null;
     }
 
-    final recommendation = _asMap(response['recommendation']);
-    final alternatives = response['alternatives'];
-    final items = <HomeQuickBookItem>[];
+    final payload =
+        _asMap(response['data']) ??
+        _asMap(response['user']) ??
+        response;
 
-    final recommendationItem = _toQuickBookItem(
-      recommendation,
-      badge: 'Recommended',
+    final displayName =
+        payload['displayName']?.toString() ??
+        payload['name']?.toString() ??
+        payload['fullName']?.toString() ??
+        '';
+    if (displayName.trim().isEmpty) {
+      return null;
+    }
+
+    return HomeUserDetailsItem(
+      displayName: displayName,
+      avatarIndex: _parseInt(payload['avatarIndex']) ?? 0,
     );
-    if (recommendationItem != null) {
-      items.add(recommendationItem);
-    }
-
-    if (alternatives is List) {
-      for (final alternative in alternatives) {
-        final item = _toQuickBookItem(
-          _asMap(alternative),
-          badge: 'Alternative',
-        );
-        if (item != null) {
-          items.add(item);
-        }
-      }
-    }
-
-    return items;
-  }
-
-  HomeQuickBookItem? _toQuickBookItem(
-    Map<String, dynamic>? payload, {
-    required String badge,
-  }) {
-    if (payload == null) {
-      return null;
-    }
-
-    final club = _asMap(payload['club']);
-    final nextSlot = _asMap(payload['nextSlot']);
-    if (club == null || nextSlot == null) {
-      return null;
-    }
-
-    final slug = club['slug']?.toString() ?? '';
-    final clubName = club['name']?.toString() ?? '';
-    final bookingDate = nextSlot['bookingDate']?.toString() ?? '';
-    final teeTime = nextSlot['teeTimeSlot']?.toString().toUpperCase() ?? '';
-    final remainingCapacity = _parseInt(nextSlot['remainingPlayerCapacity']);
-    final fromPrice = nextSlot['fromPrice'];
-    final currency = nextSlot['currency']?.toString() ?? 'MYR';
-
-    if (slug.trim().isEmpty || clubName.trim().isEmpty) {
-      return null;
-    }
-
-    final subtitleParts = <String>[
-      if (bookingDate.trim().isNotEmpty) bookingDate,
-      if (teeTime.trim().isNotEmpty) teeTime,
-      if (remainingCapacity != null) '$remainingCapacity spots',
-    ];
-
-    return HomeQuickBookItem(
-      clubSlug: slug,
-      title: clubName,
-      subtitle: subtitleParts.join(' • '),
-      priceLabel: fromPrice == null
-          ? 'Check rates'
-          : 'From $currency ${fromPrice.toString()}',
-      badge: badge,
-    );
-  }
-
-  List<GolfClubModel> _parseGolfClubList(dynamic rawResponse) {
-    if (rawResponse is List) {
-      return rawResponse
-          .whereType<Map<String, dynamic>>()
-          .map(GolfClubModel.fromJson)
-          .where((club) => club.slug.isNotEmpty)
-          .toList();
-    }
-
-    if (rawResponse is Map<String, dynamic>) {
-      final dynamic nestedList =
-          rawResponse['data'] ??
-          rawResponse['items'] ??
-          rawResponse['clubs'] ??
-          rawResponse['golfClubs'];
-      return _parseGolfClubList(nestedList);
-    }
-
-    return const <GolfClubModel>[];
   }
 
   List<dynamic> _extractList(dynamic response, List<String> keys) {
@@ -356,14 +325,25 @@ class HomeRepositoryImpl implements HomeRepository {
         return (label: 'Course conditions pending', icon: 'Weather');
     }
   }
-
-  String _sanitizeWelcomeMessage(String value) {
-    final cleaned = value
-        .replaceAll(RegExp('hello world', caseSensitive: false), '')
-        .trim();
-    return cleaned;
-  }
 }
+
+const List<HomeAdvertisementItem> _fallbackAdvertisements = [
+  HomeAdvertisementItem(
+    tag: 'Club Notice',
+    title: 'Weekend tee sheet opens earlier this Friday',
+    subtitle: 'Members can secure preferred morning slots from 6:00 PM onwards.',
+  ),
+  HomeAdvertisementItem(
+    tag: 'Course Update',
+    title: 'Kinrara greens maintenance scheduled tomorrow',
+    subtitle: 'Expect smoother front-nine play with light maintenance on selected holes.',
+  ),
+  HomeAdvertisementItem(
+    tag: 'Promo',
+    title: 'Early-bird weekday rounds now from MYR 39',
+    subtitle: 'Book selected morning sessions and lock in lower rates before noon.',
+  ),
+];
 
 const List<HomeHotDealItem> _fallbackHotDeals = [
   HomeHotDealItem(

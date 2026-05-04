@@ -1,6 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_advertisement_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
@@ -18,35 +18,39 @@ sealed class HomeViewState implements ViewState {
 
 class HomeDataLoaded extends HomeViewState {
   const HomeDataLoaded({
-    this.hotDeals = const <HomeHotDealViewData>[],
-    this.quickBookItems = const <HomeQuickBookViewData>[],
-    this.message = emptyString,
+    this.advertisements = const <HomeAdvertisementViewData>[],
+    this.deals = const <HomeHotDealViewData>[],
+    this.headerDisplayName = emptyString,
+    this.headerAvatarIndex = 0,
     this.isLoading = emptyBool,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
-  final List<HomeHotDealViewData> hotDeals;
-  final List<HomeQuickBookViewData> quickBookItems;
-  final String message;
+  final List<HomeAdvertisementViewData> advertisements;
+  final List<HomeHotDealViewData> deals;
+  final String headerDisplayName;
+  final int headerAvatarIndex;
   final bool isLoading;
   final SnackbarMessageModel errorSnackbarMessageModel;
 
   HomeDataLoaded copyWith({
-    List<HomeHotDealViewData>? hotDeals,
-    List<HomeQuickBookViewData>? quickBookItems,
-    String? message,
+    List<HomeAdvertisementViewData>? advertisements,
+    List<HomeHotDealViewData>? deals,
+    String? headerDisplayName,
+    int? headerAvatarIndex,
     bool? isLoading,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearError = false,
   }) {
     return HomeDataLoaded(
-      message: message ?? this.message,
+      headerDisplayName: headerDisplayName ?? this.headerDisplayName,
+      headerAvatarIndex: headerAvatarIndex ?? this.headerAvatarIndex,
       isLoading: isLoading ?? this.isLoading,
       errorSnackbarMessageModel: clearError
           ? SnackbarMessageModel.emptyValue
           : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
-      hotDeals: hotDeals ?? this.hotDeals,
-      quickBookItems: quickBookItems ?? this.quickBookItems,
+      advertisements: advertisements ?? this.advertisements,
+      deals: deals ?? this.deals,
     );
   }
 
@@ -59,12 +63,18 @@ sealed class HomeUserIntent implements UserIntent {
   const HomeUserIntent();
 }
 
-class OnInitHome extends HomeUserIntent {
-  const OnInitHome();
+class OnHomeOverviewInit extends HomeUserIntent {
+  const OnHomeOverviewInit({required this.isLoggedIn, this.accessToken});
+
+  final bool isLoggedIn;
+  final String? accessToken;
 }
 
-class OnRefreshHome extends HomeUserIntent {
-  const OnRefreshHome();
+class OnRefreshHomeOverview extends HomeUserIntent {
+  const OnRefreshHomeOverview({required this.isLoggedIn, this.accessToken});
+
+  final bool isLoggedIn;
+  final String? accessToken;
 }
 
 class OnNewBookingClick extends HomeUserIntent {
@@ -77,12 +87,6 @@ class OnGolfClubListClick extends HomeUserIntent {
 
 class OnBookingListClick extends HomeUserIntent {
   const OnBookingListClick();
-}
-
-class OnQuickBookClick extends HomeUserIntent {
-  const OnQuickBookClick(this.clubSlug);
-
-  final String clubSlug;
 }
 
 // ------ NavEffect ------
@@ -101,10 +105,4 @@ class NavigateToGolfClubList extends HomeNavEffect {
 
 class NavigateToBookingOverview extends HomeNavEffect {
   const NavigateToBookingOverview();
-}
-
-class NavigateToQuickBook extends HomeNavEffect {
-  const NavigateToQuickBook(this.clubSlug);
-
-  final String clubSlug;
 }

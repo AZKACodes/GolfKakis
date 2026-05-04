@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'package:golf_kakis/features/foundation/default_values.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_advertisement_item.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_advertisement_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_quick_book_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
@@ -27,35 +28,47 @@ class HomeViewModel
   @override
   FutureOr<void> handleIntent(HomeUserIntent intent) {
     switch (intent) {
-      case OnInitHome():
-      case OnRefreshHome():
-        return _loadData();
+      case OnHomeOverviewInit():
+        return _loadData(
+          isLoggedIn: intent.isLoggedIn,
+          accessToken: intent.accessToken,
+        );
+      case OnRefreshHomeOverview():
+        return _loadData(
+          isLoggedIn: intent.isLoggedIn,
+          accessToken: intent.accessToken,
+        );
       case OnNewBookingClick():
         sendNavEffect(() => const NavigateToBookingSlotSubmission());
       case OnGolfClubListClick():
         sendNavEffect(() => const NavigateToGolfClubList());
       case OnBookingListClick():
         sendNavEffect(() => const NavigateToBookingOverview());
-      case OnQuickBookClick():
-        sendNavEffect(() => NavigateToQuickBook(intent.clubSlug));
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({
+    required bool isLoggedIn,
+    String? accessToken,
+  }) async {
     final currentState = _currentDataState;
     emitViewState(
       (_) => currentState.copyWith(isLoading: true, clearError: true),
     );
 
     try {
-      final result = await _useCase.onFetchHomeOverviewDetails();
+      final result = await _useCase.onHomeOverviewInit(
+        isLoggedIn: isLoggedIn,
+        accessToken: accessToken,
+      );
 
       emitViewState(
         (_) => currentState.copyWith(
-          message: result.message,
+          headerDisplayName: result.userDetails?.displayName ?? emptyString,
+          headerAvatarIndex: result.userDetails?.avatarIndex ?? 0,
           isLoading: false,
-          hotDeals: result.hotDeals.map(_mapHotDeal).toList(),
-          quickBookItems: result.quickBookItems.map(_mapQuickBookItem).toList(),
+          advertisements: result.advertisements.map(_mapAdvertisement).toList(),
+          deals: result.deals.map(_mapHotDeal).toList(),
           clearError: true,
         ),
       );
@@ -66,25 +79,23 @@ class HomeViewModel
           errorSnackbarMessageModel: const SnackbarMessageModel(
             message: 'Failed to load home data',
           ),
-          hotDeals: const <HomeHotDealViewData>[],
-          quickBookItems: const <HomeQuickBookViewData>[],
+          advertisements: const <HomeAdvertisementViewData>[],
+          deals: const <HomeHotDealViewData>[],
         ),
       );
     }
   }
 
-  HomeHotDealViewData _mapHotDeal(HomeHotDealItem item) {
-    return HomeHotDealViewData(
+  HomeAdvertisementViewData _mapAdvertisement(HomeAdvertisementItem item) {
+    return HomeAdvertisementViewData(
+      tag: item.tag,
       title: item.title,
       subtitle: item.subtitle,
-      priceLabel: item.priceLabel,
-      badge: item.badge,
     );
   }
 
-  HomeQuickBookViewData _mapQuickBookItem(HomeQuickBookItem item) {
-    return HomeQuickBookViewData(
-      clubSlug: item.clubSlug,
+  HomeHotDealViewData _mapHotDeal(HomeHotDealItem item) {
+    return HomeHotDealViewData(
       title: item.title,
       subtitle: item.subtitle,
       priceLabel: item.priceLabel,
