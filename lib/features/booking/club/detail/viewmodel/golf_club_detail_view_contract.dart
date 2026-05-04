@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/booking/club/detail/data/golf_club_detail_repository.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class GolfClubDetailViewContract {
@@ -13,7 +14,7 @@ class GolfClubDetailViewState extends ViewState {
     required this.detail,
     required this.isLoading,
     required this.isUsingFallback,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory GolfClubDetailViewState.initial(GolfClubModel club) {
@@ -39,22 +40,26 @@ class GolfClubDetailViewState extends ViewState {
   final GolfClubDetailData detail;
   final bool isLoading;
   final bool isUsingFallback;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   GolfClubDetailViewState copyWith({
     GolfClubDetailData? detail,
     bool? isLoading,
     bool? isUsingFallback,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return GolfClubDetailViewState(
       detail: detail ?? this.detail,
       isLoading: isLoading ?? this.isLoading,
       isUsingFallback: isUsingFallback ?? this.isUsingFallback,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }

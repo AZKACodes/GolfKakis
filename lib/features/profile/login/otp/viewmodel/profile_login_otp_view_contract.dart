@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileLoginOtpViewContract {
@@ -15,50 +16,54 @@ sealed class ProfileLoginOtpViewState extends ViewState {
 
 class ProfileLoginOtpDataLoaded extends ProfileLoginOtpViewState {
   const ProfileLoginOtpDataLoaded({
-    required this.name,
+    required this.username,
     required this.phoneNumber,
     required this.otpDigits,
     required this.isSubmitting,
-    this.errorMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory ProfileLoginOtpDataLoaded.initial({
-    required String name,
+    required String username,
     required String phoneNumber,
   }) {
     return ProfileLoginOtpDataLoaded(
-      name: name,
+      username: username,
       phoneNumber: phoneNumber,
       otpDigits: const ['', '', '', '', '', ''],
       isSubmitting: false,
     );
   }
 
-  final String name;
+  final String username;
   final String phoneNumber;
   final List<String> otpDigits;
   final bool isSubmitting;
-  final String? errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   bool get canVerify =>
       otpDigits.every((digit) => digit.trim().isNotEmpty) && !isSubmitting;
 
   ProfileLoginOtpDataLoaded copyWith({
-    String? name,
+    String? username,
     String? phoneNumber,
     List<String>? otpDigits,
     bool? isSubmitting,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return ProfileLoginOtpDataLoaded(
-      name: name ?? this.name,
+      username: username ?? this.username,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       otpDigits: otpDigits ?? this.otpDigits,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }
@@ -97,7 +102,8 @@ class LoginOtpNavigateBack extends ProfileLoginOtpNavEffect {
 }
 
 class LoginOtpVerified extends ProfileLoginOtpNavEffect {
-  const LoginOtpVerified({required this.response});
+  const LoginOtpVerified({required this.response, required this.username});
 
   final VerifyOtpResponse response;
+  final String username;
 }

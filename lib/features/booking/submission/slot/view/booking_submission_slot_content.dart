@@ -8,7 +8,8 @@ import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking
 import 'package:golf_kakis/features/booking/submission/slot/view/widgets/golf_club_picker_card.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
-import 'package:golf_kakis/features/foundation/util/string_util.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_date_picker_button.dart';
 import 'package:golf_kakis/features/foundation/widgets/card_message.dart';
 
@@ -16,11 +17,15 @@ class BookingSubmissionSlotContent extends StatelessWidget {
   const BookingSubmissionSlotContent({
     required this.viewModel,
     required this.state,
+    required this.isSubmittingHold,
+    required this.onConfirmSlotPressed,
     super.key,
   });
 
   final BookingSubmissionSlotViewModel viewModel;
   final BookingSubmissionSlotDataLoaded state;
+  final bool isSubmittingHold;
+  final Future<void> Function(BookingSlotModel slot) onConfirmSlotPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -79,13 +84,9 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   _PlayerCountSection(
-                    normalPlayerCount: state.normalPlayerCount,
-                    seniorPlayerCount: state.seniorPlayerCount,
-                    onNormalPlayerCountChanged: (value) {
-                      viewModel.onUserIntent(OnNormalPlayerCountChanged(value));
-                    },
-                    onSeniorPlayerCountChanged: (value) {
-                      viewModel.onUserIntent(OnSeniorPlayerCountChanged(value));
+                    playerCount: state.playerCount,
+                    onPlayerCountChanged: (value) {
+                      viewModel.onUserIntent(OnPlayerCountChanged(value));
                     },
                   ),
 
@@ -109,25 +110,6 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                       viewModel.onUserIntent(OnSelectGolfClub(club.slug));
                     },
                   ),
-
-                  if (hasSelectedClub &&
-                      state.availableSupportedNines.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Starting Course',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _SupportedNinePickerCard(
-                      value: state.selectedSupportedNine,
-                      options: state.availableSupportedNines,
-                      onChanged: (value) {
-                        viewModel.onUserIntent(OnSelectSupportedNine(value));
-                      },
-                    ),
-                  ],
 
                   const SizedBox(height: 20),
 
@@ -186,11 +168,10 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                     ),
                   ),
 
-                  if (!hasSelectedClub || !canActivateCalendar)
+                  if (!hasSelectedClub)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: _CalendarGateMessage(
-                        hasSelectedClub: hasSelectedClub,
                         hasAvailableGolfClubs: hasAvailableGolfClubs,
                       ),
                     ),
@@ -275,14 +256,424 @@ class BookingSubmissionSlotContent extends StatelessWidget {
                     slots: state.visibleSlots,
                     selectedIndex: state.visibleSelectedIndex,
                     unavailableIndices: state.visibleUnavailableIndices,
-                    onSelected: (visibleIndex) {
-                      viewModel.onUserIntent(
-                        OnSelectSlot(state.visibleSlots[visibleIndex]),
+                    onSlotTap: (visibleIndex) {
+                      _showSlotDetailsSheet(
+                        context,
+                        slot: state.visibleSlots[visibleIndex],
+                        date: state.selectedDate,
+                        isSelected: state.visibleSelectedIndex == visibleIndex,
                       );
                     },
                   ),
                 ),
               ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSlotDetailsSheet(
+    BuildContext context, {
+    required BookingSlotModel slot,
+    required DateTime date,
+    required bool isSelected,
+  }) async {
+    final localizations = MaterialLocalizations.of(context);
+    final prices = _slotCategoryPrices(slot);
+    var hasAgreedToTerms = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return FractionallySizedBox(
+              heightFactor: 0.9,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Slot Details',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                            tooltip: 'Close',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Review the tee time and category pricing before confirming this slot.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _SlotImportantDetailsPanel(
+                                dateLabel: localizations.formatFullDate(date),
+                                teeTimeSlot: slot.time,
+                                holeCount: '${slot.noOfHoles}',
+                              ),
+                              const SizedBox(height: 18),
+                              Text(
+                                'Category Pricing',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              ...prices.map(
+                                (price) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _CategoryPriceRow(
+                                    label: price.label,
+                                    description: price.description,
+                                    priceLabel: CurrencyUtil.formatPrice(
+                                      price.amount,
+                                      slot.currency,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F9FC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0x14000000)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                              value: hasAgreedToTerms,
+                              onChanged: (value) {
+                                setSheetState(() {
+                                  hasAgreedToTerms = value ?? false;
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 11),
+                                child: Text(
+                                  'I have agreed to the terms and conditions for this booking.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: isSubmittingHold || !hasAgreedToTerms
+                              ? null
+                              : () async {
+                                  Navigator.of(context).pop();
+                                  await onConfirmSlotPressed(slot);
+                                },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF0D7A3A),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                          child: isSubmittingHold
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Confirm Slot'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<_SlotCategoryPrice> _slotCategoryPrices(BookingSlotModel slot) {
+    return <_SlotCategoryPrice>[
+      _SlotCategoryPrice(
+        label: 'Normal',
+        description: 'Standard adult green fee',
+        amount: slot.price,
+      ),
+      _SlotCategoryPrice(
+        label: 'Senior',
+        description: 'Reduced rate for senior players',
+        amount: slot.price * 0.88,
+      ),
+      _SlotCategoryPrice(
+        label: 'Junior',
+        description: 'Reduced rate for junior players',
+        amount: slot.price * 0.72,
+      ),
+    ];
+  }
+}
+
+class _SlotCategoryPrice {
+  const _SlotCategoryPrice({
+    required this.label,
+    required this.description,
+    required this.amount,
+  });
+
+  final String label;
+  final String description;
+  final double amount;
+}
+
+class _SlotImportantDetailsPanel extends StatelessWidget {
+  const _SlotImportantDetailsPanel({
+    required this.dateLabel,
+    required this.teeTimeSlot,
+    required this.holeCount,
+  });
+
+  final String dateLabel;
+  final String teeTimeSlot;
+  final String holeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F8FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD8E4FF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _SlotHighlightStatCard(
+                  label: 'Date',
+                  value: dateLabel,
+                  backgroundColor: const Color(0xFFE8F0FF),
+                  foregroundColor: const Color(0xFF17397C),
+                  icon: Icons.calendar_today_outlined,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SlotHighlightStatCard(
+                  label: 'Tee Time',
+                  value: teeTimeSlot,
+                  backgroundColor: const Color(0xFFEAF7EF),
+                  foregroundColor: const Color(0xFF155B36),
+                  icon: Icons.schedule_outlined,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _SlotSheetInfoRow(label: 'Holes', value: holeCount),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotHighlightStatCard extends StatelessWidget {
+  const _SlotHighlightStatCard({
+    required this.label,
+    required this.value,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: foregroundColor),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: foregroundColor,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotSheetInfoRow extends StatelessWidget {
+  const _SlotSheetInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryPriceRow extends StatelessWidget {
+  const _CategoryPriceRow({
+    required this.label,
+    required this.description,
+    required this.priceLabel,
+  });
+
+  final String label;
+  final String description;
+  final String priceLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0x14000000)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            priceLabel,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: const Color(0xFF0D7A3A),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
@@ -338,27 +729,19 @@ class _SlotLoadingContainer extends StatelessWidget {
 }
 
 class _CalendarGateMessage extends StatelessWidget {
-  const _CalendarGateMessage({
-    required this.hasSelectedClub,
-    required this.hasAvailableGolfClubs,
-  });
+  const _CalendarGateMessage({required this.hasAvailableGolfClubs});
 
-  final bool hasSelectedClub;
   final bool hasAvailableGolfClubs;
 
   @override
   Widget build(BuildContext context) {
     return CardMessage(
-      title: !hasSelectedClub
-          ? hasAvailableGolfClubs
-                ? 'Please select a golf club'
-                : 'No Golf Clubs Available'
-          : 'Select a starting course first',
-      message: !hasSelectedClub
-          ? hasAvailableGolfClubs
-                ? 'Select a golf club to continue with the calendar and available time slots.'
-                : 'There are no golf clubs available right now.'
-          : 'Choose a starting course before the calendar becomes active.',
+      title: hasAvailableGolfClubs
+          ? 'Please select a golf club'
+          : 'No Golf Clubs Available',
+      message: hasAvailableGolfClubs
+          ? 'Select a golf club to continue with the calendar and available time slots.'
+          : 'There are no golf clubs available right now.',
       icon: Icons.golf_course_rounded,
     );
   }
@@ -366,33 +749,24 @@ class _CalendarGateMessage extends StatelessWidget {
 
 class _PlayerCountSection extends StatelessWidget {
   const _PlayerCountSection({
-    required this.normalPlayerCount,
-    required this.seniorPlayerCount,
-    required this.onNormalPlayerCountChanged,
-    required this.onSeniorPlayerCountChanged,
+    required this.playerCount,
+    required this.onPlayerCountChanged,
   });
 
-  final int normalPlayerCount;
-  final int seniorPlayerCount;
-  final ValueChanged<int> onNormalPlayerCountChanged;
-  final ValueChanged<int> onSeniorPlayerCountChanged;
+  final int playerCount;
+  final ValueChanged<int> onPlayerCountChanged;
 
   @override
   Widget build(BuildContext context) {
     return BookingSubmissionAddOnSelection(
       children: [
         _CounterPreferenceRow(
-          label: 'Normal',
-          value: normalPlayerCount,
-          minValue: 0,
-          onChanged: onNormalPlayerCountChanged,
-        ),
-        const Divider(height: 1),
-        _CounterPreferenceRow(
-          label: 'Senior Citizen',
-          value: seniorPlayerCount,
-          minValue: 0,
-          onChanged: onSeniorPlayerCountChanged,
+          label: 'Number of Players',
+          value: playerCount,
+          minValue: 2,
+          helperText:
+              'Player category will be selected on the next screen for each player.',
+          onChanged: onPlayerCountChanged,
         ),
       ],
     );
@@ -404,12 +778,14 @@ class _CounterPreferenceRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.minValue,
+    this.helperText,
     required this.onChanged,
   });
 
   final String label;
   final int value;
   final int minValue;
+  final String? helperText;
   final ValueChanged<int> onChanged;
 
   @override
@@ -421,11 +797,26 @@ class _CounterPreferenceRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (helperText != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    helperText!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           BookingSubmissionDetailCounterControl(
@@ -439,156 +830,5 @@ class _CounterPreferenceRow extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _SupportedNinePickerCard extends StatelessWidget {
-  const _SupportedNinePickerCard({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String value;
-  final List<String> options;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: options.isEmpty ? null : () => _showPicker(context),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x1F000000)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value.isNotEmpty
-                      ? _formatLabel(value)
-                      : 'Select starting course',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: value.isEmpty
-                        ? Colors.black54
-                        : const Color(0xFF0A1F1A),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF0A1F1A),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showPicker(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select Starting Course',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Choose the starting course for this booking.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-              ),
-              const SizedBox(height: 14),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: options.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final option = options[index];
-                    final isSelected = option == value;
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          onChanged(option);
-                        },
-                        child: Ink(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFF0F8F2)
-                                : const Color(0xFFF8F8F6),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF0D7A3A)
-                                  : const Color(0x14000000),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _formatLabel(option),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Color(0xFF0D7A3A),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatLabel(String value) {
-    return StringUtil.capitalizeFirst(value);
   }
 }

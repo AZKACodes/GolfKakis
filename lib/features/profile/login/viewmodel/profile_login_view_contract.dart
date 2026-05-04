@@ -1,6 +1,5 @@
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
-import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileLoginViewContract {
@@ -9,91 +8,77 @@ abstract class ProfileLoginViewContract {
   void onUserIntent(ProfileLoginUserIntent intent);
 }
 
-// ------ View State ------
-
 sealed class ProfileLoginViewState extends ViewState {
   const ProfileLoginViewState() : super();
 }
 
 class ProfileLoginDataLoaded extends ProfileLoginViewState {
   const ProfileLoginDataLoaded({
-    required this.name,
-    required this.countryCode,
-    required this.phoneNumber,
+    required this.username,
+    required this.password,
     required this.isSubmitting,
-    this.errorMessage,
-    this.infoMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
+    this.infoSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   static const initial = ProfileLoginDataLoaded(
-    name: '',
-    countryCode: PhoneUtil.defaultCountryCodeOption,
-    phoneNumber: '',
+    username: '',
+    password: '',
     isSubmitting: false,
   );
 
-  final String name;
-  final PhoneCountryCodeOption countryCode;
-  final String phoneNumber;
+  final String username;
+  final String password;
   final bool isSubmitting;
-  final String? errorMessage;
-  final String? infoMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+  final SnackbarMessageModel infoSnackbarMessageModel;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
+
+  String? get infoMessage => infoSnackbarMessageModel.hasMessage
+      ? infoSnackbarMessageModel.message
+      : null;
 
   bool get canSubmit =>
-      name.trim().isNotEmpty && phoneNumber.trim().isNotEmpty && !isSubmitting;
-
-  String get fullPhoneNumber {
-    final normalized = phoneNumber.trim();
-    if (normalized.isEmpty) {
-      return countryCode.dialCode;
-    }
-
-    return '${countryCode.dialCode} $normalized';
-  }
+      username.trim().isNotEmpty && password.trim().isNotEmpty && !isSubmitting;
 
   ProfileLoginDataLoaded copyWith({
-    String? name,
-    PhoneCountryCodeOption? countryCode,
-    String? phoneNumber,
+    String? username,
+    String? password,
     bool? isSubmitting,
-    String? errorMessage,
-    String? infoMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
+    SnackbarMessageModel? infoSnackbarMessageModel,
     bool clearErrorMessage = false,
     bool clearInfoMessage = false,
   }) {
     return ProfileLoginDataLoaded(
-      name: name ?? this.name,
-      countryCode: countryCode ?? this.countryCode,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
+      username: username ?? this.username,
+      password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
-      infoMessage: clearInfoMessage ? null : infoMessage ?? this.infoMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
+      infoSnackbarMessageModel: clearInfoMessage
+          ? SnackbarMessageModel.emptyValue
+          : infoSnackbarMessageModel ?? this.infoSnackbarMessageModel,
     );
   }
 }
-
-// ------ UserIntent ------
 
 sealed class ProfileLoginUserIntent extends UserIntent {
   const ProfileLoginUserIntent() : super();
 }
 
-class OnNameChanged extends ProfileLoginUserIntent {
-  const OnNameChanged(this.value);
+class OnUsernameChanged extends ProfileLoginUserIntent {
+  const OnUsernameChanged(this.value);
 
   final String value;
 }
 
-class OnCountryCodeChanged extends ProfileLoginUserIntent {
-  const OnCountryCodeChanged(this.value);
-
-  final PhoneCountryCodeOption value;
-}
-
-class OnPhoneChanged extends ProfileLoginUserIntent {
-  const OnPhoneChanged(this.value);
+class OnPasswordChanged extends ProfileLoginUserIntent {
+  const OnPasswordChanged(this.value);
 
   final String value;
 }
@@ -112,8 +97,6 @@ class OnRegisterClick extends ProfileLoginUserIntent {
   const OnRegisterClick();
 }
 
-// ------ NavEffect ------
-
 sealed class ProfileLoginNavEffect extends NavEffect {
   const ProfileLoginNavEffect() : super();
 }
@@ -122,17 +105,11 @@ class NavigateBack extends ProfileLoginNavEffect {
   const NavigateBack();
 }
 
-class LoginSucceeded extends ProfileLoginNavEffect {
-  const LoginSucceeded({required this.username, required this.role});
-
-  final String username;
-  final UserRole role;
-}
-
 class RequestOtpSucceeded extends ProfileLoginNavEffect {
-  const RequestOtpSucceeded({required this.response});
+  const RequestOtpSucceeded({required this.response, required this.username});
 
   final RequestOtpResponse response;
+  final String username;
 }
 
 class RegisterRequested extends ProfileLoginNavEffect {

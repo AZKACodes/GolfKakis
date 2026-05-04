@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
-import 'package:golf_kakis/features/foundation/util/string_util.dart';
 
 class BookingSubmissionSuccessContent extends StatelessWidget {
   const BookingSubmissionSuccessContent({required this.state, super.key});
@@ -113,20 +112,8 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
                         items: [
                           ('Players', '${state.playerCount}'),
                           ('Holes', _holeCountFromPlayType(state.playType)),
-                          (
-                            'Caddies',
-                            _formatMetricValue(
-                              count: state.caddieCount,
-                              preference: state.caddiePreference,
-                            ),
-                          ),
-                          (
-                            'Buggy',
-                            _formatMetricValue(
-                              count: state.golfCartCount,
-                              preference: state.buggySharingPreference,
-                            ),
-                          ),
+                          ('Caddies', '${state.caddieCount}'),
+                          ('Buggy', '${state.golfCartCount}'),
                         ],
                       ),
                     ],
@@ -190,21 +177,6 @@ String _formatBookingDate(String rawDate) {
 
 String _holeCountFromPlayType(String playType) {
   return playType == '18_holes' ? '18' : '9';
-}
-
-String _formatMetricValue({required int count, required String preference}) {
-  final formattedPreference = _formatEnumLabel(preference);
-  if (formattedPreference == 'None') {
-    return 'None';
-  }
-  if (formattedPreference == '-') {
-    return '$count';
-  }
-  return '$count • $formattedPreference';
-}
-
-String _formatEnumLabel(String value) {
-  return StringUtil.formatEnumLabel(value, fallback: '-');
 }
 
 class _DetailCard extends StatelessWidget {

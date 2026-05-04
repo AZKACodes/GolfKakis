@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_content.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 
 class BookingSubmissionDetailView extends StatelessWidget {
-  const BookingSubmissionDetailView({required this.viewModel, super.key});
+  const BookingSubmissionDetailView({
+    required this.viewModel,
+    required this.savedFriends,
+    required this.isLoadingFriends,
+    required this.onSaveFriend,
+    super.key,
+  });
 
   final BookingSubmissionDetailViewModel viewModel;
+  final List<ProfileFriendModel> savedFriends;
+  final bool isLoadingFriends;
+  final Future<void> Function(ProfileFriendModel friend) onSaveFriend;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +35,9 @@ class BookingSubmissionDetailView extends StatelessWidget {
             body: BookingSubmissionDetailContent(
               viewModel: viewModel,
               state: state,
+              savedFriends: savedFriends,
+              isLoadingFriends: isLoadingFriends,
+              onSaveFriend: onSaveFriend,
             ),
             bottomNavigationBar: SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),

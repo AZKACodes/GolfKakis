@@ -1,5 +1,7 @@
+import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class HomeViewContract {
@@ -16,31 +18,33 @@ sealed class HomeViewState implements ViewState {
 
 class HomeDataLoaded extends HomeViewState {
   const HomeDataLoaded({
-    this.message,
-    this.isLoading = false,
-    this.error,
     this.hotDeals = const <HomeHotDealViewData>[],
     this.quickBookItems = const <HomeQuickBookViewData>[],
+    this.message = emptyString,
+    this.isLoading = emptyBool,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
-  final String? message;
-  final bool isLoading;
-  final String? error;
   final List<HomeHotDealViewData> hotDeals;
   final List<HomeQuickBookViewData> quickBookItems;
+  final String message;
+  final bool isLoading;
+  final SnackbarMessageModel errorSnackbarMessageModel;
 
   HomeDataLoaded copyWith({
-    String? message,
-    bool? isLoading,
-    String? error,
     List<HomeHotDealViewData>? hotDeals,
     List<HomeQuickBookViewData>? quickBookItems,
+    String? message,
+    bool? isLoading,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearError = false,
   }) {
     return HomeDataLoaded(
       message: message ?? this.message,
       isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : (error ?? this.error),
+      errorSnackbarMessageModel: clearError
+          ? SnackbarMessageModel.emptyValue
+          : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
       hotDeals: hotDeals ?? this.hotDeals,
       quickBookItems: quickBookItems ?? this.quickBookItems,
     );
@@ -57,6 +61,10 @@ sealed class HomeUserIntent implements UserIntent {
 
 class OnInitHome extends HomeUserIntent {
   const OnInitHome();
+}
+
+class OnRefreshHome extends HomeUserIntent {
+  const OnRefreshHome();
 }
 
 class OnNewBookingClick extends HomeUserIntent {

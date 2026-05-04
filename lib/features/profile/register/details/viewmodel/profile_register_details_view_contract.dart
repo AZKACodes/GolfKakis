@@ -8,22 +8,21 @@ abstract class ProfileRegisterDetailsViewContract {
 
 class ProfileRegisterDetailsViewState extends ViewState {
   const ProfileRegisterDetailsViewState({
-    required this.phoneNumber,
-    required this.name,
+    required this.username,
+    required this.fullName,
     required this.nickname,
     required this.occupation,
     required this.requiresOccupation,
     required this.isSubmitting,
-    this.errorMessage,
   }) : super();
 
   factory ProfileRegisterDetailsViewState.initial({
-    required String phoneNumber,
+    required String username,
     required bool requiresOccupation,
   }) {
     return ProfileRegisterDetailsViewState(
-      phoneNumber: phoneNumber,
-      name: '',
+      username: username,
+      fullName: '',
       nickname: '',
       occupation: '',
       requiresOccupation: requiresOccupation,
@@ -31,40 +30,28 @@ class ProfileRegisterDetailsViewState extends ViewState {
     );
   }
 
-  final String phoneNumber;
-  final String name;
+  final String username;
+  final String fullName;
   final String nickname;
   final String occupation;
   final bool requiresOccupation;
   final bool isSubmitting;
-  final String? errorMessage;
-
-  bool get canSubmit =>
-      name.trim().isNotEmpty &&
-      nickname.trim().isNotEmpty &&
-      (!requiresOccupation || occupation.trim().isNotEmpty) &&
-      !isSubmitting;
 
   ProfileRegisterDetailsViewState copyWith({
-    String? phoneNumber,
-    String? name,
+    String? username,
+    String? fullName,
     String? nickname,
     String? occupation,
     bool? requiresOccupation,
     bool? isSubmitting,
-    String? errorMessage,
-    bool clearErrorMessage = false,
   }) {
     return ProfileRegisterDetailsViewState(
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      name: name ?? this.name,
+      username: username ?? this.username,
+      fullName: fullName ?? this.fullName,
       nickname: nickname ?? this.nickname,
       occupation: occupation ?? this.occupation,
       requiresOccupation: requiresOccupation ?? this.requiresOccupation,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
     );
   }
 }
@@ -73,8 +60,8 @@ sealed class ProfileRegisterDetailsUserIntent extends UserIntent {
   const ProfileRegisterDetailsUserIntent() : super();
 }
 
-class OnRegisterNameChanged extends ProfileRegisterDetailsUserIntent {
-  const OnRegisterNameChanged(this.value);
+class OnRegisterFullNameChanged extends ProfileRegisterDetailsUserIntent {
+  const OnRegisterFullNameChanged(this.value);
 
   final String value;
 }
@@ -91,8 +78,12 @@ class OnRegisterOccupationChanged extends ProfileRegisterDetailsUserIntent {
   final String value;
 }
 
-class OnRegisterDetailsSubmitClick extends ProfileRegisterDetailsUserIntent {
-  const OnRegisterDetailsSubmitClick();
+class OnRegisterDetailsContinueClick extends ProfileRegisterDetailsUserIntent {
+  const OnRegisterDetailsContinueClick();
+}
+
+class OnRegisterDetailsSkipClick extends ProfileRegisterDetailsUserIntent {
+  const OnRegisterDetailsSkipClick();
 }
 
 class OnRegisterDetailsBackClick extends ProfileRegisterDetailsUserIntent {
@@ -107,18 +98,20 @@ class RegisterDetailsNavigateBack extends ProfileRegisterDetailsNavEffect {
   const RegisterDetailsNavigateBack();
 }
 
-class RegisterDetailsCompleted extends ProfileRegisterDetailsNavEffect {
-  const RegisterDetailsCompleted({
+class RegisterDetailsNavigateToPhone extends ProfileRegisterDetailsNavEffect {
+  const RegisterDetailsNavigateToPhone({
+    required this.username,
+    required this.password,
     required this.fullName,
     required this.nickname,
     required this.occupation,
-    required this.email,
-    required this.phoneNumber,
+    required this.requiresOccupation,
   });
 
+  final String username;
+  final String password;
   final String fullName;
   final String nickname;
   final String occupation;
-  final String email;
-  final String phoneNumber;
+  final bool requiresOccupation;
 }

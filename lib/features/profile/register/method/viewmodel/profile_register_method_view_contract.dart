@@ -1,6 +1,5 @@
-import 'package:golf_kakis/features/foundation/util/phone_util.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileRegisterMethodViewContract {
   ProfileRegisterMethodViewState get viewState;
@@ -10,61 +9,52 @@ abstract class ProfileRegisterMethodViewContract {
 
 class ProfileRegisterMethodViewState extends ViewState {
   const ProfileRegisterMethodViewState({
-    required this.name,
-    required this.countryCode,
-    required this.phoneNumber,
+    required this.username,
+    required this.password,
+    required this.confirmPassword,
     required this.isSubmitting,
-    this.errorMessage,
-    this.infoMessage,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   static const initial = ProfileRegisterMethodViewState(
-    name: '',
-    countryCode: PhoneUtil.defaultCountryCodeOption,
-    phoneNumber: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
     isSubmitting: false,
   );
 
-  final String name;
-  final PhoneCountryCodeOption countryCode;
-  final String phoneNumber;
+  final String username;
+  final String password;
+  final String confirmPassword;
   final bool isSubmitting;
-  final String? errorMessage;
-  final String? infoMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
 
-  bool get canContinuePhone =>
-      name.trim().isNotEmpty &&
-      phoneNumber.trim().isNotEmpty &&
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
+
+  bool get canContinue =>
+      username.trim().isNotEmpty &&
+      password.isNotEmpty &&
+      confirmPassword.isNotEmpty &&
       !isSubmitting;
 
-  String get fullPhoneNumber {
-    final normalized = phoneNumber.trim();
-    if (normalized.isEmpty) {
-      return countryCode.dialCode;
-    }
-
-    return '${countryCode.dialCode} $normalized';
-  }
-
   ProfileRegisterMethodViewState copyWith({
-    String? name,
-    PhoneCountryCodeOption? countryCode,
-    String? phoneNumber,
+    String? username,
+    String? password,
+    String? confirmPassword,
     bool? isSubmitting,
-    String? errorMessage,
-    String? infoMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
-    bool clearInfoMessage = false,
   }) {
     return ProfileRegisterMethodViewState(
-      name: name ?? this.name,
-      countryCode: countryCode ?? this.countryCode,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
+      username: username ?? this.username,
+      password: password ?? this.password,
+      confirmPassword: confirmPassword ?? this.confirmPassword,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
-      infoMessage: clearInfoMessage ? null : infoMessage ?? this.infoMessage,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }
@@ -73,28 +63,26 @@ sealed class ProfileRegisterMethodUserIntent extends UserIntent {
   const ProfileRegisterMethodUserIntent() : super();
 }
 
-class OnRegisterNameChanged extends ProfileRegisterMethodUserIntent {
-  const OnRegisterNameChanged(this.value);
+class OnRegisterUsernameChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterUsernameChanged(this.value);
 
   final String value;
 }
 
-class OnRegisterPhoneChanged extends ProfileRegisterMethodUserIntent {
-  const OnRegisterPhoneChanged(this.value);
+class OnRegisterPasswordChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterPasswordChanged(this.value);
 
   final String value;
 }
 
-class OnRegisterCountryCodeSelected extends ProfileRegisterMethodUserIntent {
-  const OnRegisterCountryCodeSelected(this.value);
+class OnRegisterConfirmPasswordChanged extends ProfileRegisterMethodUserIntent {
+  const OnRegisterConfirmPasswordChanged(this.value);
 
-  final PhoneCountryCodeOption value;
+  final String value;
 }
 
 class OnRegisterMethodContinueClick extends ProfileRegisterMethodUserIntent {
-  const OnRegisterMethodContinueClick({required this.visitorId});
-
-  final String visitorId;
+  const OnRegisterMethodContinueClick();
 }
 
 class OnRegisterMethodBackClick extends ProfileRegisterMethodUserIntent {
@@ -109,12 +97,12 @@ class RegisterMethodNavigateBack extends ProfileRegisterMethodNavEffect {
   const RegisterMethodNavigateBack();
 }
 
-class RegisterMethodNavigateToOtp extends ProfileRegisterMethodNavEffect {
-  const RegisterMethodNavigateToOtp({
-    required this.response,
+class RegisterMethodNavigateToAbout extends ProfileRegisterMethodNavEffect {
+  const RegisterMethodNavigateToAbout({
+    required this.username,
     required this.password,
   });
 
-  final RequestOtpResponse response;
+  final String username;
   final String password;
 }

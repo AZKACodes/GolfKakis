@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
@@ -33,9 +34,6 @@ class BookingSubmissionConfirmationDataLoaded
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
-    this.caddiePreference = 'none',
-    this.buggyType = 'normal',
-    this.buggySharingPreference = 'shared',
     this.selectedNine,
     this.caddieCount = 0,
     this.golfCartCount = 0,
@@ -43,7 +41,7 @@ class BookingSubmissionConfirmationDataLoaded
     this.remainingHoldSeconds = 0,
     this.isHoldExpired = false,
     this.isSubmitting = false,
-    this.errorMessage = emptyString,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : holdExpiresAt = holdExpiresAt ?? DateTime.now(),
        selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
        super();
@@ -65,9 +63,6 @@ class BookingSubmissionConfirmationDataLoaded
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;
@@ -75,7 +70,9 @@ class BookingSubmissionConfirmationDataLoaded
   final int remainingHoldSeconds;
   final bool isHoldExpired;
   final bool isSubmitting;
-  final String errorMessage;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String get errorMessage => errorSnackbarMessageModel.message;
 
   String get pricePerPersonLabel =>
       CurrencyUtil.formatPrice(pricePerPerson, currency);
@@ -106,9 +103,6 @@ class BookingSubmissionConfirmationDataLoaded
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
-    String? caddiePreference,
-    String? buggyType,
-    String? buggySharingPreference,
     String? selectedNine,
     int? caddieCount,
     int? golfCartCount,
@@ -116,7 +110,7 @@ class BookingSubmissionConfirmationDataLoaded
     int? remainingHoldSeconds,
     bool? isHoldExpired,
     bool? isSubmitting,
-    String? errorMessage,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
     return BookingSubmissionConfirmationDataLoaded(
@@ -133,10 +127,6 @@ class BookingSubmissionConfirmationDataLoaded
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,
-      caddiePreference: caddiePreference ?? this.caddiePreference,
-      buggyType: buggyType ?? this.buggyType,
-      buggySharingPreference:
-          buggySharingPreference ?? this.buggySharingPreference,
       selectedNine: selectedNine ?? this.selectedNine,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
@@ -144,9 +134,9 @@ class BookingSubmissionConfirmationDataLoaded
       remainingHoldSeconds: remainingHoldSeconds ?? this.remainingHoldSeconds,
       isHoldExpired: isHoldExpired ?? this.isHoldExpired,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: clearErrorMessage
-          ? emptyString
-          : (errorMessage ?? this.errorMessage),
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
     );
   }
 }
@@ -170,9 +160,6 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
-    required this.caddiePreference,
-    required this.buggyType,
-    required this.buggySharingPreference,
     this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
@@ -192,9 +179,6 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;

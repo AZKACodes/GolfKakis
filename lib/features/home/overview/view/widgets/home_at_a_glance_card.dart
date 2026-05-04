@@ -41,7 +41,9 @@ class HomeAtAGlanceCard extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
+
           const SizedBox(height: 8),
+          
           Text(
             'Your next round starts here.',
             style: theme.textTheme.bodyLarge?.copyWith(

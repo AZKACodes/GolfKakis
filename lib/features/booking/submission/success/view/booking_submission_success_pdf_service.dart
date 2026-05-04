@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
-import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -81,20 +80,8 @@ class BookingSubmissionSuccessPdfService {
                         items: [
                           ('Players', '${state.playerCount}'),
                           ('Holes', state.playType == '18_holes' ? '18' : '9'),
-                          (
-                            'Caddies',
-                            _formatMetricValue(
-                              count: state.caddieCount,
-                              preference: state.caddiePreference,
-                            ),
-                          ),
-                          (
-                            'Buggy',
-                            _formatMetricValue(
-                              count: state.golfCartCount,
-                              preference: state.buggySharingPreference,
-                            ),
-                          ),
+                          ('Caddies', '${state.caddieCount}'),
+                          ('Buggy', '${state.golfCartCount}'),
                         ],
                       ),
                     ],
@@ -268,24 +255,6 @@ class BookingSubmissionSuccessPdfService {
     ];
     final month = months[parsed.month - 1];
     return '${parsed.day} $month ${parsed.year}';
-  }
-
-  static String _formatMetricValue({
-    required int count,
-    required String preference,
-  }) {
-    final formattedPreference = _formatEnumLabel(preference);
-    if (formattedPreference == 'None') {
-      return 'None';
-    }
-    if (formattedPreference == '-') {
-      return '$count';
-    }
-    return '$count - $formattedPreference';
-  }
-
-  static String _formatEnumLabel(String value) {
-    return _safeText(StringUtil.formatEnumLabel(value, fallback: '-'));
   }
 
   static String _safeText(String value) {

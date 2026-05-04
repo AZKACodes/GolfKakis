@@ -1,5 +1,4 @@
-import 'package:golf_kakis/features/foundation/network/network.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'profile_register_method_view_contract.dart';
@@ -12,11 +11,6 @@ class ProfileRegisterMethodViewModel
           ProfileRegisterMethodNavEffect
         >
     implements ProfileRegisterMethodViewContract {
-  ProfileRegisterMethodViewModel({ProfileApiService? profileApiService})
-    : _profileApiService = profileApiService ?? ProfileApiService();
-
-  final ProfileApiService _profileApiService;
-
   @override
   ProfileRegisterMethodViewState createInitialState() {
     return ProfileRegisterMethodViewState.initial;
@@ -25,86 +19,70 @@ class ProfileRegisterMethodViewModel
   @override
   Future<void> handleIntent(ProfileRegisterMethodUserIntent intent) async {
     switch (intent) {
-      case OnRegisterNameChanged():
+      case OnRegisterUsernameChanged():
         emitViewState(
-          (state) => state.copyWith(
-            name: intent.value,
-            clearErrorMessage: true,
-            clearInfoMessage: true,
-          ),
+          (state) =>
+              state.copyWith(username: intent.value, clearErrorMessage: true),
         );
-      case OnRegisterPhoneChanged():
+      case OnRegisterPasswordChanged():
         emitViewState(
-          (state) => state.copyWith(
-            phoneNumber: intent.value,
-            clearErrorMessage: true,
-            clearInfoMessage: true,
-          ),
+          (state) =>
+              state.copyWith(password: intent.value, clearErrorMessage: true),
         );
-      case OnRegisterCountryCodeSelected():
+      case OnRegisterConfirmPasswordChanged():
         emitViewState(
           (state) => state.copyWith(
-            countryCode: intent.value,
+            confirmPassword: intent.value,
             clearErrorMessage: true,
-            clearInfoMessage: true,
           ),
         );
       case OnRegisterMethodContinueClick():
-        await _continueRegistration(visitorId: intent.visitorId);
+        await _continueRegistration();
       case OnRegisterMethodBackClick():
         sendNavEffect(() => const RegisterMethodNavigateBack());
     }
   }
 
-  Future<void> _continueRegistration({required String visitorId}) async {
-    if (!currentState.canContinuePhone) {
+  Future<void> _continueRegistration() async {
+    if (!currentState.canContinue) {
       emitViewState(
         (state) => state.copyWith(
-          errorMessage: 'Enter your name and phone number to continue.',
-          clearInfoMessage: true,
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message:
+                'Enter your username, password, and confirm your password to continue.',
+          ),
         ),
       );
       return;
     }
 
-    emitViewState(
-      (state) => state.copyWith(
-        isSubmitting: true,
-        clearErrorMessage: true,
-        clearInfoMessage: true,
+    if (currentState.password != currentState.confirmPassword) {
+      emitViewState(
+        (state) => state.copyWith(
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Password and confirm password must match.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (currentState.password.length < 6) {
+      emitViewState(
+        (state) => state.copyWith(
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Password must be at least 6 characters.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    sendNavEffect(
+      () => RegisterMethodNavigateToAbout(
+        username: currentState.username.trim(),
+        password: currentState.password,
       ),
     );
-
-    try {
-      final response = await _profileApiService.onRequestOtp(
-        name: currentState.name.trim(),
-        phoneNumber: currentState.fullPhoneNumber.replaceAll(' ', ''),
-        visitorId: visitorId,
-      );
-
-      emitViewState((state) => state.copyWith(isSubmitting: false));
-      sendNavEffect(
-        () => RegisterMethodNavigateToOtp(
-          response: response,
-          password: '',
-        ),
-      );
-    } on ApiException catch (error) {
-      emitViewState(
-        (state) => state.copyWith(
-          isSubmitting: false,
-          errorMessage: error.message,
-          clearInfoMessage: true,
-        ),
-      );
-    } catch (_) {
-      emitViewState(
-        (state) => state.copyWith(
-          isSubmitting: false,
-          errorMessage: 'Unable to request OTP right now.',
-          clearInfoMessage: true,
-        ),
-      );
-    }
   }
 }

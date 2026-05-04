@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'profile_edit_view_contract.dart';
@@ -89,7 +90,9 @@ class ProfileEditViewModel
     if (!_currentDataState.canSave) {
       emitViewState(
         (_) => _currentDataState.copyWith(
-          errorMessage: 'Enter your name, nickname, and occupation to save.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Enter your name, nickname, and occupation to save.',
+          ),
           clearMessage: true,
         ),
       );
@@ -107,7 +110,9 @@ class ProfileEditViewModel
     emitViewState(
       (_) => _currentDataState.copyWith(
         isSaving: false,
-        message: 'Profile updated for this demo session.',
+        snackbarMessageModel: const SnackbarMessageModel(
+          message: 'Profile updated for this demo session.',
+        ),
       ),
     );
     sendNavEffect(() => const ProfileEditSaved());

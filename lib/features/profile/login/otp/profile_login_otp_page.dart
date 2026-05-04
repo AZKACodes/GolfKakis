@@ -1,22 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/profile/login/domain/profile_login_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/login/otp/view/profile_login_otp_view.dart';
 import 'package:golf_kakis/features/profile/login/otp/viewmodel/profile_login_otp_view_contract.dart';
 import 'package:golf_kakis/features/profile/login/otp/viewmodel/profile_login_otp_view_model.dart';
 
 class ProfileLoginOtpPage extends StatefulWidget {
   const ProfileLoginOtpPage({
-    required this.name,
+    required this.username,
     required this.phoneNumber,
     required this.requestMessage,
     required this.visitorId,
     super.key,
   });
 
-  final String name;
+  final String username;
   final String phoneNumber;
   final String requestMessage;
   final String visitorId;
@@ -33,8 +35,9 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileLoginOtpViewModel(
-      name: widget.name,
+      username: widget.username,
       phoneNumber: widget.phoneNumber,
+      useCase: ProfileLoginUseCaseImpl.create(),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,9 +72,13 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
       case LoginOtpNavigateBack():
         Navigator.of(context).maybePop();
       case LoginOtpVerified():
-        Navigator.of(
-          context,
-        ).pop(LoginOtpSuccessResult(response: effect.response));
+        Navigator.of(context).pop(
+          LoginOtpSuccessResult(
+            response: effect.response,
+            username: effect.username,
+            role: UserRole.user,
+          ),
+        );
     }
   }
 
@@ -111,7 +118,13 @@ class _ProfileLoginOtpPageState extends State<ProfileLoginOtpPage> {
 }
 
 class LoginOtpSuccessResult {
-  const LoginOtpSuccessResult({required this.response});
+  const LoginOtpSuccessResult({
+    required this.response,
+    required this.username,
+    required this.role,
+  });
 
   final VerifyOtpResponse response;
+  final String username;
+  final UserRole role;
 }

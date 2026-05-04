@@ -5,18 +5,20 @@ import '../viewmodel/profile_register_details_view_contract.dart';
 class ProfileRegisterDetailsView extends StatefulWidget {
   const ProfileRegisterDetailsView({
     required this.state,
-    required this.onNameChanged,
+    required this.onFullNameChanged,
     required this.onNicknameChanged,
     required this.onOccupationChanged,
-    required this.onSubmitClick,
+    required this.onContinueClick,
+    required this.onSkipClick,
     super.key,
   });
 
   final ProfileRegisterDetailsViewState state;
-  final ValueChanged<String> onNameChanged;
+  final ValueChanged<String> onFullNameChanged;
   final ValueChanged<String> onNicknameChanged;
   final ValueChanged<String> onOccupationChanged;
-  final VoidCallback onSubmitClick;
+  final VoidCallback onContinueClick;
+  final VoidCallback onSkipClick;
 
   @override
   State<ProfileRegisterDetailsView> createState() =>
@@ -25,14 +27,14 @@ class ProfileRegisterDetailsView extends StatefulWidget {
 
 class _ProfileRegisterDetailsViewState
     extends State<ProfileRegisterDetailsView> {
-  late final TextEditingController _nameController;
+  late final TextEditingController _fullNameController;
   late final TextEditingController _nicknameController;
   late final TextEditingController _occupationController;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.state.name);
+    _fullNameController = TextEditingController(text: widget.state.fullName);
     _nicknameController = TextEditingController(text: widget.state.nickname);
     _occupationController = TextEditingController(
       text: widget.state.occupation,
@@ -42,8 +44,8 @@ class _ProfileRegisterDetailsViewState
   @override
   void didUpdateWidget(covariant ProfileRegisterDetailsView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_nameController.text != widget.state.name) {
-      _nameController.text = widget.state.name;
+    if (_fullNameController.text != widget.state.fullName) {
+      _fullNameController.text = widget.state.fullName;
     }
     if (_nicknameController.text != widget.state.nickname) {
       _nicknameController.text = widget.state.nickname;
@@ -55,7 +57,7 @@ class _ProfileRegisterDetailsViewState
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _fullNameController.dispose();
     _nicknameController.dispose();
     _occupationController.dispose();
     super.dispose();
@@ -96,46 +98,25 @@ class _ProfileRegisterDetailsViewState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tell me about yourself',
+                      'Tell me more about yourself',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.state.requiresOccupation
-                          ? 'Complete your name, username, and occupation for ${widget.state.phoneNumber}.'
-                          : 'Complete your name and username for ${widget.state.phoneNumber}.',
+                      'You can skip this for now and update it later from Edit Profile.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.black54,
                       ),
                     ),
-                    if (widget.state.errorMessage != null) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFDECEC),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE7A1A1)),
-                        ),
-                        child: Text(
-                          widget.state.errorMessage!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF8A3D3D),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 18),
                     TextField(
-                      controller: _nameController,
+                      controller: _fullNameController,
                       textInputAction: TextInputAction.next,
-                      onChanged: widget.onNameChanged,
+                      onChanged: widget.onFullNameChanged,
                       decoration: InputDecoration(
-                        labelText: 'Name',
+                        labelText: 'Full name',
                         prefixIcon: const Icon(Icons.person_outline),
                         filled: true,
                         fillColor: const Color(0xFFF6F8FC),
@@ -180,20 +161,24 @@ class _ProfileRegisterDetailsViewState
                       ),
                       const SizedBox(height: 18),
                     ] else
-                      const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: widget.state.isSubmitting
-                            ? null
-                            : widget.onSubmitClick,
-                        child: const Text('Complete Registration'),
-                      ),
+                      const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: widget.onSkipClick,
+                            child: const Text('Skip for now'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: widget.onContinueClick,
+                            child: const Text('Continue'),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (widget.state.isSubmitting) ...[
-                      const SizedBox(height: 14),
-                      const LinearProgressIndicator(),
-                    ],
                   ],
                 ),
               ),

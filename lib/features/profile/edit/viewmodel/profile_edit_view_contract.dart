@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ProfileEditViewContract {
@@ -22,8 +23,8 @@ class ProfileEditDataLoaded extends ProfileEditViewState {
     required this.phoneNumber,
     required this.avatarIndex,
     required this.isSaving,
-    this.message,
-    this.errorMessage,
+    this.snackbarMessageModel = SnackbarMessageModel.emptyValue,
+    this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
   factory ProfileEditDataLoaded.fromProfile(UserProfileModel profile) {
@@ -45,8 +46,15 @@ class ProfileEditDataLoaded extends ProfileEditViewState {
   final String phoneNumber;
   final int avatarIndex;
   final bool isSaving;
-  final String? message;
-  final String? errorMessage;
+  final SnackbarMessageModel snackbarMessageModel;
+  final SnackbarMessageModel errorSnackbarMessageModel;
+
+  String? get message =>
+      snackbarMessageModel.hasMessage ? snackbarMessageModel.message : null;
+
+  String? get errorMessage => errorSnackbarMessageModel.hasMessage
+      ? errorSnackbarMessageModel.message
+      : null;
 
   bool get canSave =>
       fullName.trim().isNotEmpty &&
@@ -62,8 +70,8 @@ class ProfileEditDataLoaded extends ProfileEditViewState {
     String? phoneNumber,
     int? avatarIndex,
     bool? isSaving,
-    String? message,
-    String? errorMessage,
+    SnackbarMessageModel? snackbarMessageModel,
+    SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearMessage = false,
     bool clearErrorMessage = false,
   }) {
@@ -75,10 +83,12 @@ class ProfileEditDataLoaded extends ProfileEditViewState {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       avatarIndex: avatarIndex ?? this.avatarIndex,
       isSaving: isSaving ?? this.isSaving,
-      message: clearMessage ? null : message ?? this.message,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      snackbarMessageModel: clearMessage
+          ? SnackbarMessageModel.emptyValue
+          : snackbarMessageModel ?? this.snackbarMessageModel,
+      errorSnackbarMessageModel: clearErrorMessage
+          ? SnackbarMessageModel.emptyValue
+          : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
 }

@@ -35,7 +35,9 @@ class GolfClubDetailView extends StatelessWidget {
             address: club.address,
             bestForLabel: detail.bestForLabel,
           ),
+
           const SizedBox(height: 24),
+
           _SectionCard(
             title: 'About This Club',
             child: Text(
@@ -46,7 +48,9 @@ class GolfClubDetailView extends StatelessWidget {
               ),
             ),
           ),
+
           const SizedBox(height: 16),
+
           _SectionCard(
             title: 'Facilities',
             child: Wrap(
@@ -58,7 +62,9 @@ class GolfClubDetailView extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
+
           _SectionCard(
             title: 'Course Snapshot',
             child: Column(
@@ -72,7 +78,9 @@ class GolfClubDetailView extends StatelessWidget {
                         value: '${club.noOfHoles}',
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
                     Expanded(
                       child: _SnapshotTile(
                         icon: Icons.wb_sunny_outlined,
@@ -82,7 +90,9 @@ class GolfClubDetailView extends StatelessWidget {
                             : detail.nextSlotLabel,
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
                     Expanded(
                       child: _SnapshotTile(
                         icon: Icons.event_outlined,
@@ -94,8 +104,10 @@ class GolfClubDetailView extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 if (detail.weather != null) ...[
                   const SizedBox(height: 14),
+
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
@@ -114,7 +126,9 @@ class GolfClubDetailView extends StatelessWidget {
                             color: Colors.black87,
                           ),
                         ),
+
                         const SizedBox(height: 10),
+
                         Row(
                           children: [
                             Container(
@@ -131,7 +145,9 @@ class GolfClubDetailView extends StatelessWidget {
                                 color: const Color(0xFF173B7A),
                               ),
                             ),
+
                             const SizedBox(width: 12),
+
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +159,9 @@ class GolfClubDetailView extends StatelessWidget {
                                       color: Colors.black87,
                                     ),
                                   ),
+
                                   const SizedBox(height: 2),
+
                                   Text(
                                     'Now ${detail.weather!.temperatureCelsius} C • Wind ${detail.weather!.windSpeedKph} km/h',
                                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -151,7 +169,9 @@ class GolfClubDetailView extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
+
                                   const SizedBox(height: 2),
+
                                   Text(
                                     'High ${detail.weather!.highCelsius} C • Low ${detail.weather!.lowCelsius} C',
                                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -171,7 +191,9 @@ class GolfClubDetailView extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: 18),
+          
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

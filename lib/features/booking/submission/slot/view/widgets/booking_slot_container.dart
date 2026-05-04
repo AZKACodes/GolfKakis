@@ -10,13 +10,13 @@ class BookingSlotContainer extends StatelessWidget {
     required this.slots,
     required this.selectedIndex,
     required this.unavailableIndices,
-    required this.onSelected,
+    required this.onSlotTap,
   });
 
   final List<BookingSlotModel> slots;
   final int? selectedIndex;
   final Set<int> unavailableIndices;
-  final ValueChanged<int> onSelected;
+  final ValueChanged<int> onSlotTap;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class BookingSlotContainer extends StatelessWidget {
                   : Colors.black12;
 
               return InkWell(
-                onTap: isUnavailable ? null : () => onSelected(index),
+                onTap: isUnavailable ? null : () => onSlotTap(index),
                 borderRadius: BorderRadius.circular(18),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 170),
@@ -144,7 +144,7 @@ class BookingSlotContainer extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Price / pax',
+                                  'Starting from',
                                   style: Theme.of(context).textTheme.labelSmall
                                       ?.copyWith(
                                         color: textColor.withValues(
@@ -160,7 +160,6 @@ class BookingSlotContainer extends StatelessWidget {
                                   CurrencyUtil.formatPrice(
                                     slot.price,
                                     slot.currency,
-                                    suffix: '/ pax',
                                   ),
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
@@ -275,6 +274,20 @@ class BookingSlotContainer extends StatelessWidget {
                             ),
                           ),
                         ),
+
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          'Tap to view slot details and category pricing',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: textColor.withValues(
+                                  alpha: isSelected ? 0.82 : 0.68,
+                                ),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -1,7 +1,8 @@
-import 'package:golf_kakis/features/booking/edit/data/booking_edit_repository.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/booking_edit_use_case.dart';
 import 'booking_edit_view_contract.dart';
 
 class BookingEditViewModel
@@ -13,12 +14,12 @@ class BookingEditViewModel
         >
     implements BookingEditViewContract {
   BookingEditViewModel({
-    required BookingEditRepository repository,
+    required BookingEditUseCase useCase,
     required BookingEditViewState initialState,
-  }) : _repository = repository,
+  }) : _useCase = useCase,
        _initialState = initialState;
 
-  final BookingEditRepository _repository;
+  final BookingEditUseCase _useCase;
   final BookingEditViewState _initialState;
 
   @override
@@ -72,9 +73,7 @@ class BookingEditViewModel
     );
 
     try {
-      final result = await _repository.onSaveBooking(
-        booking: currentState.booking,
-      );
+      final result = await _useCase.saveBooking(booking: currentState.booking);
       emitViewState(
         (state) => state.copyWith(
           booking: result.booking,
@@ -87,7 +86,9 @@ class BookingEditViewModel
       emitViewState(
         (state) => state.copyWith(
           isSaving: false,
-          errorMessage: 'Unable to save booking changes right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to save booking changes right now.',
+          ),
         ),
       );
     }

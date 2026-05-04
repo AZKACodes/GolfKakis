@@ -5,6 +5,9 @@ import 'package:golf_kakis/features/booking/submission/detail/view/booking_submi
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
   const BookingSubmissionDetailPage({
@@ -21,11 +24,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
     required this.pricePerPerson,
     required this.currency,
     this.initialPlayerCount = 4,
-    this.initialNormalPlayerCount = 4,
-    this.initialSeniorPlayerCount = 0,
-    this.caddiePreference = 'none',
-    this.buggyType = 'normal',
-    this.buggySharingPreference = 'shared',
+    this.initialCaddieCount = 0,
+    this.initialGolfCartCount = 0,
     this.selectedNine,
     this.initialPlayerName = '',
     this.initialPlayerPhoneNumber = '',
@@ -46,11 +46,8 @@ class BookingSubmissionDetailPage extends StatefulWidget {
   final double pricePerPerson;
   final String currency;
   final int initialPlayerCount;
-  final int initialNormalPlayerCount;
-  final int initialSeniorPlayerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
+  final int initialCaddieCount;
+  final int initialGolfCartCount;
   final String? selectedNine;
   final String initialPlayerName;
   final String initialPlayerPhoneNumber;
@@ -64,13 +61,19 @@ class BookingSubmissionDetailPage extends StatefulWidget {
 class _BookingSubmissionDetailPageState
     extends State<BookingSubmissionDetailPage> {
   late final BookingSubmissionDetailViewModel _viewModel;
+  late final ProfileFriendsUseCaseImpl _friendsUseCase;
   StreamSubscription<BookingSubmissionDetailNavEffect>? _navEffectSubscription;
+  List<ProfileFriendModel> _savedFriends = const <ProfileFriendModel>[];
+  bool _isLoadingFriends = false;
+  String? _friendsOwnerId;
+  bool _didLoadFriends = false;
 
   @override
   void initState() {
     super.initState();
 
     _viewModel = BookingSubmissionDetailViewModel();
+    _friendsUseCase = ProfileFriendsUseCaseImpl.create();
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
 
@@ -89,17 +92,33 @@ class _BookingSubmissionDetailPageState
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
         initialPlayerCount: widget.initialPlayerCount,
-        initialNormalPlayerCount: widget.initialNormalPlayerCount,
-        initialSeniorPlayerCount: widget.initialSeniorPlayerCount,
-        caddiePreference: widget.caddiePreference,
-        buggyType: widget.buggyType,
-        buggySharingPreference: widget.buggySharingPreference,
+        initialCaddieCount: widget.initialCaddieCount,
+        initialGolfCartCount: widget.initialGolfCartCount,
         selectedNine: widget.selectedNine,
         initialPlayerName: widget.initialPlayerName,
         initialPlayerPhoneNumber: widget.initialPlayerPhoneNumber,
         guestId: widget.guestId,
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadFriends) {
+      return;
+    }
+    _didLoadFriends = true;
+    final session = SessionScope.of(context).state;
+    _friendsOwnerId = session.authUserId?.trim().isNotEmpty == true
+        ? session.authUserId!.trim()
+        : session.deviceId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _loadSavedFriends();
+    });
   }
 
   @override
@@ -131,9 +150,6 @@ class _BookingSubmissionDetailPageState
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,
               playerCount: effect.playerCount,
-              caddiePreference: effect.caddiePreference,
-              buggyType: effect.buggyType,
-              buggySharingPreference: effect.buggySharingPreference,
               selectedNine: effect.selectedNine,
               caddieCount: effect.caddieCount,
               golfCartCount: effect.golfCartCount,
@@ -180,6 +196,79 @@ class _BookingSubmissionDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    return BookingSubmissionDetailView(viewModel: _viewModel);
+    return BookingSubmissionDetailView(
+      viewModel: _viewModel,
+      savedFriends: _savedFriends,
+      isLoadingFriends: _isLoadingFriends,
+      onSaveFriend: _saveFriendFromBooking,
+    );
+  }
+
+  Future<void> _loadSavedFriends() async {
+    final ownerId = _friendsOwnerId;
+    if (ownerId == null || ownerId.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingFriends = true;
+    });
+
+    try {
+      final result = await _friendsUseCase.fetchFriends(ownerId: ownerId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _savedFriends = result.friends;
+        _isLoadingFriends = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingFriends = false;
+      });
+    }
+  }
+
+  Future<void> _saveFriendFromBooking(ProfileFriendModel friend) async {
+    final ownerId = _friendsOwnerId;
+    if (ownerId == null || ownerId.isEmpty) {
+      return;
+    }
+
+    await _friendsUseCase.addFriend(ownerId: ownerId, friend: friend);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      final nextFriends = [..._savedFriends];
+      final existingIndex = nextFriends.indexWhere(
+        (item) => item.contactKey == friend.contactKey,
+      );
+      if (existingIndex == -1) {
+        nextFriends.add(friend);
+      } else {
+        nextFriends[existingIndex] = friend;
+      }
+      nextFriends.sort(
+        (left, right) => left.effectiveDisplayName.toLowerCase().compareTo(
+          right.effectiveDisplayName.toLowerCase(),
+        ),
+      );
+      _savedFriends = nextFriends;
+    });
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('${friend.displayName} added to My Golf Kakis.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 }

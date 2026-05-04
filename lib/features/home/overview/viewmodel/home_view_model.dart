@@ -1,25 +1,25 @@
 import 'dart:async';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_item.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_quick_book_item.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
-import '../data/home_overview_models.dart';
-import '../data/home_repository.dart';
-import '../domain/get_home_message_use_case.dart';
+import '../domain/home_overview_use_case.dart';
 import 'home_view_contract.dart';
 
 class HomeViewModel
     extends MviViewModel<HomeUserIntent, HomeViewState, HomeNavEffect>
     implements HomeViewContract {
-  HomeViewModel(this._getHomeMessage, this._repository);
+  HomeViewModel(this._useCase);
+  final HomeOverviewUseCase _useCase;
 
-  factory HomeViewModel.create() {
-    final repository = HomeRepositoryImpl();
-    return HomeViewModel(GetHomeMessageUseCase(repository), repository);
+  HomeDataLoaded get _currentDataState {
+    return switch (currentState) {
+      HomeDataLoaded() => currentState as HomeDataLoaded,
+    };
   }
-
-  final GetHomeMessageUseCase _getHomeMessage;
-  final HomeRepository _repository;
 
   @override
   HomeViewState createInitialState() => HomeDataLoaded.initial;
@@ -28,6 +28,7 @@ class HomeViewModel
   FutureOr<void> handleIntent(HomeUserIntent intent) {
     switch (intent) {
       case OnInitHome():
+      case OnRefreshHome():
         return _loadData();
       case OnNewBookingClick():
         sendNavEffect(() => const NavigateToBookingSlotSubmission());
@@ -47,16 +48,14 @@ class HomeViewModel
     );
 
     try {
-      final message = await _getHomeMessage();
-      final hotDeals = await _repository.fetchHotDeals();
-      final quickBookItems = await _repository.fetchQuickBookItems();
+      final result = await _useCase.onFetchHomeOverviewDetails();
 
       emitViewState(
         (_) => currentState.copyWith(
-          message: message,
+          message: result.message,
           isLoading: false,
-          hotDeals: hotDeals.map(_mapHotDeal).toList(),
-          quickBookItems: quickBookItems.map(_mapQuickBookItem).toList(),
+          hotDeals: result.hotDeals.map(_mapHotDeal).toList(),
+          quickBookItems: result.quickBookItems.map(_mapQuickBookItem).toList(),
           clearError: true,
         ),
       );
@@ -64,7 +63,9 @@ class HomeViewModel
       emitViewState(
         (_) => currentState.copyWith(
           isLoading: false,
-          error: 'Failed to load home data',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Failed to load home data',
+          ),
           hotDeals: const <HomeHotDealViewData>[],
           quickBookItems: const <HomeQuickBookViewData>[],
         ),
@@ -89,11 +90,5 @@ class HomeViewModel
       priceLabel: item.priceLabel,
       badge: item.badge,
     );
-  }
-
-  HomeDataLoaded get _currentDataState {
-    return switch (currentState) {
-      HomeDataLoaded() => currentState as HomeDataLoaded,
-    };
   }
 }

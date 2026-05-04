@@ -26,6 +26,7 @@ class HomeView extends StatelessWidget {
     final session = SessionScope.of(context).state;
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +68,7 @@ class HomeView extends StatelessWidget {
               ),
 
               const SizedBox(width: 10),
-              
+
               Expanded(
                 child: QuickActionTile(
                   icon: Icons.receipt_long_outlined,

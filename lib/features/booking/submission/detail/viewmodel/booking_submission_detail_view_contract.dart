@@ -38,13 +38,10 @@ class BookingSubmissionDetailDataLoaded
     this.holdDurationSeconds = 0,
     DateTime? holdExpiresAt,
     this.playerCount = 4,
-    this.normalPlayerCount = 4,
-    this.seniorPlayerCount = 0,
     this.maxPlayerCount = 4,
-    this.caddiePreference = 'none',
-    this.buggyType = 'normal',
-    this.buggySharingPreference = 'shared',
     this.selectedNine,
+    this.initialCaddieCount = 0,
+    this.initialGolfCartCount = 0,
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
@@ -74,13 +71,10 @@ class BookingSubmissionDetailDataLoaded
   final int holdDurationSeconds;
   final DateTime holdExpiresAt;
   final int playerCount;
-  final int normalPlayerCount;
-  final int seniorPlayerCount;
   final int maxPlayerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
+  final int initialCaddieCount;
+  final int initialGolfCartCount;
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
@@ -92,8 +86,62 @@ class BookingSubmissionDetailDataLoaded
   String get pricePerPersonLabel =>
       CurrencyUtil.formatPrice(pricePerPerson, currency);
 
-  String get totalCostLabel =>
-      CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
+  String get totalCostLabel => CurrencyUtil.formatPrice(totalCost, currency);
+
+  String get buggySurchargeLabel =>
+      CurrencyUtil.formatPrice(buggySurcharge, currency);
+
+  double get normalPricePerPerson => pricePerPerson;
+
+  double get seniorPricePerPerson => pricePerPerson * 0.88;
+
+  double get juniorPricePerPerson => pricePerPerson * 0.72;
+
+  double get playerSubtotal =>
+      (normalPlayerCount * normalPricePerPerson) +
+      (seniorPlayerCount * seniorPricePerPerson) +
+      (juniorPlayerCount * juniorPricePerPerson);
+
+  int get buggySurchargeUnitCount {
+    if (golfCartCount <= 0) {
+      return 0;
+    }
+
+    final totalIncludedBuggyCoverage = playerCount * 40;
+    final totalBuggyCost = golfCartCount * 80;
+    final surcharge = totalBuggyCost - totalIncludedBuggyCoverage;
+    return surcharge <= 0 ? 0 : (surcharge / 40).round();
+  }
+
+  double get buggySurcharge {
+    if (golfCartCount <= 0) {
+      return 0;
+    }
+
+    final totalIncludedBuggyCoverage = playerCount * 40;
+    final totalBuggyCost = golfCartCount * 80;
+    final surcharge = totalBuggyCost - totalIncludedBuggyCoverage;
+    return surcharge <= 0 ? 0 : surcharge.toDouble();
+  }
+
+  int get minGolfCartCount =>
+      _defaultGolfCartCountFor(playerCount: playerCount);
+
+  int get maxGolfCartCount => _maxGolfCartCountFor(playerCount: playerCount);
+
+  int get normalPlayerCount => playerDetails
+      .where((player) => _normalizePlayerCategory(player.category) == 'normal')
+      .length;
+
+  int get seniorPlayerCount => playerDetails
+      .where((player) => _normalizePlayerCategory(player.category) == 'senior')
+      .length;
+
+  int get juniorPlayerCount => playerDetails
+      .where((player) => _normalizePlayerCategory(player.category) == 'junior')
+      .length;
+
+  double get totalCost => playerSubtotal + buggySurcharge;
 
   String get holdCountdownLabel {
     final safeSeconds = remainingHoldSeconds < 0 ? 0 : remainingHoldSeconds;
@@ -106,21 +154,6 @@ class BookingSubmissionDetailDataLoaded
 
   bool get isForcedSharedCaddieSlot =>
       teeTime?.requiresSharedCaddieAndJumboBuggy == true;
-
-  String get effectiveCaddiePreference {
-    if (caddieCount <= 0) {
-      return 'none';
-    }
-    if (isForcedSharedCaddieSlot) {
-      return 'shared';
-    }
-    return caddieCount >= playerCount ? 'per_player' : 'shared';
-  }
-
-  String get effectiveBuggyType =>
-      isForcedSharedCaddieSlot ? 'jumbo' : buggyType;
-
-  String get effectiveBuggySharingPreference => 'shared';
 
   BookingSubmissionDetailDataLoaded copyWith({
     String? slotId,
@@ -137,13 +170,10 @@ class BookingSubmissionDetailDataLoaded
     int? holdDurationSeconds,
     DateTime? holdExpiresAt,
     int? playerCount,
-    int? normalPlayerCount,
-    int? seniorPlayerCount,
     int? maxPlayerCount,
-    String? caddiePreference,
-    String? buggyType,
-    String? buggySharingPreference,
     String? selectedNine,
+    int? initialCaddieCount,
+    int? initialGolfCartCount,
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
@@ -167,14 +197,10 @@ class BookingSubmissionDetailDataLoaded
       holdDurationSeconds: holdDurationSeconds ?? this.holdDurationSeconds,
       holdExpiresAt: holdExpiresAt ?? this.holdExpiresAt,
       playerCount: playerCount ?? this.playerCount,
-      normalPlayerCount: normalPlayerCount ?? this.normalPlayerCount,
-      seniorPlayerCount: seniorPlayerCount ?? this.seniorPlayerCount,
       maxPlayerCount: maxPlayerCount ?? this.maxPlayerCount,
-      caddiePreference: caddiePreference ?? this.caddiePreference,
-      buggyType: buggyType ?? this.buggyType,
-      buggySharingPreference:
-          buggySharingPreference ?? this.buggySharingPreference,
       selectedNine: selectedNine ?? this.selectedNine,
+      initialCaddieCount: initialCaddieCount ?? this.initialCaddieCount,
+      initialGolfCartCount: initialGolfCartCount ?? this.initialGolfCartCount,
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
@@ -184,6 +210,35 @@ class BookingSubmissionDetailDataLoaded
       isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
+}
+
+String _normalizePlayerCategory(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'senior':
+    case 'senior_citizen':
+      return 'senior';
+    case 'junior':
+      return 'junior';
+    case 'normal':
+    default:
+      return 'normal';
+  }
+}
+
+int _defaultGolfCartCountFor({required int playerCount}) {
+  if (playerCount <= 2) {
+    return 1;
+  }
+
+  if (playerCount <= 4) {
+    return 2;
+  }
+
+  return 3;
+}
+
+int _maxGolfCartCountFor({required int playerCount}) {
+  return playerCount;
 }
 
 // =========================
@@ -209,12 +264,9 @@ class OnInit extends BookingSubmissionDetailUserIntent {
     required this.pricePerPerson,
     required this.currency,
     this.initialPlayerCount = 4,
-    this.initialNormalPlayerCount = 4,
-    this.initialSeniorPlayerCount = 0,
-    this.caddiePreference = 'none',
-    this.buggyType = 'normal',
-    this.buggySharingPreference = 'shared',
     this.selectedNine,
+    this.initialCaddieCount = 0,
+    this.initialGolfCartCount = 0,
     this.initialPlayerName = emptyString,
     this.initialPlayerPhoneNumber = emptyString,
     this.guestId,
@@ -233,12 +285,9 @@ class OnInit extends BookingSubmissionDetailUserIntent {
   final double pricePerPerson;
   final String currency;
   final int initialPlayerCount;
-  final int initialNormalPlayerCount;
-  final int initialSeniorPlayerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
+  final int initialCaddieCount;
+  final int initialGolfCartCount;
   final String initialPlayerName;
   final String initialPlayerPhoneNumber;
   final String? guestId;
@@ -280,6 +329,13 @@ class OnPlayerPhoneNumberChanged extends BookingSubmissionDetailUserIntent {
   final String value;
 }
 
+class OnPlayerCategoryChanged extends BookingSubmissionDetailUserIntent {
+  const OnPlayerCategoryChanged({required this.index, required this.value});
+
+  final int index;
+  final String value;
+}
+
 class OnCaddieCountChanged extends BookingSubmissionDetailUserIntent {
   const OnCaddieCountChanged(this.value);
 
@@ -290,18 +346,6 @@ class OnGolfCartCountChanged extends BookingSubmissionDetailUserIntent {
   const OnGolfCartCountChanged(this.value);
 
   final int value;
-}
-
-class OnSelectCaddiePreference extends BookingSubmissionDetailUserIntent {
-  const OnSelectCaddiePreference(this.value);
-
-  final String value;
-}
-
-class OnSelectBuggySharingPreference extends BookingSubmissionDetailUserIntent {
-  const OnSelectBuggySharingPreference(this.value);
-
-  final String value;
 }
 
 class OnContinueClick extends BookingSubmissionDetailUserIntent {
@@ -337,9 +381,6 @@ class NavigateToBookingSubmissionConfirmation
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
-    required this.caddiePreference,
-    required this.buggyType,
-    required this.buggySharingPreference,
     this.selectedNine,
     required this.caddieCount,
     required this.golfCartCount,
@@ -360,9 +401,6 @@ class NavigateToBookingSubmissionConfirmation
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
-  final String caddiePreference;
-  final String buggyType;
-  final String buggySharingPreference;
   final String? selectedNine;
   final int caddieCount;
   final int golfCartCount;

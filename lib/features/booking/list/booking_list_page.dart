@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/detail/booking_detail_page.dart';
-import 'package:golf_kakis/features/booking/list/data/booking_list_repository_impl.dart';
+import 'package:golf_kakis/features/booking/list/domain/booking_list_use_case_impl.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 
 import 'view/booking_list_view.dart';
@@ -42,7 +42,8 @@ class _BookingListPageState extends State<BookingListPage>
     final accessToken =
         SessionScope.of(context).state.accessToken?.trim() ?? '';
     _viewModel = BookingListViewModel(
-      repository: BookingListRepositoryImpl(accessToken: accessToken),
+      useCase: const BookingListUseCaseImpl(),
+      accessToken: accessToken,
     );
 
     _navEffectSubscription = _viewModel!.navEffects.listen((effect) {

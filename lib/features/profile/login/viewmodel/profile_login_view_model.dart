@@ -1,7 +1,8 @@
 import 'package:golf_kakis/features/foundation/network/network.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
+import '../domain/profile_login_use_case.dart';
 import 'profile_login_view_contract.dart';
 
 class ProfileLoginViewModel
@@ -12,10 +13,10 @@ class ProfileLoginViewModel
           ProfileLoginNavEffect
         >
     implements ProfileLoginViewContract {
-  ProfileLoginViewModel({ProfileApiService? profileApiService})
-    : _profileApiService = profileApiService ?? ProfileApiService();
+  ProfileLoginViewModel({required ProfileLoginUseCase useCase})
+    : _useCase = useCase;
 
-  final ProfileApiService _profileApiService;
+  final ProfileLoginUseCase _useCase;
 
   @override
   ProfileLoginViewState createInitialState() => ProfileLoginDataLoaded.initial;
@@ -23,24 +24,17 @@ class ProfileLoginViewModel
   @override
   Future<void> handleIntent(ProfileLoginUserIntent intent) async {
     switch (intent) {
-      case OnNameChanged():
+      case OnUsernameChanged():
         emitViewState(
           (_) => _currentDataState.copyWith(
-            name: intent.value,
+            username: intent.value,
             clearErrorMessage: true,
           ),
         );
-      case OnCountryCodeChanged():
+      case OnPasswordChanged():
         emitViewState(
           (_) => _currentDataState.copyWith(
-            countryCode: intent.value,
-            clearErrorMessage: true,
-          ),
-        );
-      case OnPhoneChanged():
-        emitViewState(
-          (_) => _currentDataState.copyWith(
-            phoneNumber: intent.value,
+            password: intent.value,
             clearErrorMessage: true,
           ),
         );
@@ -63,7 +57,9 @@ class ProfileLoginViewModel
     if (!_currentDataState.canSubmit) {
       emitViewState(
         (_) => _currentDataState.copyWith(
-          errorMessage: 'Enter your name and phone number to continue.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Enter your username and password to continue.',
+          ),
           clearInfoMessage: true,
         ),
       );
@@ -79,19 +75,26 @@ class ProfileLoginViewModel
     );
 
     try {
-      final response = await _profileApiService.onRequestOtp(
-        name: _currentDataState.name.trim(),
-        phoneNumber: _currentDataState.fullPhoneNumber.replaceAll(' ', ''),
+      final response = await _useCase.requestOtp(
+        username: _currentDataState.username.trim(),
+        password: _currentDataState.password,
         visitorId: visitorId,
       );
 
       emitViewState((_) => _currentDataState.copyWith(isSubmitting: false));
-      sendNavEffect(() => RequestOtpSucceeded(response: response));
+      sendNavEffect(
+        () => RequestOtpSucceeded(
+          response: response,
+          username: _currentDataState.username.trim(),
+        ),
+      );
     } on ApiException catch (error) {
       emitViewState(
         (_) => _currentDataState.copyWith(
           isSubmitting: false,
-          errorMessage: error.message,
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: error.message,
+          ),
           clearInfoMessage: true,
         ),
       );
@@ -99,7 +102,9 @@ class ProfileLoginViewModel
       emitViewState(
         (_) => _currentDataState.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to request OTP right now.',
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to request OTP right now.',
+          ),
           clearInfoMessage: true,
         ),
       );
