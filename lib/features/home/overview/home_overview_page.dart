@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/home/golf_club_list/home_golf_club_list_page.dart';
 import 'package:golf_kakis/features/home/overview/domain/home_overview_use_case_impl.dart';
 
@@ -32,7 +33,13 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       if (!mounted) {
         return;
       }
-      _viewModel.onUserIntent(const OnInitHome());
+      final session = SessionScope.of(context).state;
+      _viewModel.onUserIntent(
+        OnHomeOverviewInit(
+          isLoggedIn: session.isLoggedIn,
+          accessToken: session.accessToken,
+        ),
+      );
     });
   }
 
@@ -63,18 +70,17 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(builder: (_) => const BookingListPage()),
         );
-      case NavigateToQuickBook():
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                BookingSubmissionSlotPage(initialClubSlug: effect.clubSlug),
-          ),
-        );
     }
   }
 
   Future<void> _handleRefresh() async {
-    await _viewModel.handleIntent(const OnRefreshHome());
+    final session = SessionScope.of(context).state;
+    await _viewModel.handleIntent(
+      OnRefreshHomeOverview(
+        isLoggedIn: session.isLoggedIn,
+        accessToken: session.accessToken,
+      ),
+    );
   }
 
   @override

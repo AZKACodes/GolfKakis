@@ -25,6 +25,21 @@ class HomeApiService {
     return _apiClient.getJson('/home/hot-deals');
   }
 
+  Future<dynamic> getHomeUserDetails({required String accessToken}) {
+    return _apiClient.getJson(
+      '/home/overview/user-details',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
+  }
+
+  Future<dynamic> getAdvertisementList() {
+    return _apiClient.getJson('/home/overview/advertisements');
+  }
+
+  Future<dynamic> getDealsList() {
+    return _apiClient.getJson('/home/overview/deals');
+  }
+
   Future<dynamic> getKinraraWeather() {
     return _weatherApiService.getKinraraWeather();
   }

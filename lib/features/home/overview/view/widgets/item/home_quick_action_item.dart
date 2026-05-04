@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class QuickActionTile extends StatelessWidget {
-  const QuickActionTile({
+class HomeQuickActionItem extends StatelessWidget {
+  const HomeQuickActionItem({
     required this.icon,
     required this.label,
     this.onTap,
