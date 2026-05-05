@@ -5,16 +5,21 @@ class HomeHeaderSection extends StatelessWidget {
     required this.greeting,
     required this.showAvatar,
     required this.avatarIndex,
+    this.avatarUrl,
     super.key,
   });
 
   final String greeting;
   final bool showAvatar;
   final int avatarIndex;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final resolvedAvatarUrl = avatarUrl?.trim();
+    final hasAvatarImage =
+        resolvedAvatarUrl != null && resolvedAvatarUrl.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -50,13 +55,21 @@ class HomeHeaderSection extends StatelessWidget {
                   backgroundColor: _avatarBackgroundColors[
                       avatarIndex % _avatarBackgroundColors.length
                   ],
-                  child: Text(
-                    _resolveInitials(greeting),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF0E2A47),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                  backgroundImage: hasAvatarImage
+                      ? NetworkImage(resolvedAvatarUrl)
+                      : null,
+                  onBackgroundImageError: hasAvatarImage
+                      ? (_, _) {}
+                      : null,
+                  child: hasAvatarImage
+                      ? null
+                      : Text(
+                          _resolveInitials(greeting),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: const Color(0xFF0E2A47),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                 ),
               ],
             ),

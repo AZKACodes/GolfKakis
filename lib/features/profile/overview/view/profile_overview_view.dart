@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
-import 'package:golf_kakis/features/home/overview/view/widgets/quick_action_tile.dart';
+import 'package:golf_kakis/features/home/overview/view/widgets/item/home_quick_action_item.dart';
 
 import '../viewmodel/profile_overview_view_contract.dart';
 
@@ -467,7 +467,7 @@ class _DashboardSection extends StatelessWidget {
               .map(
                 (action) => SizedBox(
                   width: 140,
-                  child: QuickActionTile(
+                  child: HomeQuickActionItem(
                     icon: action.icon,
                     label: action.label,
                   ),

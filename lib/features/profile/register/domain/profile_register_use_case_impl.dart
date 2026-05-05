@@ -65,6 +65,7 @@ class ProfileRegisterUseCaseImpl implements ProfileRegisterUseCase {
           name: username.trim(),
           phoneNumber: phoneNumber.trim(),
           isPhoneVerified: true,
+          avatarUrl: null,
           createdAt: now,
           updatedAt: now,
         ),

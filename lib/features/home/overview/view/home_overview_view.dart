@@ -31,24 +31,34 @@ class HomeView extends StatelessWidget {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
+      padding: const EdgeInsets.fromLTRB(0, 16, 0, _bottomNavScrollClearance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeHeaderSection(
-            greeting: greeting,
-            showAvatar: session.isLoggedIn,
-            avatarIndex: loadedState.headerAvatarIndex,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HomeHeaderSection(
+              greeting: greeting,
+              showAvatar: session.isLoggedIn,
+              avatarIndex: loadedState.headerAvatarIndex,
+              avatarUrl: loadedState.headerAvatarUrl,
+            ),
           ),
 
           const SizedBox(height: 24),
-          HomeAnnouncementSection(items: loadedState.advertisements),
+          HomeAnnouncementSection(items: loadedState.announcements),
 
           const SizedBox(height: 24),
-          HomeQuickActionSection(onUserIntent: onUserIntent),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HomeQuickActionSection(onUserIntent: onUserIntent),
+          ),
 
           const SizedBox(height: 24),
-          HomeDealsSection(items: loadedState.deals),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HomeDealsSection(items: loadedState.deals),
+          ),
         ],
       ),
     );
