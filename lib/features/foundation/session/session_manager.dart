@@ -117,8 +117,21 @@ class SessionManager extends ChangeNotifier {
       clearAuthenticatedUsername: true,
       clearAuthenticatedUserRole: true,
       clearProfileDetails: true,
+      clearVisitor: true,
     );
     unawaited(_persistState());
+    notifyListeners();
+    unawaited(_refreshVisitorAfterLogout());
+  }
+
+  Future<void> _refreshVisitorAfterLogout() async {
+    final currentDeviceId = _state.deviceId;
+    if (!_shouldSyncVisitor(currentDeviceId)) {
+      return;
+    }
+
+    await _syncVisitor(currentDeviceId);
+    await _persistState();
     notifyListeners();
   }
 

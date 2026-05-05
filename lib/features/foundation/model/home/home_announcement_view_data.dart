@@ -1,5 +1,5 @@
-class HomeAnnouncementItem {
-  const HomeAnnouncementItem({
+class HomeAnnouncementViewData {
+  const HomeAnnouncementViewData({
     required this.announcementId,
     required this.announcementType,
     required this.title,

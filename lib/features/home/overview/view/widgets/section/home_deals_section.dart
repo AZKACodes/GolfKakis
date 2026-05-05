@@ -16,7 +16,7 @@ class HomeDealsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Deals & Deductions',
+          "Today's Hot Deals",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -26,10 +26,18 @@ class HomeDealsSection extends StatelessWidget {
           children: [
             for (var i = 0; i < items.length; i++) ...[
               HomeDealsItem(
+                dealId: items[i].dealId,
+                slotId: items[i].slotId,
                 title: items[i].title,
-                subtitle: items[i].subtitle,
-                price: items[i].priceLabel,
-                badge: items[i].badge,
+                description: items[i].description,
+                price: items[i].price,
+                discountedPrice: items[i].discountedPrice,
+                currency: items[i].currency,
+                golfClubSlug: items[i].golfClubSlug,
+                slotDate: items[i].slotDate,
+                slotTime: items[i].slotTime,
+                noOfHoles: items[i].noOfHoles,
+                imageUrl: items[i].imageUrl,
               ),
               if (i != items.length - 1) const SizedBox(height: 10),
             ],

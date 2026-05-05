@@ -84,6 +84,7 @@ class AuthUser {
     required this.name,
     required this.phoneNumber,
     required this.isPhoneVerified,
+    required this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -93,6 +94,7 @@ class AuthUser {
   final String name;
   final String phoneNumber;
   final bool isPhoneVerified;
+  final String? avatarUrl;
   final String createdAt;
   final String updatedAt;
 
@@ -103,6 +105,9 @@ class AuthUser {
       name: json['name'] as String? ?? '',
       phoneNumber: json['phoneNumber'] as String? ?? '',
       isPhoneVerified: json['isPhoneVerified'] as bool? ?? false,
+      avatarUrl:
+          json['avatar_url'] as String? ??
+          json['avatarUrl'] as String?,
       createdAt: json['createdAt'] as String? ?? '',
       updatedAt: json['updatedAt'] as String? ?? '',
     );

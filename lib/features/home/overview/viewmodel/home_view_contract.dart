@@ -1,5 +1,5 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_advertisement_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_announcement_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
@@ -18,26 +18,29 @@ sealed class HomeViewState implements ViewState {
 
 class HomeDataLoaded extends HomeViewState {
   const HomeDataLoaded({
-    this.advertisements = const <HomeAdvertisementViewData>[],
+    this.announcements = const <HomeAnnouncementViewData>[],
     this.deals = const <HomeHotDealViewData>[],
     this.headerDisplayName = emptyString,
     this.headerAvatarIndex = 0,
+    this.headerAvatarUrl,
     this.isLoading = emptyBool,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
-  final List<HomeAdvertisementViewData> advertisements;
+  final List<HomeAnnouncementViewData> announcements;
   final List<HomeHotDealViewData> deals;
   final String headerDisplayName;
   final int headerAvatarIndex;
+  final String? headerAvatarUrl;
   final bool isLoading;
   final SnackbarMessageModel errorSnackbarMessageModel;
 
   HomeDataLoaded copyWith({
-    List<HomeAdvertisementViewData>? advertisements,
+    List<HomeAnnouncementViewData>? announcements,
     List<HomeHotDealViewData>? deals,
     String? headerDisplayName,
     int? headerAvatarIndex,
+    String? headerAvatarUrl,
     bool? isLoading,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearError = false,
@@ -45,11 +48,12 @@ class HomeDataLoaded extends HomeViewState {
     return HomeDataLoaded(
       headerDisplayName: headerDisplayName ?? this.headerDisplayName,
       headerAvatarIndex: headerAvatarIndex ?? this.headerAvatarIndex,
+      headerAvatarUrl: headerAvatarUrl ?? this.headerAvatarUrl,
       isLoading: isLoading ?? this.isLoading,
       errorSnackbarMessageModel: clearError
           ? SnackbarMessageModel.emptyValue
           : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
-      advertisements: advertisements ?? this.advertisements,
+      announcements: announcements ?? this.announcements,
       deals: deals ?? this.deals,
     );
   }

@@ -1,13 +1,29 @@
 class HomeHotDealViewData {
   const HomeHotDealViewData({
+    required this.dealId,
+    required this.slotId,
     required this.title,
-    required this.subtitle,
-    required this.priceLabel,
-    required this.badge,
+    required this.description,
+    required this.price,
+    required this.discountedPrice,
+    required this.currency,
+    required this.golfClubSlug,
+    required this.slotDate,
+    required this.slotTime,
+    required this.noOfHoles,
+    this.imageUrl,
   });
 
+  final String dealId;
+  final String slotId;
   final String title;
-  final String subtitle;
-  final String priceLabel;
-  final String badge;
+  final String description;
+  final num price;
+  final num discountedPrice;
+  final String currency;
+  final String golfClubSlug;
+  final String slotDate;
+  final String slotTime;
+  final int noOfHoles;
+  final String? imageUrl;
 }

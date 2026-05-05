@@ -1,4 +1,4 @@
-import '../../../foundation/model/home/home_advertisement_item.dart';
+import '../../../foundation/model/home/home_announcement_item.dart';
 import '../../../foundation/model/home/home_hot_deal_item.dart';
 import '../../../foundation/model/home/home_smart_rebook_item.dart';
 import '../../../foundation/model/home/home_user_details_item.dart';
@@ -25,42 +25,35 @@ class HomeRepositoryImpl implements HomeRepository {
     required String accessToken,
   }) async {
     try {
-      final response = await _apiService.getHomeUserDetails(
-        accessToken: accessToken,
-      );
-      final parsed = _parseUserDetailsResponse(response);
-      if (parsed != null) {
-        return parsed;
-      }
-    } catch (_) {
-      // Temporary fallback while the dedicated home overview endpoint is pending.
-    }
-
-    try {
       final authUser = await _profileApiService.onFetchUserDetails(
         accessToken: accessToken,
       );
-      if (authUser.name.trim().isEmpty) {
-        return null;
+      if (authUser.name.trim().isNotEmpty) {
+        return HomeUserDetailsItem(
+          displayName: authUser.name,
+          avatarIndex: 0,
+          avatarUrl: authUser.avatarUrl,
+        );
       }
-      return HomeUserDetailsItem(displayName: authUser.name, avatarIndex: 0);
     } catch (_) {
       return null;
     }
+
+    return null;
   }
 
   @override
-  Future<List<HomeAdvertisementItem>> onFetchAdvertisementList() async {
+  Future<List<HomeAnnouncementItem>> onFetchAnnouncementList() async {
     try {
-      final response = await _apiService.getAdvertisementList();
-      final parsedItems = _parseAdvertisementItems(response);
+      final response = await _apiService.getAnnouncementList();
+      final parsedItems = _parseAnnouncementItems(response);
       if (parsedItems.isNotEmpty) {
         return parsedItems;
       }
     } catch (_) {
-      // Fall back to seeded advertisement content until backend wiring is ready.
+      // Fall back to seeded announcement content until backend wiring is ready.
     }
-    return _fallbackAdvertisements;
+    return _fallbackAnnouncements;
   }
 
   @override
@@ -143,10 +136,11 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  List<HomeAdvertisementItem> _parseAdvertisementItems(dynamic response) {
+  List<HomeAnnouncementItem> _parseAnnouncementItems(dynamic response) {
     final items = _extractList(response, const <String>[
       'data',
       'items',
+      'announcements',
       'advertisements',
       'ads',
     ]);
@@ -154,13 +148,25 @@ class HomeRepositoryImpl implements HomeRepository {
     return items
         .whereType<Map<String, dynamic>>()
         .map(
-          (item) => HomeAdvertisementItem(
-            tag: item['tag']?.toString() ?? item['label']?.toString() ?? 'Ad',
+          (item) => HomeAnnouncementItem(
+            announcementId:
+                item['announcement_id']?.toString() ??
+                item['announcementId']?.toString() ??
+                '',
+            announcementType:
+                item['announcement_type']?.toString() ??
+                item['announcementType']?.toString() ??
+                item['tag']?.toString() ??
+                item['label']?.toString() ??
+                'Announcement',
             title: item['title']?.toString() ?? '',
             subtitle:
                 item['subtitle']?.toString() ??
                 item['description']?.toString() ??
                 '',
+            imageUrl:
+                item['image_url']?.toString() ??
+                item['imageUrl']?.toString(),
           ),
         )
         .where((item) => item.title.trim().isNotEmpty)
@@ -202,45 +208,53 @@ class HomeRepositoryImpl implements HomeRepository {
         .whereType<Map<String, dynamic>>()
         .map(
           (item) => HomeHotDealItem(
+            dealId:
+                item['deal_id']?.toString() ??
+                item['dealId']?.toString() ??
+                '',
+            slotId:
+                item['slot_id']?.toString() ??
+                item['slotId']?.toString() ??
+                '',
             title: item['title']?.toString() ?? '',
-            subtitle:
-                item['subtitle']?.toString() ??
+            description:
                 item['description']?.toString() ??
+                item['subtitle']?.toString() ??
                 '',
-            priceLabel:
-                item['priceLabel']?.toString() ??
-                item['price']?.toString() ??
+            price: _parseNum(item['price']) ?? 0,
+            discountedPrice:
+                _parseNum(item['discounted_price']) ??
+                _parseNum(item['discountedPrice']) ??
+                _parseNum(item['price']) ??
+                0,
+            currency:
+                item['currency']?.toString() ??
+                item['currency_code']?.toString() ??
+                item['currencyCode']?.toString() ??
+                'MYR',
+            golfClubSlug:
+                item['golf_club_slug']?.toString() ??
+                item['golfClubSlug']?.toString() ??
                 '',
-            badge: item['badge']?.toString() ?? '',
+            slotDate:
+                item['slot_date']?.toString() ??
+                item['slotDate']?.toString() ??
+                '',
+            slotTime:
+                item['slot_time']?.toString() ??
+                item['slotTime']?.toString() ??
+                '',
+            noOfHoles:
+                _parseInt(item['no_of_holes']) ??
+                _parseInt(item['noOfHoles']) ??
+                18,
+            imageUrl:
+                item['image_url']?.toString() ??
+                item['imageUrl']?.toString(),
           ),
         )
         .where((item) => item.title.trim().isNotEmpty)
         .toList();
-  }
-
-  HomeUserDetailsItem? _parseUserDetailsResponse(dynamic response) {
-    if (response is! Map<String, dynamic>) {
-      return null;
-    }
-
-    final payload =
-        _asMap(response['data']) ??
-        _asMap(response['user']) ??
-        response;
-
-    final displayName =
-        payload['displayName']?.toString() ??
-        payload['name']?.toString() ??
-        payload['fullName']?.toString() ??
-        '';
-    if (displayName.trim().isEmpty) {
-      return null;
-    }
-
-    return HomeUserDetailsItem(
-      displayName: displayName,
-      avatarIndex: _parseInt(payload['avatarIndex']) ?? 0,
-    );
   }
 
   List<dynamic> _extractList(dynamic response, List<String> keys) {
@@ -275,14 +289,20 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   int? _parseInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
     if (value is num) {
       return value.toInt();
     }
     return int.tryParse(value?.toString() ?? '');
   }
 
-  Map<String, dynamic>? _asMap(dynamic value) {
-    return value is Map<String, dynamic> ? value : null;
+  num? _parseNum(dynamic value) {
+    if (value is num) {
+      return value;
+    }
+    return num.tryParse(value?.toString() ?? '');
   }
 
   ({String label, String icon}) _weatherDescriptor(int code) {
@@ -327,19 +347,22 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 }
 
-const List<HomeAdvertisementItem> _fallbackAdvertisements = [
-  HomeAdvertisementItem(
-    tag: 'Club Notice',
+const List<HomeAnnouncementItem> _fallbackAnnouncements = [
+  HomeAnnouncementItem(
+    announcementId: 'announcement-club-notice',
+    announcementType: 'Club Notice',
     title: 'Weekend tee sheet opens earlier this Friday',
     subtitle: 'Members can secure preferred morning slots from 6:00 PM onwards.',
   ),
-  HomeAdvertisementItem(
-    tag: 'Course Update',
+  HomeAnnouncementItem(
+    announcementId: 'announcement-course-update',
+    announcementType: 'Course Update',
     title: 'Kinrara greens maintenance scheduled tomorrow',
     subtitle: 'Expect smoother front-nine play with light maintenance on selected holes.',
   ),
-  HomeAdvertisementItem(
-    tag: 'Promo',
+  HomeAnnouncementItem(
+    announcementId: 'announcement-promo',
+    announcementType: 'Promo',
     title: 'Early-bird weekday rounds now from MYR 39',
     subtitle: 'Book selected morning sessions and lock in lower rates before noon.',
   ),
@@ -347,21 +370,42 @@ const List<HomeAdvertisementItem> _fallbackAdvertisements = [
 
 const List<HomeHotDealItem> _fallbackHotDeals = [
   HomeHotDealItem(
+    dealId: 'deal-kinrara-morning',
+    slotId: 'slot-kinrara-0720',
     title: 'Kinrara Golf Club',
-    subtitle: 'Morning slots from 7:20 AM • Bandar Kinrara, Puchong',
-    priceLabel: 'From MYR 39',
-    badge: 'Best Value',
+    description: 'Morning slots from 7:20 AM • Bandar Kinrara, Puchong',
+    price: 61,
+    discountedPrice: 39,
+    currency: 'MYR',
+    golfClubSlug: 'kinrara-golf-club',
+    slotDate: '2026-05-06',
+    slotTime: '07:20',
+    noOfHoles: 18,
   ),
   HomeHotDealItem(
+    dealId: 'deal-saujana-peak',
+    slotId: 'slot-saujana-0800',
     title: 'Saujana Golf & Country Club',
-    subtitle: 'Peak play from 8:00 AM • Shah Alam, Selangor',
-    priceLabel: 'From MYR 52',
-    badge: 'Popular',
+    description: 'Peak play from 8:00 AM • Shah Alam, Selangor',
+    price: 74,
+    discountedPrice: 52,
+    currency: 'MYR',
+    golfClubSlug: 'saujana-golf-country-club',
+    slotDate: '2026-05-06',
+    slotTime: '08:00',
+    noOfHoles: 18,
   ),
   HomeHotDealItem(
+    dealId: 'deal-mines-early',
+    slotId: 'slot-mines-0740',
     title: 'The Mines Resort & Golf Club',
-    subtitle: 'Early access from 7:40 AM • Serdang, Selangor',
-    priceLabel: 'From MYR 58',
-    badge: 'Premium',
+    description: 'Early access from 7:40 AM • Serdang, Selangor',
+    price: 82,
+    discountedPrice: 58,
+    currency: 'MYR',
+    golfClubSlug: 'the-mines-resort-golf-club',
+    slotDate: '2026-05-06',
+    slotTime: '07:40',
+    noOfHoles: 18,
   ),
 ];

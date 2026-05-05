@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_advertisement_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_announcement_view_data.dart';
 
 import '../item/home_announcement_item.dart';
 
 class HomeAnnouncementSection extends StatefulWidget {
   const HomeAnnouncementSection({required this.items, super.key});
 
-  final List<HomeAdvertisementViewData> items;
+  final List<HomeAnnouncementViewData> items;
 
   @override
   State<HomeAnnouncementSection> createState() =>
@@ -36,10 +36,13 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Advertisements',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Announcement',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -48,6 +51,7 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
           child: widget.items.isEmpty
               ? const _EmptyAnnouncementCard()
               : PageView.builder(
+                  padEnds: false,
                   controller: _controller,
                   itemCount: widget.items.length,
                   onPageChanged: (value) {
@@ -57,9 +61,13 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
                   },
                   itemBuilder: (context, index) {
                     final item = widget.items[index];
+                    final isFirst = index == 0;
                     final isLast = index == widget.items.length - 1;
                     return Padding(
-                      padding: EdgeInsets.only(right: isLast ? 0 : 10),
+                      padding: EdgeInsets.only(
+                        left: isFirst ? 16 : 0,
+                        right: isLast ? 16 : 10,
+                      ),
                       child: HomeAnnouncementItemCard(item: item, index: index),
                     );
                   },
@@ -111,7 +119,7 @@ class _EmptyAnnouncementCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Advertisement',
+            'Announcement',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -119,7 +127,7 @@ class _EmptyAnnouncementCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Promotions will appear here soon.',
+            'Announcements will appear here soon.',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w900,

@@ -22,16 +22,16 @@ class HomeOverviewUseCaseImpl implements HomeOverviewUseCase {
         isLoggedIn && accessToken != null && accessToken.trim().isNotEmpty
         ? _repository.onFetchUserDetails(accessToken: accessToken)
         : Future<HomeUserDetailsItem?>.value(null);
-    final advertisementsFuture = _repository.onFetchAdvertisementList();
+    final announcementsFuture = _repository.onFetchAnnouncementList();
     final dealsFuture = _repository.onFetchDealsList();
 
     final userDetails = await userDetailsFuture;
-    final advertisements = await advertisementsFuture;
+    final announcements = await announcementsFuture;
     final deals = await dealsFuture;
 
     return HomeOverviewResult(
       userDetails: userDetails,
-      advertisements: advertisements,
+      announcements: announcements,
       deals: deals,
     );
   }

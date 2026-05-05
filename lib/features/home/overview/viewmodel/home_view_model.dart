@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_advertisement_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_advertisement_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_announcement_item.dart';
+import 'package:golf_kakis/features/foundation/model/home/home_announcement_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_item.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
@@ -66,8 +66,9 @@ class HomeViewModel
         (_) => currentState.copyWith(
           headerDisplayName: result.userDetails?.displayName ?? emptyString,
           headerAvatarIndex: result.userDetails?.avatarIndex ?? 0,
+          headerAvatarUrl: result.userDetails?.avatarUrl,
           isLoading: false,
-          advertisements: result.advertisements.map(_mapAdvertisement).toList(),
+          announcements: result.announcements.map(_mapAnnouncement).toList(),
           deals: result.deals.map(_mapHotDeal).toList(),
           clearError: true,
         ),
@@ -79,27 +80,37 @@ class HomeViewModel
           errorSnackbarMessageModel: const SnackbarMessageModel(
             message: 'Failed to load home data',
           ),
-          advertisements: const <HomeAdvertisementViewData>[],
+          announcements: const <HomeAnnouncementViewData>[],
           deals: const <HomeHotDealViewData>[],
         ),
       );
     }
   }
 
-  HomeAdvertisementViewData _mapAdvertisement(HomeAdvertisementItem item) {
-    return HomeAdvertisementViewData(
-      tag: item.tag,
+  HomeAnnouncementViewData _mapAnnouncement(HomeAnnouncementItem item) {
+    return HomeAnnouncementViewData(
+      announcementId: item.announcementId,
+      announcementType: item.announcementType,
       title: item.title,
       subtitle: item.subtitle,
+      imageUrl: item.imageUrl,
     );
   }
 
   HomeHotDealViewData _mapHotDeal(HomeHotDealItem item) {
     return HomeHotDealViewData(
+      dealId: item.dealId,
+      slotId: item.slotId,
       title: item.title,
-      subtitle: item.subtitle,
-      priceLabel: item.priceLabel,
-      badge: item.badge,
+      description: item.description,
+      price: item.price,
+      discountedPrice: item.discountedPrice,
+      currency: item.currency,
+      golfClubSlug: item.golfClubSlug,
+      slotDate: item.slotDate,
+      slotTime: item.slotTime,
+      noOfHoles: item.noOfHoles,
+      imageUrl: item.imageUrl,
     );
   }
 }
