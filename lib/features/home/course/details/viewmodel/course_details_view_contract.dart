@@ -1,25 +1,25 @@
-import 'package:golf_kakis/features/booking/club/detail/data/golf_club_detail_repository.dart';
+import 'package:golf_kakis/features/home/course/details/data/course_details_repository.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
-abstract class GolfClubDetailViewContract {
-  GolfClubDetailViewState get viewState;
-  Stream<GolfClubDetailNavEffect> get navEffects;
-  void onUserIntent(GolfClubDetailUserIntent intent);
+abstract class CourseDetailsViewContract {
+  CourseDetailsViewState get viewState;
+  Stream<CourseDetailsNavEffect> get navEffects;
+  void onUserIntent(CourseDetailsUserIntent intent);
 }
 
-class GolfClubDetailViewState extends ViewState {
-  const GolfClubDetailViewState({
+class CourseDetailsViewState extends ViewState {
+  const CourseDetailsViewState({
     required this.detail,
     required this.isLoading,
     required this.isUsingFallback,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
 
-  factory GolfClubDetailViewState.initial(GolfClubModel club) {
-    return GolfClubDetailViewState(
-      detail: GolfClubDetailData(
+  factory CourseDetailsViewState.initial(GolfClubModel club) {
+    return CourseDetailsViewState(
+      detail: CourseDetailsData(
         club: club,
         distanceLabel: '',
         openSlotsLabel: '',
@@ -37,7 +37,7 @@ class GolfClubDetailViewState extends ViewState {
     );
   }
 
-  final GolfClubDetailData detail;
+  final CourseDetailsData detail;
   final bool isLoading;
   final bool isUsingFallback;
   final SnackbarMessageModel errorSnackbarMessageModel;
@@ -46,14 +46,14 @@ class GolfClubDetailViewState extends ViewState {
       ? errorSnackbarMessageModel.message
       : null;
 
-  GolfClubDetailViewState copyWith({
-    GolfClubDetailData? detail,
+  CourseDetailsViewState copyWith({
+    CourseDetailsData? detail,
     bool? isLoading,
     bool? isUsingFallback,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
-    return GolfClubDetailViewState(
+    return CourseDetailsViewState(
       detail: detail ?? this.detail,
       isLoading: isLoading ?? this.isLoading,
       isUsingFallback: isUsingFallback ?? this.isUsingFallback,
@@ -64,34 +64,34 @@ class GolfClubDetailViewState extends ViewState {
   }
 }
 
-sealed class GolfClubDetailUserIntent extends UserIntent {
-  const GolfClubDetailUserIntent() : super();
+sealed class CourseDetailsUserIntent extends UserIntent {
+  const CourseDetailsUserIntent() : super();
 }
 
-class OnInit extends GolfClubDetailUserIntent {
+class OnInit extends CourseDetailsUserIntent {
   const OnInit();
 }
 
-class OnRefresh extends GolfClubDetailUserIntent {
+class OnRefresh extends CourseDetailsUserIntent {
   const OnRefresh();
 }
 
-class OnBackClick extends GolfClubDetailUserIntent {
+class OnBackClick extends CourseDetailsUserIntent {
   const OnBackClick();
 }
 
-class OnBookNowClick extends GolfClubDetailUserIntent {
+class OnBookNowClick extends CourseDetailsUserIntent {
   const OnBookNowClick();
 }
 
-sealed class GolfClubDetailNavEffect extends NavEffect {
-  const GolfClubDetailNavEffect() : super();
+sealed class CourseDetailsNavEffect extends NavEffect {
+  const CourseDetailsNavEffect() : super();
 }
 
-class NavigateBack extends GolfClubDetailNavEffect {
+class NavigateBack extends CourseDetailsNavEffect {
   const NavigateBack();
 }
 
-class NavigateToBookingSubmission extends GolfClubDetailNavEffect {
+class NavigateToBookingSubmission extends CourseDetailsNavEffect {
   const NavigateToBookingSubmission();
 }

@@ -3,11 +3,11 @@ import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dar
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/home/api/weather_api_service.dart';
 
-import 'golf_club_detail_repository.dart';
-import 'local_golf_club_display_content.dart';
+import 'course_details_repository.dart';
+import 'local_course_display_content.dart';
 
-class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
-  GolfClubDetailRepositoryImpl({
+class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
+  CourseDetailsRepositoryImpl({
     BookingApiService? bookingApiService,
     WeatherApiService? weatherApiService,
   }) : _bookingApiService = bookingApiService ?? BookingApiService(),
@@ -17,7 +17,7 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
   final WeatherApiService _weatherApiService;
 
   @override
-  Future<GolfClubDetailResult> onFetchGolfClubDetail({
+  Future<CourseDetailsResult> onFetchCourseDetails({
     required String slug,
     GolfClubModel? initialClub,
   }) async {
@@ -38,7 +38,7 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
     final recommendation = _extractRecommendation(quickBookResponse);
     final weather = await _fetchWeather(club);
     final kinraraContent = slug.trim().toLowerCase() == 'kinrara-golf-club'
-        ? localGolfClubDisplayContent['kinrara-golf-club']
+        ? localCourseDisplayContent['kinrara-golf-club']
         : null;
     final resolvedDescription =
         kinraraContent?.summary ??
@@ -47,8 +47,8 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
         ? kinraraContent!.facilities
         : _facilityLabels(detailResponse, club, requestedSlug: slug);
 
-    return GolfClubDetailResult(
-      detail: GolfClubDetailData(
+    return CourseDetailsResult(
+      detail: CourseDetailsData(
         club: club,
         distanceLabel: _distanceLabel(recommendation),
         openSlotsLabel: _availabilityLabel(recommendation),
@@ -115,7 +115,7 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
         _asMap(_asMap(map['data'])?['recommendation']);
   }
 
-  Future<GolfClubWeatherSummary?> _fetchWeather(GolfClubModel club) async {
+  Future<CourseWeatherSummary?> _fetchWeather(GolfClubModel club) async {
     if (club.latitude == null || club.longitude == null) {
       return null;
     }
@@ -150,7 +150,7 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
       }
 
       final descriptor = _weatherDescriptor(weatherCode);
-      return GolfClubWeatherSummary(
+      return CourseWeatherSummary(
         temperatureCelsius: currentTemperature,
         highCelsius: highTemperature,
         lowCelsius: lowTemperature,
@@ -369,7 +369,7 @@ class GolfClubDetailRepositoryImpl implements GolfClubDetailRepository {
         normalizedSlug == 'kinrara-golf-club' ||
         normalizedName == 'kinrara golf club' ||
         normalizedName.contains('kinrara')) {
-      return localGolfClubDisplayContent['kinrara-golf-club'];
+      return localCourseDisplayContent['kinrara-golf-club'];
     }
     return null;
   }

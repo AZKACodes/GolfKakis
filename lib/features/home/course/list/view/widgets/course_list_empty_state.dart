@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HomeGolfClubListEmptyState extends StatelessWidget {
-  const HomeGolfClubListEmptyState({
+class CourseListEmptyState extends StatelessWidget {
+  const CourseListEmptyState({
     required this.title,
     required this.message,
     super.key,

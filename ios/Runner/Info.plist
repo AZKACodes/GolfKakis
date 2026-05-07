@@ -24,6 +24,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSContactsUsageDescription</key>
 	<string>GolfKakis uses your contacts to help you build your My Golf Kakis friend list and save in-app nicknames.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GolfKakis uses your location to sort nearby courses and show how far away they are.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

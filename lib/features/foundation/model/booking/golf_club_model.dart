@@ -7,10 +7,12 @@ class GolfClubModel {
     required this.noOfHoles,
     this.latitude,
     this.longitude,
+    this.isEnabled = false,
     this.supportsNineHoles = false,
     this.supportedNines = const <String>[],
     this.buggyPolicy = '',
     this.paymentMethods = const <String>[],
+    this.facilities = const <GolfClubFacilityModel>[],
     this.updatedAt = '',
   });
 
@@ -21,10 +23,12 @@ class GolfClubModel {
   final int noOfHoles;
   final double? latitude;
   final double? longitude;
+  final bool isEnabled;
   final bool supportsNineHoles;
   final List<String> supportedNines;
   final String buggyPolicy;
   final List<String> paymentMethods;
+  final List<GolfClubFacilityModel> facilities;
   final String updatedAt;
 
   factory GolfClubModel.fromJson(Map<String, dynamic> json) {
@@ -36,10 +40,12 @@ class GolfClubModel {
       noOfHoles: _parseHoleCount(json),
       latitude: _parseNullableDouble(json['latitude'] ?? json['lat']),
       longitude: _parseNullableDouble(json['longitude'] ?? json['lng']),
+      isEnabled: _parseIsEnabled(json),
       supportsNineHoles: _parseSupportsNineHoles(json),
       supportedNines: _parseSupportedNines(json),
       buggyPolicy: json['buggyPolicy']?.toString() ?? '',
       paymentMethods: _parsePaymentMethods(json),
+      facilities: _parseFacilities(json),
       updatedAt: json['updatedAt']?.toString() ?? '',
     );
   }
@@ -53,10 +59,12 @@ class GolfClubModel {
       'noOfHoles': noOfHoles,
       'latitude': latitude,
       'longitude': longitude,
+      'isEnabled': isEnabled,
       'supportsNineHoles': supportsNineHoles,
       'supportedNines': supportedNines,
       'buggyPolicy': buggyPolicy,
       'paymentMethods': paymentMethods,
+      'facilities': facilities.map((item) => item.toJson()).toList(),
       'updatedAt': updatedAt,
     };
   }
@@ -69,10 +77,12 @@ class GolfClubModel {
     int? noOfHoles,
     double? latitude,
     double? longitude,
+    bool? isEnabled,
     bool? supportsNineHoles,
     List<String>? supportedNines,
     String? buggyPolicy,
     List<String>? paymentMethods,
+    List<GolfClubFacilityModel>? facilities,
     String? updatedAt,
   }) {
     return GolfClubModel(
@@ -83,12 +93,28 @@ class GolfClubModel {
       noOfHoles: noOfHoles ?? this.noOfHoles,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      isEnabled: isEnabled ?? this.isEnabled,
       supportsNineHoles: supportsNineHoles ?? this.supportsNineHoles,
       supportedNines: supportedNines ?? this.supportedNines,
       buggyPolicy: buggyPolicy ?? this.buggyPolicy,
       paymentMethods: paymentMethods ?? this.paymentMethods,
+      facilities: facilities ?? this.facilities,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  static List<GolfClubFacilityModel> _parseFacilities(Map<String, dynamic> json) {
+    final dynamic value = json['facilities'];
+
+    if (value is List) {
+      return value
+          .whereType<Map<String, dynamic>>()
+          .map(GolfClubFacilityModel.fromJson)
+          .where((item) => item.facilityType.isNotEmpty || item.title.isNotEmpty)
+          .toList();
+    }
+
+    return const <GolfClubFacilityModel>[];
   }
 
   static int _parseHoleCount(Map<String, dynamic> json) {
@@ -137,10 +163,51 @@ class GolfClubModel {
     return value?.toString().toLowerCase() == 'true';
   }
 
+  static bool _parseIsEnabled(Map<String, dynamic> json) {
+    final dynamic value = json['isEnabled'] ?? json['is_enabled'];
+    if (value is bool) {
+      return value;
+    }
+    if (value != null) {
+      return value.toString().toLowerCase() == 'true';
+    }
+
+    final slug = json['slug']?.toString().trim().toLowerCase() ?? '';
+    final name = json['name']?.toString().trim().toLowerCase() ?? '';
+    return slug == 'kinrara-golf-club' || name == 'kinrara golf club';
+  }
+
   static double? _parseNullableDouble(dynamic value) {
     if (value is num) {
       return value.toDouble();
     }
     return double.tryParse(value?.toString() ?? '');
+  }
+}
+
+class GolfClubFacilityModel {
+  const GolfClubFacilityModel({
+    required this.facilityType,
+    required this.title,
+  });
+
+  final String facilityType;
+  final String title;
+
+  factory GolfClubFacilityModel.fromJson(Map<String, dynamic> json) {
+    return GolfClubFacilityModel(
+      facilityType:
+          json['facility_type']?.toString() ??
+          json['facilityType']?.toString() ??
+          '',
+      title: json['title']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'facility_type': facilityType,
+      'title': title,
+    };
   }
 }
