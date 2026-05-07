@@ -26,6 +26,14 @@ class BookingApiService {
     return onFetchGolfClubs(slug: slug);
   }
 
+  Future<dynamic> onFetchCourseDetails({required String slug}) {
+    return onFetchGolfClubDetail(slug: slug);
+  }
+
+  Future<dynamic> onFetchCourseExtraDetails({required String slug}) {
+    return _apiClient.getJson('/booking/golf-clubs/$slug/extra-details');
+  }
+
   Future<dynamic> onQuickBook({
     required String golfClubSlug,
     double? latitude,

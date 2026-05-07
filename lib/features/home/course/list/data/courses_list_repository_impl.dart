@@ -11,28 +11,66 @@ class CoursesListRepositoryImpl implements CoursesListRepository {
 
   @override
   Future<List<GolfClubModel>> onFetchCoursesList() async {
-    final response = await _bookingApiService.onFetchGolfClubList();
-    return _parseGolfClubList(response);
+    try {
+      final response = await _bookingApiService.onFetchGolfClubList();
+      final clubs = _parseGolfClubList(response);
+      return clubs.isEmpty ? _fallbackCourses : clubs;
+    } catch (_) {
+      return _fallbackCourses;
+    }
   }
 
   List<GolfClubModel> _parseGolfClubList(dynamic rawResponse) {
     if (rawResponse is List) {
       return rawResponse
+          .map(_asStringMap)
           .whereType<Map<String, dynamic>>()
-          .map(GolfClubModel.fromJson)
+          .map(_tryParseClub)
+          .whereType<GolfClubModel>()
           .where((club) => club.slug.isNotEmpty)
           .toList();
     }
 
-    if (rawResponse is Map<String, dynamic>) {
+    final map = _asStringMap(rawResponse);
+    if (map != null) {
       final dynamic nestedList =
-          rawResponse['data'] ??
-          rawResponse['items'] ??
-          rawResponse['clubs'] ??
-          rawResponse['golfClubs'];
+          map['data'] ?? map['items'] ?? map['clubs'] ?? map['golfClubs'];
       return _parseGolfClubList(nestedList);
     }
 
     return const <GolfClubModel>[];
   }
+
+  GolfClubModel? _tryParseClub(Map<String, dynamic> json) {
+    try {
+      return GolfClubModel.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic>? _asStringMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map(
+        (key, item) => MapEntry(key.toString(), item),
+      );
+    }
+    return null;
+  }
 }
+
+const List<GolfClubModel> _fallbackCourses = <GolfClubModel>[
+  GolfClubModel(
+    id: 'fallback-kinrara',
+    slug: 'kinrara-golf-club',
+    name: 'Kinrara Golf Club',
+    address: 'Puchong, Selangor',
+    noOfHoles: 18,
+    latitude: 3.0446,
+    longitude: 101.6426,
+    isEnabled: true,
+  ),
+];

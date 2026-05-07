@@ -46,6 +46,7 @@ class CourseDetailsViewModel
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnBookNowClick():
+      case OnQuickBookClick():
         sendNavEffect(() => const NavigateToBookingSubmission());
     }
   }
@@ -56,7 +57,7 @@ class CourseDetailsViewModel
     );
 
     try {
-      final result = await _useCase.fetchCourseDetails(
+      final result = await _useCase.onInitCourseDetailInit(
         slug: _clubSlug,
         initialClub: _initialClub,
       );

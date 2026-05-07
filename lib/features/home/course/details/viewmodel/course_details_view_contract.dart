@@ -28,7 +28,9 @@ class CourseDetailsViewState extends ViewState {
         description: '',
         bestForLabel: '',
         facilityLabels: const <String>[],
+        photoUrls: const <String>[],
         weather: null,
+        weeklyForecast: const <CourseWeatherForecastItem>[],
         nextSlotLabel: '',
         bookingDateLabel: '',
       ),
@@ -82,6 +84,10 @@ class OnBackClick extends CourseDetailsUserIntent {
 
 class OnBookNowClick extends CourseDetailsUserIntent {
   const OnBookNowClick();
+}
+
+class OnQuickBookClick extends CourseDetailsUserIntent {
+  const OnQuickBookClick();
 }
 
 sealed class CourseDetailsNavEffect extends NavEffect {

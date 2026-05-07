@@ -17,11 +17,11 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
   final WeatherApiService _weatherApiService;
 
   @override
-  Future<CourseDetailsResult> onFetchCourseDetails({
+  Future<CourseHeaderDetailsData> onFetchCourseDetails({
     required String slug,
     GolfClubModel? initialClub,
   }) async {
-    final detailResponse = await _bookingApiService.onFetchGolfClubDetail(
+    final detailResponse = await _bookingApiService.onFetchCourseDetails(
       slug: slug,
     );
     final club = _parseDetailedClub(detailResponse) ?? initialClub;
@@ -36,32 +36,58 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     );
 
     final recommendation = _extractRecommendation(quickBookResponse);
-    final weather = await _fetchWeather(club);
+    return CourseHeaderDetailsData(
+      club: club,
+      distanceLabel: _distanceLabel(recommendation),
+      openSlotsLabel: _availabilityLabel(recommendation),
+      greenFeeLabel: _greenFeeLabel(recommendation),
+      peakLabel: _peakLabel(recommendation),
+      bestForLabel: _bestForLabel(quickBookResponse, recommendation),
+      nextSlotLabel: _nextSlotLabel(recommendation),
+      bookingDateLabel: _bookingDateLabel(recommendation),
+    );
+  }
+
+  @override
+  Future<CourseExtraDetailsData> onFetchCourseExtraDetails({
+    required String slug,
+    required GolfClubModel club,
+  }) async {
+    dynamic extraResponse;
+    try {
+      extraResponse = await _bookingApiService.onFetchCourseExtraDetails(
+        slug: slug,
+      );
+    } catch (_) {
+      extraResponse = null;
+    }
+
     final kinraraContent = slug.trim().toLowerCase() == 'kinrara-golf-club'
         ? localCourseDisplayContent['kinrara-golf-club']
         : null;
-    final resolvedDescription =
-        kinraraContent?.summary ??
-        _description(detailResponse, club, requestedSlug: slug);
-    final resolvedFacilities = kinraraContent?.facilities.isNotEmpty == true
-        ? kinraraContent!.facilities
-        : _facilityLabels(detailResponse, club, requestedSlug: slug);
 
-    return CourseDetailsResult(
-      detail: CourseDetailsData(
-        club: club,
-        distanceLabel: _distanceLabel(recommendation),
-        openSlotsLabel: _availabilityLabel(recommendation),
-        greenFeeLabel: _greenFeeLabel(recommendation),
-        peakLabel: _peakLabel(recommendation),
-        description: resolvedDescription,
-        bestForLabel: _bestForLabel(quickBookResponse, recommendation),
-        facilityLabels: resolvedFacilities,
-        weather: weather,
-        nextSlotLabel: _nextSlotLabel(recommendation),
-        bookingDateLabel: _bookingDateLabel(recommendation),
-      ),
-      isFallback: false,
+    return CourseExtraDetailsData(
+      description:
+          kinraraContent?.summary ??
+          _description(extraResponse, club, requestedSlug: slug),
+      facilityLabels: kinraraContent?.facilities.isNotEmpty == true
+          ? kinraraContent!.facilities
+          : _facilityLabels(extraResponse, club, requestedSlug: slug),
+      photoUrls: kinraraContent?.photoUrls.isNotEmpty == true
+          ? kinraraContent!.photoUrls
+          : _photoUrls(extraResponse),
+    );
+  }
+
+  @override
+  Future<CourseWeatherDetailsData> onFetchCourseWeather({
+    required GolfClubModel club,
+  }) async {
+    final weather = await _fetchWeather(club);
+    final weeklyForecast = await _fetchWeeklyForecast(club);
+    return CourseWeatherDetailsData(
+      weather: weather,
+      weeklyForecast: weeklyForecast,
     );
   }
 
@@ -160,6 +186,55 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
       );
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<List<CourseWeatherForecastItem>> _fetchWeeklyForecast(
+    GolfClubModel club,
+  ) async {
+    if (club.latitude == null || club.longitude == null) {
+      return const <CourseWeatherForecastItem>[];
+    }
+
+    try {
+      final response = await _weatherApiService.getWeather(
+        latitude: club.latitude!,
+        longitude: club.longitude!,
+      );
+      final daily = _asMap(response['daily']);
+      if (daily == null) {
+        return const <CourseWeatherForecastItem>[];
+      }
+
+      final times = daily['time'];
+      final weatherCodes = daily['weather_code'];
+      final highs = daily['temperature_2m_max'];
+      final lows = daily['temperature_2m_min'];
+
+      if (times is! List || weatherCodes is! List || highs is! List || lows is! List) {
+        return const <CourseWeatherForecastItem>[];
+      }
+
+      final count = <int>[
+        times.length,
+        weatherCodes.length,
+        highs.length,
+        lows.length,
+      ].reduce((value, element) => value < element ? value : element);
+
+      return List<CourseWeatherForecastItem>.generate(count, (index) {
+        final weatherCode = _roundToInt(weatherCodes[index]) ?? 0;
+        final descriptor = _weatherDescriptor(weatherCode);
+        return CourseWeatherForecastItem(
+          dayLabel: _dayLabel(times[index]?.toString() ?? ''),
+          highCelsius: _roundToInt(highs[index]) ?? 0,
+          lowCelsius: _roundToInt(lows[index]) ?? 0,
+          weatherLabel: descriptor.label,
+          weatherIcon: descriptor.icon,
+        );
+      });
+    } catch (_) {
+      return const <CourseWeatherForecastItem>[];
     }
   }
 
@@ -324,6 +399,65 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     ].where((item) => item.trim().isNotEmpty).toList();
 
     return fallback.isEmpty ? const <String>['Golf Booking'] : fallback;
+  }
+
+  List<String> _photoUrls(dynamic detailResponse) {
+    final map = _asMap(detailResponse);
+    final candidates = <dynamic>[
+      map?['photos'],
+      map?['images'],
+      map?['gallery'],
+      map?['imageUrls'],
+      _asMap(map?['data'])?['photos'],
+      _asMap(map?['data'])?['images'],
+      _asMap(map?['club'])?['photos'],
+      _asMap(map?['club'])?['images'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is List) {
+        final urls = candidate.map((item) {
+          if (item is Map<String, dynamic>) {
+            return item['url']?.toString() ??
+                item['imageUrl']?.toString() ??
+                item['src']?.toString() ??
+                '';
+          }
+          return item?.toString() ?? '';
+        }).where((item) => item.trim().isNotEmpty).toList();
+
+        if (urls.isNotEmpty) {
+          return urls;
+        }
+      }
+    }
+
+    return const <String>[];
+  }
+
+  String _dayLabel(String rawDate) {
+    final date = DateTime.tryParse(rawDate);
+    if (date == null) {
+      return rawDate;
+    }
+
+    switch (date.weekday) {
+      case DateTime.monday:
+        return 'Mon';
+      case DateTime.tuesday:
+        return 'Tue';
+      case DateTime.wednesday:
+        return 'Wed';
+      case DateTime.thursday:
+        return 'Thu';
+      case DateTime.friday:
+        return 'Fri';
+      case DateTime.saturday:
+        return 'Sat';
+      case DateTime.sunday:
+        return 'Sun';
+    }
+    return rawDate;
   }
 
   int? _extractFirstRoundedValue(dynamic value) {
