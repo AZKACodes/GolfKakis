@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'data/local_course_display_content.dart';
 import 'domain/course_details_use_case_impl.dart';
 import 'view/course_details_view.dart';
+import 'view/widgets/section/course_details_bottom_bar_section.dart';
 import 'viewmodel/course_details_view_contract.dart';
 import 'viewmodel/course_details_view_model.dart';
 
@@ -75,7 +77,9 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         final club = _viewModel.viewState.detail.club;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Course Details'),
+            title: Text(
+              club.name.trim().isNotEmpty ? club.name : 'Course Details',
+            ),
             leading: IconButton(
               onPressed: () => _viewModel.onUserIntent(const OnBackClick()),
               icon: const Icon(Icons.arrow_back),
@@ -84,17 +88,15 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           body: SafeArea(
             child: CourseDetailsView(
               state: _viewModel.viewState,
-              onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
-              onDirectionsClick: () => _openDirections(club),
+              onRefresh: () async =>
+                  _viewModel.onUserIntent(const OnRefresh()),
+              onDirectionsTap: () => _openDirections(club),
             ),
           ),
-          bottomNavigationBar: SafeArea(
-            minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: FilledButton.icon(
-              onPressed: () => _viewModel.onUserIntent(const OnBookNowClick()),
-              icon: const Icon(Icons.flash_on_outlined),
-              label: const Text('Quick Book'),
-            ),
+          bottomNavigationBar: CourseDetailsBottomBarSection(
+            onBookNowTap: () => _viewModel.onUserIntent(const OnBookNowClick()),
+            onQuickBookTap: () =>
+                _viewModel.onUserIntent(const OnQuickBookClick()),
           ),
         );
       },
@@ -105,23 +107,63 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     final fallbackContent = localCourseDisplayContent[club.slug];
     final latitude = club.latitude ?? fallbackContent?.latitude;
     final longitude = club.longitude ?? fallbackContent?.longitude;
-
-    final coordinatesUri = (latitude != null && longitude != null)
-        ? Uri.parse(
-            'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
-          )
-        : null;
     final addressQuery = Uri.encodeComponent(
       club.address.trim().isEmpty ? club.name : '${club.name}, ${club.address}',
     );
-    final addressUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$addressQuery',
-    );
+    final candidateUris = <Uri>[
+      if (latitude != null && longitude != null)
+        ..._navigationUris(
+          latitude: latitude,
+          longitude: longitude,
+          addressQuery: addressQuery,
+        ),
+      Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$addressQuery',
+      ),
+    ];
 
-    if (coordinatesUri != null && await launchUrl(coordinatesUri)) {
-      return;
+    for (final uri in candidateUris) {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        return;
+      }
     }
+  }
 
-    await launchUrl(addressUri);
+  List<Uri> _navigationUris({
+    required double latitude,
+    required double longitude,
+    required String addressQuery,
+  }) {
+    final coordinatesQuery = '$latitude,$longitude';
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return <Uri>[
+          Uri.parse(
+            'geo:0,0?q=$coordinatesQuery($addressQuery)',
+          ),
+          Uri.parse(
+            'google.navigation:q=$coordinatesQuery',
+          ),
+          Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$coordinatesQuery',
+          ),
+        ];
+      case TargetPlatform.iOS:
+        return <Uri>[
+          Uri.parse(
+            'http://maps.apple.com/?ll=$coordinatesQuery&q=$addressQuery',
+          ),
+          Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$coordinatesQuery',
+          ),
+        ];
+      default:
+        return <Uri>[
+          Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$coordinatesQuery',
+          ),
+        ];
+    }
   }
 }

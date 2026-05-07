@@ -5,16 +5,53 @@ import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dar
 import 'course_details_use_case.dart';
 
 class CourseDetailsUseCaseImpl implements CourseDetailsUseCase {
-  const CourseDetailsUseCaseImpl();
+  const CourseDetailsUseCaseImpl({
+    CourseDetailsRepository? repository,
+  }) : _repository = repository;
+
+  final CourseDetailsRepository? _repository;
+
+  CourseDetailsRepository get _resolvedRepository =>
+      _repository ?? CourseDetailsRepositoryImpl();
 
   @override
-  Future<CourseDetailsResult> fetchCourseDetails({
+  Future<CourseDetailsResult> onInitCourseDetailInit({
     required String slug,
     GolfClubModel? initialClub,
-  }) {
-    return CourseDetailsRepositoryImpl().onFetchCourseDetails(
+  }) async {
+    final headerDetails = await _resolvedRepository.onFetchCourseDetails(
       slug: slug,
       initialClub: initialClub,
+    );
+
+    final results = await Future.wait<Object>([
+      _resolvedRepository.onFetchCourseExtraDetails(
+        slug: slug,
+        club: headerDetails.club,
+      ),
+      _resolvedRepository.onFetchCourseWeather(club: headerDetails.club),
+    ]);
+
+    final extraDetails = results[0] as CourseExtraDetailsData;
+    final weatherDetails = results[1] as CourseWeatherDetailsData;
+
+    return CourseDetailsResult(
+      detail: CourseDetailsData(
+        club: headerDetails.club,
+        distanceLabel: headerDetails.distanceLabel,
+        openSlotsLabel: headerDetails.openSlotsLabel,
+        greenFeeLabel: headerDetails.greenFeeLabel,
+        peakLabel: headerDetails.peakLabel,
+        description: extraDetails.description,
+        bestForLabel: headerDetails.bestForLabel,
+        facilityLabels: extraDetails.facilityLabels,
+        photoUrls: extraDetails.photoUrls,
+        weather: weatherDetails.weather,
+        weeklyForecast: weatherDetails.weeklyForecast,
+        nextSlotLabel: headerDetails.nextSlotLabel,
+        bookingDateLabel: headerDetails.bookingDateLabel,
+      ),
+      isFallback: false,
     );
   }
 }
