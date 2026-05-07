@@ -1,21 +1,21 @@
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
-import '../domain/golf_club_detail_use_case.dart';
-import 'golf_club_detail_view_contract.dart';
+import '../domain/course_details_use_case.dart';
+import 'course_details_view_contract.dart';
 
-class GolfClubDetailViewModel
+class CourseDetailsViewModel
     extends
         MviViewModel<
-          GolfClubDetailUserIntent,
-          GolfClubDetailViewState,
-          GolfClubDetailNavEffect
+          CourseDetailsUserIntent,
+          CourseDetailsViewState,
+          CourseDetailsNavEffect
         >
-    implements GolfClubDetailViewContract {
-  GolfClubDetailViewModel({
+    implements CourseDetailsViewContract {
+  CourseDetailsViewModel({
     required String clubSlug,
     GolfClubModel? initialClub,
-    required GolfClubDetailUseCase useCase,
+    required CourseDetailsUseCase useCase,
   }) : _clubSlug = clubSlug,
        _initialClub =
            initialClub ??
@@ -30,15 +30,15 @@ class GolfClubDetailViewModel
 
   final String _clubSlug;
   final GolfClubModel _initialClub;
-  final GolfClubDetailUseCase _useCase;
+  final CourseDetailsUseCase _useCase;
 
   @override
-  GolfClubDetailViewState createInitialState() {
-    return GolfClubDetailViewState.initial(_initialClub);
+  CourseDetailsViewState createInitialState() {
+    return CourseDetailsViewState.initial(_initialClub);
   }
 
   @override
-  Future<void> handleIntent(GolfClubDetailUserIntent intent) async {
+  Future<void> handleIntent(CourseDetailsUserIntent intent) async {
     switch (intent) {
       case OnInit():
       case OnRefresh():
@@ -56,7 +56,7 @@ class GolfClubDetailViewModel
     );
 
     try {
-      final result = await _useCase.fetchGolfClubDetail(
+      final result = await _useCase.fetchCourseDetails(
         slug: _clubSlug,
         initialClub: _initialClub,
       );

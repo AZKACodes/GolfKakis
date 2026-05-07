@@ -196,6 +196,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
         name: 'Kinrara Golf Club',
         address: 'Puchong, Selangor',
         noOfHoles: 18,
+        isEnabled: true,
       ),
     ];
   }

@@ -1,7 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
-class GolfClubDetailData {
-  const GolfClubDetailData({
+class CourseDetailsData {
+  const CourseDetailsData({
     required this.club,
     required this.distanceLabel,
     required this.openSlotsLabel,
@@ -23,13 +23,13 @@ class GolfClubDetailData {
   final String description;
   final String bestForLabel;
   final List<String> facilityLabels;
-  final GolfClubWeatherSummary? weather;
+  final CourseWeatherSummary? weather;
   final String nextSlotLabel;
   final String bookingDateLabel;
 }
 
-class GolfClubWeatherSummary {
-  const GolfClubWeatherSummary({
+class CourseWeatherSummary {
+  const CourseWeatherSummary({
     required this.temperatureCelsius,
     required this.highCelsius,
     required this.lowCelsius,
@@ -46,15 +46,15 @@ class GolfClubWeatherSummary {
   final String weatherIcon;
 }
 
-class GolfClubDetailResult {
-  const GolfClubDetailResult({required this.detail, required this.isFallback});
+class CourseDetailsResult {
+  const CourseDetailsResult({required this.detail, required this.isFallback});
 
-  final GolfClubDetailData detail;
+  final CourseDetailsData detail;
   final bool isFallback;
 }
 
-abstract class GolfClubDetailRepository {
-  Future<GolfClubDetailResult> onFetchGolfClubDetail({
+abstract class CourseDetailsRepository {
+  Future<CourseDetailsResult> onFetchCourseDetails({
     required String slug,
     GolfClubModel? initialClub,
   });

@@ -1,16 +1,16 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
-import 'home_golf_club_list_repository.dart';
+import 'courses_list_repository.dart';
 
-class HomeGolfClubListRepositoryImpl implements HomeGolfClubListRepository {
-  HomeGolfClubListRepositoryImpl({BookingApiService? bookingApiService})
+class CoursesListRepositoryImpl implements CoursesListRepository {
+  CoursesListRepositoryImpl({BookingApiService? bookingApiService})
     : _bookingApiService = bookingApiService ?? BookingApiService();
 
   final BookingApiService _bookingApiService;
 
   @override
-  Future<List<GolfClubModel>> onFetchGolfClubList() async {
+  Future<List<GolfClubModel>> onFetchCoursesList() async {
     final response = await _bookingApiService.onFetchGolfClubList();
     return _parseGolfClubList(response);
   }

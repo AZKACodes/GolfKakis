@@ -13,7 +13,7 @@ class LocalGolfClubDisplayContent {
 }
 
 const Map<String, LocalGolfClubDisplayContent>
-localGolfClubDisplayContent = <String, LocalGolfClubDisplayContent>{
+localCourseDisplayContent = <String, LocalGolfClubDisplayContent>{
   'kinrara-golf-club': LocalGolfClubDisplayContent(
     summary:
         'Kinrara Golf Club is a well-established golf destination located in Puchong, Malaysia, offering a scenic and challenging 18-hole championship course. Surrounded by lush greenery and natural lakes, the course provides an enjoyable experience for golfers of all skill levels. Known for its well-maintained fairways and welcoming atmosphere, Kinrara Golf Club is a popular choice for both casual rounds and competitive play.',

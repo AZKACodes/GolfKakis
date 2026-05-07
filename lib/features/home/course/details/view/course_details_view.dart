@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../viewmodel/golf_club_detail_view_contract.dart';
+import '../viewmodel/course_details_view_contract.dart';
 
-class GolfClubDetailView extends StatelessWidget {
-  const GolfClubDetailView({
+class CourseDetailsView extends StatelessWidget {
+  const CourseDetailsView({
     required this.state,
     required this.onRefresh,
     required this.onDirectionsClick,
     super.key,
   });
 
-  final GolfClubDetailViewState state;
+  final CourseDetailsViewState state;
   final Future<void> Function() onRefresh;
   final VoidCallback onDirectionsClick;
 

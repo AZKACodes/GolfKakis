@@ -1,17 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/club/detail/data/local_golf_club_display_content.dart';
-import 'package:golf_kakis/features/booking/club/detail/domain/golf_club_detail_use_case_impl.dart';
-import 'package:golf_kakis/features/booking/club/detail/view/golf_club_detail_view.dart';
-import 'package:golf_kakis/features/booking/club/detail/viewmodel/golf_club_detail_view_contract.dart';
-import 'package:golf_kakis/features/booking/club/detail/viewmodel/golf_club_detail_view_model.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class GolfClubDetailPage extends StatefulWidget {
-  const GolfClubDetailPage({
+import 'data/local_course_display_content.dart';
+import 'domain/course_details_use_case_impl.dart';
+import 'view/course_details_view.dart';
+import 'viewmodel/course_details_view_contract.dart';
+import 'viewmodel/course_details_view_model.dart';
+
+class CourseDetailsPage extends StatefulWidget {
+  const CourseDetailsPage({
     required this.clubSlug,
     this.initialClub,
     super.key,
@@ -21,20 +22,20 @@ class GolfClubDetailPage extends StatefulWidget {
   final GolfClubModel? initialClub;
 
   @override
-  State<GolfClubDetailPage> createState() => _GolfClubDetailPageState();
+  State<CourseDetailsPage> createState() => _CourseDetailsPageState();
 }
 
-class _GolfClubDetailPageState extends State<GolfClubDetailPage> {
-  late final GolfClubDetailViewModel _viewModel;
-  StreamSubscription<GolfClubDetailNavEffect>? _navEffectSubscription;
+class _CourseDetailsPageState extends State<CourseDetailsPage> {
+  late final CourseDetailsViewModel _viewModel;
+  StreamSubscription<CourseDetailsNavEffect>? _navEffectSubscription;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = GolfClubDetailViewModel(
+    _viewModel = CourseDetailsViewModel(
       clubSlug: widget.clubSlug,
       initialClub: widget.initialClub,
-      useCase: const GolfClubDetailUseCaseImpl(),
+      useCase: const CourseDetailsUseCaseImpl(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is NavigateBack) {
@@ -74,14 +75,14 @@ class _GolfClubDetailPageState extends State<GolfClubDetailPage> {
         final club = _viewModel.viewState.detail.club;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Golf Club Details'),
+            title: const Text('Course Details'),
             leading: IconButton(
               onPressed: () => _viewModel.onUserIntent(const OnBackClick()),
               icon: const Icon(Icons.arrow_back),
             ),
           ),
           body: SafeArea(
-            child: GolfClubDetailView(
+            child: CourseDetailsView(
               state: _viewModel.viewState,
               onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
               onDirectionsClick: () => _openDirections(club),
@@ -101,7 +102,7 @@ class _GolfClubDetailPageState extends State<GolfClubDetailPage> {
   }
 
   Future<void> _openDirections(GolfClubModel club) async {
-    final fallbackContent = localGolfClubDisplayContent[club.slug];
+    final fallbackContent = localCourseDisplayContent[club.slug];
     final latitude = club.latitude ?? fallbackContent?.latitude;
     final longitude = club.longitude ?? fallbackContent?.longitude;
 
