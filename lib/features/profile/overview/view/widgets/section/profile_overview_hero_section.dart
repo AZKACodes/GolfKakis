@@ -37,7 +37,7 @@ class ProfileOverviewHeroSection extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            isLoggedIn ? profile.displayName : 'Guest',
+            profile.displayName,
             style: theme.textTheme.titleLarge?.copyWith(
               color: const Color(0xFF111827),
               fontWeight: FontWeight.w700,

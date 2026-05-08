@@ -67,6 +67,7 @@ class SessionManager extends ChangeNotifier {
     String? profileEmail,
     String? profilePhoneNumber,
     int? profileAvatarIndex,
+    String? profileAvatarImagePath,
   }) {
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
@@ -84,6 +85,7 @@ class SessionManager extends ChangeNotifier {
       profileEmail: profileEmail,
       profilePhoneNumber: profilePhoneNumber,
       profileAvatarIndex: profileAvatarIndex,
+      profileAvatarImagePath: profileAvatarImagePath,
     );
     unawaited(_persistState());
     notifyListeners();
@@ -96,6 +98,7 @@ class SessionManager extends ChangeNotifier {
     required String email,
     required String phoneNumber,
     required int avatarIndex,
+    String? avatarImagePath,
   }) {
     _state = _state.copyWith(
       authenticatedUsername: fullName,
@@ -105,6 +108,7 @@ class SessionManager extends ChangeNotifier {
       profileEmail: email,
       profilePhoneNumber: phoneNumber,
       profileAvatarIndex: avatarIndex,
+      profileAvatarImagePath: avatarImagePath,
     );
     unawaited(_persistState());
     notifyListeners();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -70,6 +71,21 @@ class ApiClient {
     return _decodeJsonResponse(response);
   }
 
+  Future<dynamic> patchJson(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    final response = await _client.patch(
+      uri,
+      headers: _mergeHeaders(headers),
+      body: jsonEncode(body),
+    );
+    return _decodeJsonResponse(response);
+  }
+
   Future<dynamic> deleteJson(
     String path, {
     Object? body,
@@ -82,6 +98,34 @@ class ApiClient {
       headers: _mergeHeaders(headers),
       body: body == null ? null : jsonEncode(body),
     );
+    return _decodeJsonResponse(response);
+  }
+
+  Future<dynamic> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    required List<MultipartFilePayload> files,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    final request = http.MultipartRequest('POST', uri);
+    final resolvedHeaders = _mergeHeaders(headers)
+      ..remove('Content-Type');
+    request.headers.addAll(resolvedHeaders);
+    request.fields.addAll(fields);
+    for (final file in files) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          file.field,
+          file.path,
+          filename: file.filename,
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
     return _decodeJsonResponse(response);
   }
 
@@ -172,4 +216,19 @@ class ApiClient {
 
     return null;
   }
+}
+
+class MultipartFilePayload {
+  const MultipartFilePayload({
+    required this.field,
+    required this.path,
+    this.filename,
+  });
+
+  final String field;
+  final String path;
+  final String? filename;
+
+  String get resolvedFilename =>
+      filename ?? File(path).uri.pathSegments.last;
 }
