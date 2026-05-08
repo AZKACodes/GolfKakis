@@ -10,6 +10,7 @@ class UserProfileModel {
     required this.email,
     required this.phoneNumber,
     int? avatarIndex,
+    this.avatarImagePath,
     required this.role,
     required this.membershipLabel,
     required this.isLoggedIn,
@@ -23,6 +24,7 @@ class UserProfileModel {
   final String email;
   final String phoneNumber;
   final int? _avatarIndex;
+  final String? avatarImagePath;
   final UserRole role;
   final String membershipLabel;
   final bool isLoggedIn;
@@ -33,6 +35,36 @@ class UserProfileModel {
   bool get isUser => role == UserRole.user;
   bool get isAgent => role == UserRole.agent;
   bool get isAdmin => role == UserRole.admin;
+
+  UserProfileModel copyWith({
+    String? userId,
+    String? userSlug,
+    String? displayName,
+    String? nickname,
+    String? occupation,
+    String? email,
+    String? phoneNumber,
+    int? avatarIndex,
+    String? avatarImagePath,
+    UserRole? role,
+    String? membershipLabel,
+    bool? isLoggedIn,
+  }) {
+    return UserProfileModel(
+      userId: userId ?? this.userId,
+      userSlug: userSlug ?? this.userSlug,
+      displayName: displayName ?? this.displayName,
+      nickname: nickname ?? this.nickname,
+      occupation: occupation ?? this.occupation,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      avatarIndex: avatarIndex ?? this.avatarIndex,
+      avatarImagePath: avatarImagePath ?? this.avatarImagePath,
+      role: role ?? this.role,
+      membershipLabel: membershipLabel ?? this.membershipLabel,
+      isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+    );
+  }
 
   String get roleLabel {
     switch (role) {

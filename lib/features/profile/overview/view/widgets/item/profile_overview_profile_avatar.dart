@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 
@@ -13,6 +15,22 @@ class ProfileOverviewProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localAvatarPath = profile.avatarImagePath?.trim();
+    if (localAvatarPath != null && localAvatarPath.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+          image: DecorationImage(
+            image: FileImage(File(localAvatarPath)),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+
     final palette =
         _avatarPalettes[profile.avatarIndex % _avatarPalettes.length];
 

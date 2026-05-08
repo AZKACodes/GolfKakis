@@ -1,3 +1,4 @@
+import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
@@ -54,7 +55,8 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       occupation: session.profileOccupation ?? 'Golfer',
       email: session.profileEmail ?? '-',
       phoneNumber: user.phoneNumber,
-      avatarIndex: session.profileAvatarIndex ?? 0,
+      avatarIndex: session.profileAvatarIndex ?? emptyInt,
+      avatarImagePath: session.profileAvatarImagePath,
       role: role,
       membershipLabel: _defaultMembershipLabel(role),
       isLoggedIn: true,
@@ -71,6 +73,7 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       email: '-',
       phoneNumber: '-',
       avatarIndex: 0,
+      avatarImagePath: session.profileAvatarImagePath,
       role: UserRole.guest,
       membershipLabel: _defaultMembershipLabel(UserRole.guest),
       isLoggedIn: false,

@@ -1,3 +1,4 @@
+import '../default_values.dart';
 import '../enums/session/session_status.dart';
 import '../enums/session/user_role.dart';
 import 'session_visitor.dart';
@@ -20,6 +21,7 @@ class SessionState {
     this.profileEmail,
     this.profilePhoneNumber,
     this.profileAvatarIndex,
+    this.profileAvatarImagePath,
     this.visitor,
   });
 
@@ -39,6 +41,7 @@ class SessionState {
   final String? profileEmail;
   final String? profilePhoneNumber;
   final int? profileAvatarIndex;
+  final String? profileAvatarImagePath;
   final SessionVisitor? visitor;
 
   bool get isLoggedIn => status == SessionStatus.loggedIn;
@@ -77,6 +80,7 @@ class SessionState {
     String? profileEmail,
     String? profilePhoneNumber,
     int? profileAvatarIndex,
+    String? profileAvatarImagePath,
     SessionVisitor? visitor,
     bool clearAuthenticatedUsername = false,
     bool clearAuthenticatedUserRole = false,
@@ -123,6 +127,9 @@ class SessionState {
       profileAvatarIndex: clearProfileDetails
           ? null
           : (profileAvatarIndex ?? this.profileAvatarIndex),
+      profileAvatarImagePath: clearProfileDetails
+          ? null
+          : (profileAvatarImagePath ?? this.profileAvatarImagePath),
       visitor: clearVisitor ? null : (visitor ?? this.visitor),
     );
   }
@@ -145,6 +152,7 @@ class SessionState {
       'profileEmail': profileEmail,
       'profilePhoneNumber': profilePhoneNumber,
       'profileAvatarIndex': profileAvatarIndex,
+      'profileAvatarImagePath': profileAvatarImagePath,
       'visitor': visitor?.toJson(),
     };
   }
@@ -169,12 +177,13 @@ class SessionState {
       profileEmail: json['profileEmail'] as String?,
       profilePhoneNumber: json['profilePhoneNumber'] as String?,
       profileAvatarIndex: json['profileAvatarIndex'] as int?,
+      profileAvatarImagePath: json['profileAvatarImagePath'] as String?,
       visitor: _visitorFromJson(json['visitor']),
     );
   }
 
   static SessionStatus _sessionStatusFromName(String? name) {
-    if (name == null || name.isEmpty) {
+    if (name.getValueOrEmpty().isEmpty) {
       return SessionStatus.loggedOut;
     }
 
@@ -188,7 +197,7 @@ class SessionState {
   }
 
   static UserRole? _userRoleFromName(String? name) {
-    if (name == null || name.isEmpty) {
+    if (name.getValueOrEmpty().isEmpty) {
       return null;
     }
 

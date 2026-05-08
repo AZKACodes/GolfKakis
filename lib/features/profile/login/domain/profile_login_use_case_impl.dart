@@ -1,3 +1,4 @@
+import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 import 'profile_login_use_case.dart';
@@ -63,6 +64,10 @@ class ProfileLoginUseCaseImpl implements ProfileLoginUseCase {
           userId: 'mock-user-$visitorId',
           authId: 'mock-auth-$visitorId',
           name: username.trim(),
+          username: username.trim(),
+          gender: emptyString,
+          dateOfBirth: emptyString,
+          email: emptyString,
           phoneNumber: phoneNumber.trim(),
           isPhoneVerified: true,
           avatarUrl: null,
