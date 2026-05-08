@@ -9,6 +9,8 @@ import 'package:golf_kakis/features/profile/overview/domain/profile_overview_use
 import 'package:golf_kakis/features/profile/overview/view/profile_overview_view.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_contract.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_model.dart';
+import 'package:golf_kakis/features/profile/systemsetting/language/profile_language_page.dart';
+import 'package:golf_kakis/features/profile/systemsetting/notification/profile_notification_page.dart';
 
 class ProfileOverviewPage extends StatefulWidget {
   const ProfileOverviewPage({super.key});
@@ -75,6 +77,28 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
           ),
         );
       }
+
+      if (effect is LanguageSettingsRequested) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ProfileLanguagePage(),
+          ),
+        );
+      }
+
+      if (effect is NotificationSettingsRequested) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ProfileNotificationPage(),
+          ),
+        );
+      }
     });
   }
 
@@ -84,7 +108,7 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
     final sessionState = SessionScope.of(context).state;
     if (_lastSessionState != sessionState) {
       _lastSessionState = sessionState;
-      _viewModel.onUserIntent(OnInit(sessionState));
+      _viewModel.onUserIntent(OnInitProfile(sessionState));
     }
   }
 
@@ -109,6 +133,10 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
                 _viewModel.onUserIntent(const OnPrimaryTouchpointClick()),
             onMyGolfKakisClick: () =>
                 _viewModel.onUserIntent(const OnMyGolfKakisTouchpointClick()),
+            onLanguageClick: () =>
+                _viewModel.onUserIntent(const OnLanguageClick()),
+            onNotificationClick: () =>
+                _viewModel.onUserIntent(const OnNotificationClick()),
             onLogoutClick: () => _viewModel.onUserIntent(const OnLogoutClick()),
           ),
         );

@@ -8,9 +8,16 @@ class ProfileOverviewUseCaseImpl implements ProfileOverviewUseCase {
   const ProfileOverviewUseCaseImpl();
 
   @override
-  Future<ProfileOverviewResult> fetchUserProfile({
+  Future<ProfileOverviewResult> onFetchUserDetails({
     required SessionState session,
   }) {
-    return ProfileOverviewRepositoryImpl().onFetchUserProfile(session: session);
+    return ProfileOverviewRepositoryImpl().onFetchUserDetails(session: session);
+  }
+
+  @override
+  Future<ProfileOverviewResult> onBuildGuestProfile({
+    required SessionState session,
+  }) {
+    return ProfileOverviewRepositoryImpl().onBuildGuestProfile(session: session);
   }
 }

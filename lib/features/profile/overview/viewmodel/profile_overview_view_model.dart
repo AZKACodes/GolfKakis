@@ -26,7 +26,7 @@ class ProfileOverviewViewModel
   @override
   Future<void> handleIntent(ProfileOverviewUserIntent intent) async {
     switch (intent) {
-      case OnInit():
+      case OnInitProfile():
         await _loadProfile(intent.session);
       case OnRefresh():
         await _loadProfile(intent.session);
@@ -44,6 +44,10 @@ class ProfileOverviewViewModel
         } else if (currentState.profile?.isLoggedIn == true) {
           sendNavEffect(() => const MyGolfKakisRequested());
         }
+      case OnLanguageClick():
+        sendNavEffect(() => const LanguageSettingsRequested());
+      case OnNotificationClick():
+        sendNavEffect(() => const NotificationSettingsRequested());
     }
   }
 
@@ -57,7 +61,9 @@ class ProfileOverviewViewModel
     );
 
     try {
-      final result = await _useCase.fetchUserProfile(session: session);
+      final result = session.isLoggedIn
+          ? await _useCase.onFetchUserDetails(session: session)
+          : await _useCase.onBuildGuestProfile(session: session);
       emitViewState(
         (state) => state.copyWith(
           isLoading: false,

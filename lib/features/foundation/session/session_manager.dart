@@ -146,7 +146,7 @@ class SessionManager extends ChangeNotifier {
 
   Future<void> _syncVisitor(String deviceId) async {
     try {
-      final visitor = await _visitorApiService.onSetVisitorHeartbeat(
+      final visitor = await _visitorApiService.onInitVisitorHeartbeat(
         visitorId: deviceId,
         platform: _visitorApiService.resolvePlatform(),
       );

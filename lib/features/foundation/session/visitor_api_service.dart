@@ -9,7 +9,7 @@ class VisitorApiService {
 
   final ApiClient _apiClient;
 
-  Future<SessionVisitor> onSetVisitorHeartbeat({
+  Future<SessionVisitor> onInitVisitorHeartbeat({
     required String visitorId,
     required String platform,
   }) async {

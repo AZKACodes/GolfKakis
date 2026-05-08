@@ -27,6 +27,53 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+def patch_flutter_contacts_scene_crash
+  plugin_file = File.join(
+    __dir__,
+    '.symlinks',
+    'plugins',
+    'flutter_contacts',
+    'ios',
+    'Classes',
+    'SwiftFlutterContactsPlugin.swift',
+  )
+  return unless File.exist?(plugin_file)
+
+  source = File.read(plugin_file)
+  legacy_code = '        let rootViewController = UIApplication.shared.delegate!.window!!.rootViewController!'
+  patched_code = <<~SWIFT.chomp
+            let rootViewController = registrar.viewController
+                ?? UIApplication.shared.connectedScenes
+                    .compactMap { ($0 as? UIWindowScene)?.windows.first(where: { $0.isKeyWindow })?.rootViewController }
+                    .first
+                ?? UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                ?? UIViewController()
+  SWIFT
+  broken_code = <<~SWIFT.chomp
+            let rootViewController = registrar.viewController()
+                ?? UIApplication.shared.connectedScenes
+                    .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }
+                    .first
+                ?? UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                ?? UIViewController()
+  SWIFT
+  previous_patched_code = <<~SWIFT.chomp
+            let rootViewController = registrar.viewController
+                ?? UIApplication.shared.connectedScenes
+                    .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }
+                    .first
+                ?? UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                ?? UIViewController()
+  SWIFT
+  updated_source = source
+    .sub(legacy_code, patched_code)
+    .sub(broken_code, patched_code)
+    .sub(previous_patched_code, patched_code)
+  return if updated_source == source
+
+  File.write(plugin_file, updated_source)
+end
+
 target 'Runner' do
   use_frameworks!
 
@@ -37,6 +84,8 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  patch_flutter_contacts_scene_crash
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
