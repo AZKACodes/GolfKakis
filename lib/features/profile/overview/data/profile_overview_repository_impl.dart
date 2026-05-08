@@ -14,24 +14,27 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
   final ProfileApiService _apiService;
 
   @override
-  Future<ProfileOverviewResult> onFetchUserProfile({
+  Future<ProfileOverviewResult> onFetchUserDetails({
     required SessionState session,
   }) async {
-    if (session.isLoggedIn) {
-      final accessToken = session.accessToken?.trim();
-      if (accessToken == null || accessToken.isEmpty) {
-        throw ApiException(message: 'Missing access token for user profile.');
-      }
-
-      final user = await _apiService.onFetchUserDetails(
-        accessToken: accessToken,
-      );
-      return ProfileOverviewResult(
-        profile: _buildAuthenticatedProfile(session, user),
-        isFallback: false,
-      );
+    final accessToken = session.accessToken?.trim();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw ApiException(message: 'Missing access token for user profile.');
     }
 
+    final user = await _apiService.onFetchUserDetails(
+      accessToken: accessToken,
+    );
+    return ProfileOverviewResult(
+      profile: _buildAuthenticatedProfile(session, user),
+      isFallback: false,
+    );
+  }
+
+  @override
+  Future<ProfileOverviewResult> onBuildGuestProfile({
+    required SessionState session,
+  }) async {
     return ProfileOverviewResult(
       profile: _buildGuestProfile(session),
       isFallback: false,

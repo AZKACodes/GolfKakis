@@ -2,7 +2,11 @@ import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository.dart';
 
 abstract class ProfileOverviewUseCase {
-  Future<ProfileOverviewResult> fetchUserProfile({
+  Future<ProfileOverviewResult> onFetchUserDetails({
+    required SessionState session,
+  });
+
+  Future<ProfileOverviewResult> onBuildGuestProfile({
     required SessionState session,
   });
 }

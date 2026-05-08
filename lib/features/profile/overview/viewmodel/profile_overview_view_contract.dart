@@ -53,8 +53,8 @@ sealed class ProfileOverviewUserIntent extends UserIntent {
   const ProfileOverviewUserIntent() : super();
 }
 
-class OnInit extends ProfileOverviewUserIntent {
-  const OnInit(this.session);
+class OnInitProfile extends ProfileOverviewUserIntent {
+  const OnInitProfile(this.session);
 
   final SessionState session;
 }
@@ -77,6 +77,14 @@ class OnMyGolfKakisTouchpointClick extends ProfileOverviewUserIntent {
   const OnMyGolfKakisTouchpointClick();
 }
 
+class OnLanguageClick extends ProfileOverviewUserIntent {
+  const OnLanguageClick();
+}
+
+class OnNotificationClick extends ProfileOverviewUserIntent {
+  const OnNotificationClick();
+}
+
 sealed class ProfileOverviewNavEffect extends NavEffect {
   const ProfileOverviewNavEffect() : super();
 }
@@ -95,4 +103,12 @@ class EditProfileRequested extends ProfileOverviewNavEffect {
 
 class MyGolfKakisRequested extends ProfileOverviewNavEffect {
   const MyGolfKakisRequested();
+}
+
+class LanguageSettingsRequested extends ProfileOverviewNavEffect {
+  const LanguageSettingsRequested();
+}
+
+class NotificationSettingsRequested extends ProfileOverviewNavEffect {
+  const NotificationSettingsRequested();
 }
