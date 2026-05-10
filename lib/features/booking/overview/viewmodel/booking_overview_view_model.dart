@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import '../domain/booking_overview_use_case.dart';
@@ -12,91 +14,116 @@ class BookingOverviewViewModel
         >
     implements BookingOverviewViewContract {
   BookingOverviewViewModel(this._useCase);
+
   final BookingOverviewUseCase _useCase;
-
-  String? _lastAccessToken;
-  bool _lastIsLoggedIn = false;
-
-  BookingOverviewDataLoaded get _currentDataState {
-    return switch (currentState) {
-      BookingOverviewDataLoaded() => currentState as BookingOverviewDataLoaded,
-    };
-  }
+  String _accessToken = '';
 
   @override
   BookingOverviewViewState createInitialState() =>
-      BookingOverviewDataLoaded.initial;
+      BookingOverviewViewState.initial;
 
   @override
   Future<void> handleIntent(BookingOverviewUserIntent intent) async {
     switch (intent) {
-      case OnInit():
-        await _handleInit(
-          isLoggedIn: intent.isLoggedIn,
-          accessToken: intent.accessToken,
-        );
-      case OnBookingSubmissionClick():
-        sendNavEffect(() => const NavigateToBookingSubmission());
-      case OnPopularClubClick():
-        sendNavEffect(() => NavigateToGolfClubDetail(intent.club));
-      case OnBookingListClick():
-        sendNavEffect(() => const NavigateToBookingList());
-      case OnUpcomingBookingDetailClick():
-        final booking = _currentDataState.upcomingBooking;
-        if (booking != null) {
-          sendNavEffect(() => NavigateToBookingDetail(booking));
+      case OnInitBookingOverview():
+        final normalizedAccessToken = intent.accessToken.trim();
+        if (!intent.isLoggedIn || normalizedAccessToken.isEmpty) {
+          _accessToken = '';
+          emitViewState((_) => BookingOverviewViewState.initial);
+          return;
         }
+
+        if (_accessToken == normalizedAccessToken) {
+          return;
+        }
+        _accessToken = normalizedAccessToken;
+        emitViewState((_) => BookingOverviewViewState.initial);
+        unawaited(_loadTab(BookingOverviewTab.upcoming, forceRefresh: true));
+      case OnTabChanged():
+        if (_shouldLoad(intent.tab)) {
+          unawaited(_loadTab(intent.tab));
+        }
+      case OnViewBookingDetailClick():
+        sendNavEffect(() => NavigateToBookingDetail(intent.booking));
     }
   }
 
-  Future<void> _handleInit({
-    required bool isLoggedIn,
-    String? accessToken,
+  @override
+  Future<void> onRefresh(BookingOverviewTab tab) {
+    return _loadTab(tab, forceRefresh: true);
+  }
+
+  bool _shouldLoad(BookingOverviewTab tab) {
+    return switch (tab) {
+      BookingOverviewTab.upcoming => !viewState.hasLoadedUpcoming,
+      BookingOverviewTab.past => !viewState.hasLoadedPast,
+    };
+  }
+
+  Future<void> _loadTab(
+    BookingOverviewTab tab, {
+    bool forceRefresh = false,
   }) async {
-    final normalizedToken = accessToken?.trim() ?? '';
-    if (_lastIsLoggedIn == isLoggedIn && _lastAccessToken == normalizedToken) {
+    if (_accessToken.isEmpty) {
       return;
     }
 
-    _lastIsLoggedIn = isLoggedIn;
-    _lastAccessToken = normalizedToken;
-
-    if (!isLoggedIn || normalizedToken.isEmpty) {
-      emitViewState(
-        (_) => _currentDataState.copyWith(
-          isLoggedIn: false,
-          isUpcomingLoading: false,
-          clearUpcomingBooking: true,
-        ),
-      );
-      return;
+    if (!forceRefresh) {
+      final isLoading = switch (tab) {
+        BookingOverviewTab.upcoming => viewState.isUpcomingLoading,
+        BookingOverviewTab.past => viewState.isPastLoading,
+      };
+      if (isLoading) {
+        return;
+      }
     }
 
-    emitViewState(
-      (_) =>
-          _currentDataState.copyWith(isLoggedIn: true, isUpcomingLoading: true),
-    );
+    emitViewState((state) {
+      return switch (tab) {
+        BookingOverviewTab.upcoming => state.copyWith(isUpcomingLoading: true),
+        BookingOverviewTab.past => state.copyWith(isPastLoading: true),
+      };
+    });
 
     try {
-      final upcomingBooking = await _useCase.onFetchUpcomingBooking(
-        accessToken: normalizedToken,
-      );
-      emitViewState(
-        (_) => _currentDataState.copyWith(
-          isLoggedIn: true,
-          isUpcomingLoading: false,
-          upcomingBooking: upcomingBooking,
-          clearUpcomingBooking: upcomingBooking == null,
+      final data = switch (tab) {
+        BookingOverviewTab.upcoming =>
+          await _useCase.onFetchUpcomingBookingList(accessToken: _accessToken),
+        BookingOverviewTab.past => await _useCase.onFetchPastBookingList(
+          accessToken: _accessToken,
         ),
-      );
+      };
+
+      emitViewState((state) {
+        return switch (tab) {
+          BookingOverviewTab.upcoming => state.copyWith(
+            upcomingBookings: data.bookings,
+            isUpcomingLoading: false,
+            hasLoadedUpcoming: true,
+          ),
+          BookingOverviewTab.past => state.copyWith(
+            pastBookings: data.bookings,
+            isPastLoading: false,
+            hasLoadedPast: true,
+          ),
+        };
+      });
     } catch (_) {
-      emitViewState(
-        (_) => _currentDataState.copyWith(
-          isLoggedIn: true,
-          isUpcomingLoading: false,
-          clearUpcomingBooking: true,
+      sendNavEffect(
+        () => ShowBookingOverviewError(
+          tab == BookingOverviewTab.upcoming
+              ? 'Failed to load upcoming bookings.'
+              : 'Failed to load past bookings.',
         ),
       );
+      emitViewState((state) {
+        return switch (tab) {
+          BookingOverviewTab.upcoming => state.copyWith(
+            isUpcomingLoading: false,
+          ),
+          BookingOverviewTab.past => state.copyWith(isPastLoading: false),
+        };
+      });
     }
   }
 }

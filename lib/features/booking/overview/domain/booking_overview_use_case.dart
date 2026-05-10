@@ -1,5 +1,11 @@
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import '../data/booking_overview_repository.dart';
 
 abstract class BookingOverviewUseCase {
-  Future<BookingModel?> onFetchUpcomingBooking({required String accessToken});
+  Future<BookingOverviewTabData> onFetchUpcomingBookingList({
+    required String accessToken,
+  });
+
+  Future<BookingOverviewTabData> onFetchPastBookingList({
+    required String accessToken,
+  });
 }
