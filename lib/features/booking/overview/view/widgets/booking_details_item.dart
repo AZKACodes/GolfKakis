@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
-class BookingDetailsContainer extends StatelessWidget {
-  const BookingDetailsContainer({
+class BookingDetailsItem extends StatelessWidget {
+  const BookingDetailsItem({
     required this.item,
     required this.onViewBookingDetailClick,
     super.key,

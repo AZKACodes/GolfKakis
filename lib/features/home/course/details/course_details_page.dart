@@ -88,8 +88,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           body: SafeArea(
             child: CourseDetailsView(
               state: _viewModel.viewState,
-              onRefresh: () async =>
-                  _viewModel.onUserIntent(const OnRefresh()),
+              onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
               onDirectionsTap: () => _openDirections(club),
             ),
           ),
@@ -139,12 +138,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return <Uri>[
-          Uri.parse(
-            'geo:0,0?q=$coordinatesQuery($addressQuery)',
-          ),
-          Uri.parse(
-            'google.navigation:q=$coordinatesQuery',
-          ),
+          Uri.parse('geo:0,0?q=$coordinatesQuery($addressQuery)'),
+          Uri.parse('google.navigation:q=$coordinatesQuery'),
           Uri.parse(
             'https://www.google.com/maps/search/?api=1&query=$coordinatesQuery',
           ),

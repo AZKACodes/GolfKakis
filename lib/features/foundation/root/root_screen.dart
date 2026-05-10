@@ -11,6 +11,13 @@ import 'viewmodel/root_view_model.dart';
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
 
+  static final StreamController<int> _tabSelectionController =
+      StreamController<int>.broadcast();
+
+  static void selectTab(int index) {
+    _tabSelectionController.add(index);
+  }
+
   @override
   State<RootScreen> createState() => _RootScreenState();
 }
@@ -21,6 +28,7 @@ class _RootScreenState extends State<RootScreen> {
 
   late final RootViewModel _viewModel;
   StreamSubscription<RootNavEffect>? _navEffectSubscription;
+  StreamSubscription<int>? _externalTabSelectionSubscription;
 
   static const List<NavItem> _items = [
     NavItem(label: 'Home', icon: Icons.home_outlined),
@@ -43,10 +51,17 @@ class _RootScreenState extends State<RootScreen> {
         // Tab body is bound to view state. This marks effect consumption.
       }
     });
+    _externalTabSelectionSubscription = RootScreen
+        ._tabSelectionController
+        .stream
+        .listen((index) {
+          _viewModel.onUserIntent(RootTabSelectedIntent(index));
+        });
   }
 
   @override
   void dispose() {
+    _externalTabSelectionSubscription?.cancel();
     _navEffectSubscription?.cancel();
     _viewModel.dispose();
     super.dispose();
