@@ -5,14 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/detail/booking_submission_detail_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/view/booking_submission_slot_view.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottomsheet/slot_details_bottom_sheet.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
 import 'package:golf_kakis/features/foundation/enums/session/session_status.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
-import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/util/user_util.dart';
 import 'package:golf_kakis/features/profile/register/method/profile_register_method_page.dart';
 
@@ -27,18 +24,15 @@ class BookingSubmissionSlotPage extends StatefulWidget {
 }
 
 class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
-  late final BookingSubmissionSlotUseCaseImpl _useCase;
   late final BookingSubmissionSlotViewModel _viewModel;
   StreamSubscription<BookingSubmissionSlotNavEffect>? _navEffectSubscription;
-  bool _isSubmittingHold = false;
 
   @override
   void initState() {
     super.initState();
 
-    _useCase = BookingSubmissionSlotUseCaseImpl.create();
     _viewModel = BookingSubmissionSlotViewModel(
-      _useCase,
+      BookingSubmissionSlotUseCaseImpl.create(),
       initialClubSlug: widget.initialClubSlug,
     );
 
@@ -57,8 +51,43 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     switch (effect) {
       case NavigateBack():
         Navigator.of(context).maybePop();
+      case RequestBookingHoldPrefill():
+        await _handleBookingHoldPrefillRequest(effect);
+      case ShowSlotDetailsBottomSheet():
+        await SlotDetailsBottomSheet.show(
+          context: context,
+          details: effect.details,
+          isSubmittingHold: _viewModel.getCurrentAsLoaded().isSubmittingHold,
+          onConfirmSlot: (details) {
+            _viewModel.onUserIntent(OnConfirmSlotClick(details));
+          },
+        );
       case NavigateToBookingSubmissionDetail():
-        break;
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => BookingSubmissionDetailPage(
+              slotId: effect.slotId,
+              bookingId: effect.bookingId,
+              bookingRef: effect.bookingRef,
+              holdDurationSeconds: effect.holdDurationSeconds,
+              holdExpiresAt: effect.holdExpiresAt,
+              playType: effect.playType,
+              golfClubName: effect.golfClubName,
+              golfClubSlug: effect.golfClubSlug,
+              selectedDate: effect.selectedDate,
+              teeTimeSlot: effect.teeTimeSlot,
+              pricePerPerson: effect.pricePerPerson,
+              currency: effect.currency,
+              initialPlayerCount: effect.playerCount,
+              initialCaddieCount: effect.initialCaddieCount,
+              initialGolfCartCount: effect.initialGolfCartCount,
+              selectedNine: effect.selectedNine,
+              initialPlayerName: effect.initialPlayerName,
+              initialPlayerPhoneNumber: effect.initialPlayerPhoneNumber,
+              guestId: effect.guestId,
+            ),
+          ),
+        );
       case ShowErrorMessage():
         _showMessage(effect.message);
     }
@@ -66,20 +95,12 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BookingSubmissionSlotView(
-      viewModel: _viewModel,
-      isSubmittingHold: _isSubmittingHold,
-      onConfirmSlotPressed: _handleContinuePressed,
-    );
+    return BookingSubmissionSlotView(viewModel: _viewModel);
   }
 
-  Future<void> _handleContinuePressed(BookingSlotModel selectedSlot) async {
-    final state = _viewModel.viewState;
-    if (state is! BookingSubmissionSlotDataLoaded ||
-        state.selectedClubSlug.isEmpty) {
-      return;
-    }
-
+  Future<void> _handleBookingHoldPrefillRequest(
+    RequestBookingHoldPrefill effect,
+  ) async {
     final prefill = await _resolveBookingPrefill();
     if (!mounted || prefill == null) {
       return;
@@ -91,137 +112,14 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
       return;
     }
 
-    setState(() {
-      _isSubmittingHold = true;
-    });
-
-    try {
-      final result = await _useCase
-          .onCreateBookingHold(
-            request: BookingHoldRequestModel(
-              slotId: selectedSlot.slotId,
-              accessToken: accessToken,
-              idempotencyKey: prefill.bookingUuid,
-              hostName: prefill.name,
-              hostPhoneNumber: _normalizePhoneNumber(prefill.phoneNumber),
-              source: _bookingSource,
-              playType: state.playTypeValue,
-              selectedNine: null,
-              golfClubName: state.selectedClubName,
-              golfClubSlug: state.selectedClubSlug,
-              bookingDate: state.selectedDate
-                  .toIso8601String()
-                  .split('T')
-                  .first,
-              teeTimeSlot: selectedSlot.time,
-              playerCount: state.playerCount,
-              normalPlayerCount: state.playerCount,
-              seniorPlayerCount: 0,
-              caddieCount: 0,
-              golfCartCount: _defaultGolfCartCount(state.playerCount),
-              paymentMethod: 'pay_counter',
-            ),
-          )
-          .first;
-
-      if (!mounted) {
-        return;
-      }
-
-      if (result.status != DataStatus.success ||
-          result.data is! Map<String, dynamic>) {
-        _showMessage(
-          result.apiMessage.isEmpty
-              ? 'Failed to hold booking. Please try again.'
-              : result.apiMessage,
-        );
-        return;
-      }
-
-      await _navigateToBookingDetails(
-        slotState: state,
-        selectedSlot: selectedSlot,
-        prefill: prefill,
-        holdResponse: result.data as Map<String, dynamic>,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmittingHold = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _navigateToBookingDetails({
-    required BookingSubmissionSlotDataLoaded slotState,
-    required BookingSlotModel selectedSlot,
-    required _BookingContactPrefill prefill,
-    required Map<String, dynamic> holdResponse,
-  }) async {
-    final bookingSummary =
-        holdResponse['bookingSummary'] is Map<String, dynamic>
-        ? holdResponse['bookingSummary'] as Map<String, dynamic>
-        : <String, dynamic>{};
-    final hostUser = holdResponse['hostUser'] is Map<String, dynamic>
-        ? holdResponse['hostUser'] as Map<String, dynamic>
-        : <String, dynamic>{};
-    final pricing = bookingSummary['pricing'] is Map<String, dynamic>
-        ? bookingSummary['pricing'] as Map<String, dynamic>
-        : <String, dynamic>{};
-
-    final bookingDate =
-        DateTime.tryParse(bookingSummary['bookingDate']?.toString() ?? '') ??
-        slotState.selectedDate;
-    final holdExpiresAt =
-        DateTime.tryParse(holdResponse['holdExpiresAt']?.toString() ?? '') ??
-        DateTime.now().add(
-          Duration(
-            seconds: _readInt(holdResponse['holdDurationSeconds']) ?? 300,
-          ),
-        );
-
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => BookingSubmissionDetailPage(
-          slotId: selectedSlot.slotId,
-          bookingId: holdResponse['bookingId']?.toString() ?? '',
-          bookingRef: holdResponse['bookingRef']?.toString() ?? '',
-          holdDurationSeconds:
-              _readInt(holdResponse['holdDurationSeconds']) ?? 300,
-          holdExpiresAt: holdExpiresAt,
-          playType:
-              bookingSummary['playType']?.toString() ?? slotState.playTypeValue,
-          golfClubName:
-              bookingSummary['golfClubName']?.toString() ??
-              slotState.selectedClubName,
-          golfClubSlug:
-              bookingSummary['golfClubSlug']?.toString() ??
-              slotState.selectedClubSlug,
-          selectedDate: bookingDate,
-          teeTimeSlot:
-              bookingSummary['teeTimeSlot']?.toString() ?? selectedSlot.time,
-          pricePerPerson: selectedSlot.price,
-          currency: pricing['currency']?.toString() ?? selectedSlot.currency,
-          initialPlayerCount:
-              _readInt(bookingSummary['playerCount']) ?? slotState.playerCount,
-          initialCaddieCount: _readInt(bookingSummary['caddieCount']) ?? 0,
-          initialGolfCartCount:
-              _readInt(bookingSummary['golfCartCount']) ??
-              _defaultGolfCartCount(
-                _readInt(bookingSummary['playerCount']) ??
-                    slotState.playerCount,
-              ),
-          selectedNine: null,
-          initialPlayerName: hostUser['name']?.toString().isNotEmpty == true
-              ? hostUser['name']!.toString()
-              : prefill.name,
-          initialPlayerPhoneNumber:
-              hostUser['phoneNumber']?.toString().isNotEmpty == true
-              ? _normalizePhoneNumber(hostUser['phoneNumber']!.toString())
-              : _normalizePhoneNumber(prefill.phoneNumber),
-          guestId: prefill.bookingUuid,
-        ),
+    _viewModel.onUserIntent(
+      OnCreateBookingHoldRequested(
+        selectedSlotDetails: effect.selectedSlotDetails,
+        accessToken: accessToken,
+        hostName: prefill.name,
+        hostPhoneNumber: prefill.phoneNumber,
+        source: _bookingSource,
+        idempotencyKey: prefill.bookingUuid,
       ),
     );
   }
@@ -258,36 +156,6 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     }
 
     return null;
-  }
-
-  int? _readInt(dynamic value) {
-    if (value is num) {
-      return value.toInt();
-    }
-
-    return int.tryParse(value?.toString() ?? '');
-  }
-
-  int _defaultGolfCartCount(int playerCount) {
-    if (playerCount <= 2) {
-      return 1;
-    }
-    if (playerCount <= 4) {
-      return 2;
-    }
-    return 3;
-  }
-
-  String _normalizePhoneNumber(String value) {
-    final parts = PhoneUtil.splitPhoneNumber(value);
-    if (parts.localNumber.isEmpty) {
-      return value.replaceAll(' ', '');
-    }
-
-    return PhoneUtil.normalizeFullPhoneNumber(
-      countryCode: parts.countryCode,
-      localNumber: parts.localNumber,
-    );
   }
 
   String get _bookingSource {

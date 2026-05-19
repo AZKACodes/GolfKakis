@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 
-class GolfClubPicker {
-  const GolfClubPicker._();
+class GolfClubSelectionBottomSheet {
+  const GolfClubSelectionBottomSheet._();
 
   static Future<void> show({
     required BuildContext context,
@@ -167,7 +167,7 @@ class GolfClubPicker {
 
                               if (isSelected) ...[
                                 const SizedBox(width: 10),
-                                
+
                                 const Icon(
                                   Icons.check_circle_rounded,
                                   color: Color(0xFF0D7A3A),

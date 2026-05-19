@@ -1,6 +1,7 @@
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
@@ -33,6 +34,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.playerCount = 2,
     DateTime? selectedDate,
     this.selectedSlot,
+    this.selectedSlotDetails,
     this.selectedPeriod = TimePeriod.am,
     DateTime? pickerInitialDate,
     List<BookingSlotModel>? visibleSlots,
@@ -40,6 +42,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     this.visibleSelectedIndex,
     this.canContinue = false,
     this.isLoading = false,
+    this.isLoadingSlotDetails = false,
+    this.isSubmittingHold = false,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
        pickerInitialDate = DateUtil.dateOnly(
@@ -66,12 +70,15 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   final DateTime selectedDate;
   final DateTime pickerInitialDate;
   final BookingSlotModel? selectedSlot;
+  final BookingSlotDetailsModel? selectedSlotDetails;
   final TimePeriod selectedPeriod;
   final List<BookingSlotModel> visibleSlots;
   final Set<int> visibleUnavailableIndices;
   final int? visibleSelectedIndex;
   final bool canContinue;
   final bool isLoading;
+  final bool isLoadingSlotDetails;
+  final bool isSubmittingHold;
   final SnackbarMessageModel errorSnackbarMessageModel;
 
   String get errorMessage => errorSnackbarMessageModel.message;
@@ -122,6 +129,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     DateTime? pickerInitialDate,
     BookingSlotModel? selectedSlot,
     bool clearSelectedSlot = false,
+    BookingSlotDetailsModel? selectedSlotDetails,
+    bool clearSelectedSlotDetails = false,
     TimePeriod? selectedPeriod,
     List<BookingSlotModel>? visibleSlots,
     Set<int>? visibleUnavailableIndices,
@@ -129,6 +138,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     bool clearVisibleSelectedIndex = false,
     bool? canContinue,
     bool? isLoading,
+    bool? isLoadingSlotDetails,
+    bool? isSubmittingHold,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
@@ -145,6 +156,9 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
       selectedSlot: clearSelectedSlot
           ? null
           : (selectedSlot ?? this.selectedSlot),
+      selectedSlotDetails: clearSelectedSlotDetails
+          ? null
+          : (selectedSlotDetails ?? this.selectedSlotDetails),
       selectedPeriod: selectedPeriod ?? this.selectedPeriod,
       visibleSlots: visibleSlots ?? this.visibleSlots,
       visibleUnavailableIndices:
@@ -154,6 +168,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
           : (visibleSelectedIndex ?? this.visibleSelectedIndex),
       canContinue: canContinue ?? this.canContinue,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingSlotDetails: isLoadingSlotDetails ?? this.isLoadingSlotDetails,
+      isSubmittingHold: isSubmittingHold ?? this.isSubmittingHold,
       errorSnackbarMessageModel: clearErrorMessage
           ? SnackbarMessageModel.emptyValue
           : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
@@ -214,6 +230,36 @@ class OnSelectSlot extends BookingSubmissionSlotUserIntent {
   final BookingSlotModel slot;
 }
 
+class OnSlotDetailsClick extends BookingSubmissionSlotUserIntent {
+  const OnSlotDetailsClick(this.slot);
+
+  final BookingSlotModel slot;
+}
+
+class OnConfirmSlotClick extends BookingSubmissionSlotUserIntent {
+  const OnConfirmSlotClick(this.details);
+
+  final BookingSlotDetailsModel details;
+}
+
+class OnCreateBookingHoldRequested extends BookingSubmissionSlotUserIntent {
+  const OnCreateBookingHoldRequested({
+    required this.selectedSlotDetails,
+    required this.accessToken,
+    required this.hostName,
+    required this.hostPhoneNumber,
+    required this.source,
+    this.idempotencyKey,
+  });
+
+  final BookingSlotDetailsModel selectedSlotDetails;
+  final String accessToken;
+  final String hostName;
+  final String hostPhoneNumber;
+  final String source;
+  final String? idempotencyKey;
+}
+
 class OnSelectPeriod extends BookingSubmissionSlotUserIntent {
   const OnSelectPeriod(this.period);
 
@@ -240,9 +286,25 @@ class NavigateBack extends BookingSubmissionSlotNavEffect {
   const NavigateBack();
 }
 
+class RequestBookingHoldPrefill extends BookingSubmissionSlotNavEffect {
+  const RequestBookingHoldPrefill({required this.selectedSlotDetails});
+
+  final BookingSlotDetailsModel selectedSlotDetails;
+}
+
+class ShowSlotDetailsBottomSheet extends BookingSubmissionSlotNavEffect {
+  const ShowSlotDetailsBottomSheet({required this.details});
+
+  final BookingSlotDetailsModel details;
+}
+
 class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   const NavigateToBookingSubmissionDetail({
     required this.slotId,
+    required this.bookingId,
+    required this.bookingRef,
+    required this.holdDurationSeconds,
+    required this.holdExpiresAt,
     required this.playType,
     required this.golfClubName,
     required this.golfClubSlug,
@@ -251,11 +313,19 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
     required this.pricePerPerson,
     required this.currency,
     required this.playerCount,
+    required this.initialCaddieCount,
+    required this.initialGolfCartCount,
+    required this.initialPlayerName,
+    required this.initialPlayerPhoneNumber,
     this.selectedNine,
     this.guestId,
   });
 
   final String slotId;
+  final String bookingId;
+  final String bookingRef;
+  final int holdDurationSeconds;
+  final DateTime holdExpiresAt;
   final String playType;
   final String golfClubName;
   final String golfClubSlug;
@@ -264,6 +334,10 @@ class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
   final double pricePerPerson;
   final String currency;
   final int playerCount;
+  final int initialCaddieCount;
+  final int initialGolfCartCount;
+  final String initialPlayerName;
+  final String initialPlayerPhoneNumber;
   final String? selectedNine;
   final String? guestId;
 }

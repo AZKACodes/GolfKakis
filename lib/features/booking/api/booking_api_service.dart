@@ -73,17 +73,26 @@ class BookingApiService {
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
     String? selectedNine,
   }) {
     return _apiClient.postJson(
       '/booking/available-slots',
-      body: <String, dynamic>{
-        'golfClubSlug': clubSlug,
-        'bookingDate': date,
-        'playType': playType,
-        if (selectedNine != null && selectedNine.trim().isNotEmpty)
-          'selectedNine': selectedNine,
-      },
+      body: <String, dynamic>{'golfClubSlug': clubSlug, 'bookingDate': date},
+    );
+  }
+
+  Future<dynamic> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required int playerCount,
+    required String playType,
+    String? selectedNine,
+  }) {
+    return _apiClient.postJson(
+      '/booking/slots/$slotId/details',
+      body: <String, dynamic>{'slotId': slotId},
     );
   }
 
@@ -116,7 +125,7 @@ class BookingApiService {
     debugPrint('onCreateBookingHold body: $body');
 
     return _apiClient
-        .postJson('/booking/hold', body: body, headers: additionalHeaders)
+        .postJson('/booking/holds', body: body, headers: additionalHeaders)
         .then((response) {
           debugPrint('onCreateBookingHold response: $response');
           return response;

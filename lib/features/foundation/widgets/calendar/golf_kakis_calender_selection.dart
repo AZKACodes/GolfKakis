@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class BookingSubmissionCalendar extends StatelessWidget {
-  const BookingSubmissionCalendar({
+class GolfKakisCalenderSelection extends StatelessWidget {
+  const GolfKakisCalenderSelection({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
@@ -12,12 +12,11 @@ class BookingSubmissionCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final today = DateUtils.dateOnly(DateTime.now());
     final DateTime preferredBaseDate = DateUtils.dateOnly(
       selectedDate.subtract(const Duration(days: 3)),
     );
-    
+
     final DateTime baseDate = preferredBaseDate.isBefore(today)
         ? today
         : preferredBaseDate;
@@ -86,7 +85,7 @@ class BookingSubmissionCalendar extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 4),
-                  
+
                   Text(
                     localizations.formatMonthYear(date).split(' ').first,
                     style: theme.textTheme.bodySmall?.copyWith(

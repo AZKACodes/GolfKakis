@@ -5,6 +5,7 @@ class BookingHoldRequestModel {
     required this.hostName,
     required this.hostPhoneNumber,
     required this.source,
+    this.quoteId,
     this.playType,
     this.idempotencyKey,
     this.selectedNine,
@@ -22,6 +23,7 @@ class BookingHoldRequestModel {
 
   final String slotId;
   final String accessToken;
+  final String? quoteId;
   final String? playType;
   final String? idempotencyKey;
   final String? selectedNine;
@@ -42,9 +44,27 @@ class BookingHoldRequestModel {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'slotId': slotId,
+      if (quoteId != null && quoteId!.isNotEmpty) 'quoteId': quoteId,
       'hostName': hostName,
       'hostPhoneNumber': hostPhoneNumber,
       'source': source,
+      if (playType != null && playType!.isNotEmpty) 'playType': playType,
+      if (selectedNine != null && selectedNine!.isNotEmpty)
+        'selectedNine': selectedNine,
+      if (golfClubName != null && golfClubName!.isNotEmpty)
+        'golfClubName': golfClubName,
+      if (golfClubSlug != null && golfClubSlug!.isNotEmpty)
+        'golfClubSlug': golfClubSlug,
+      if (bookingDate != null && bookingDate!.isNotEmpty)
+        'bookingDate': bookingDate,
+      if (teeTimeSlot != null && teeTimeSlot!.isNotEmpty)
+        'teeTimeSlot': teeTimeSlot,
+      if (playerCount != null) 'playerCount': playerCount,
+      if (normalPlayerCount != null) 'normalPlayerCount': normalPlayerCount,
+      'seniorPlayerCount': seniorPlayerCount,
+      'caddieCount': caddieCount,
+      'golfCartCount': golfCartCount,
+      'paymentMethod': paymentMethod,
     };
   }
 }

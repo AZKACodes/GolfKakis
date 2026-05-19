@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_slot_view_contract.dart';
@@ -30,6 +33,9 @@ class BookingSubmissionSlotViewModel
   _golfClubSubscription;
   StreamSubscription<DataStatusModel<List<BookingSlotModel>>>?
   _slotSubscription;
+  StreamSubscription<DataStatusModel<BookingSlotDetailsModel>>?
+  _slotDetailsSubscription;
+  StreamSubscription<DataStatusModel<dynamic>>? _holdSubscription;
 
   @override
   BookingSubmissionSlotViewState createInitialState() {
@@ -65,6 +71,7 @@ class BookingSubmissionSlotViewModel
               selectedClubSlug: intent.clubSlug,
               clearSelectedSupportedNine: true,
               clearSelectedSlot: true,
+              clearSelectedSlotDetails: true,
               clearVisibleSelectedIndex: true,
               clearErrorMessage: true,
             ),
@@ -75,6 +82,7 @@ class BookingSubmissionSlotViewModel
           getCurrentAsLoaded().copyWith(
             selectedSupportedNine: intent.value,
             clearSelectedSlot: true,
+            clearSelectedSlotDetails: true,
             clearVisibleSelectedIndex: true,
             clearErrorMessage: true,
           ),
@@ -94,6 +102,7 @@ class BookingSubmissionSlotViewModel
             getCurrentAsLoaded().copyWith(
               playerCount: intent.value.clamp(2, 6),
               clearSelectedSlot: true,
+              clearSelectedSlotDetails: true,
               clearVisibleSelectedIndex: true,
               clearErrorMessage: true,
             ),
@@ -110,16 +119,49 @@ class BookingSubmissionSlotViewModel
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
               selectedSlot: intent.slot,
+              clearSelectedSlotDetails: true,
               clearErrorMessage: true,
             ),
           );
         });
+      case OnSlotDetailsClick():
+        if (!intent.slot.isAvailable) {
+          return;
+        }
+
+        await _fetchSlotDetails(intent.slot);
+      case OnConfirmSlotClick():
+        final details = intent.details;
+        final slot = _slotForDetails(details);
+        if (slot == null || !slot.isAvailable) {
+          return;
+        }
+
+        final nextState = _derivePresentationState(
+          getCurrentAsLoaded().copyWith(
+            selectedSlot: slot,
+            selectedSlotDetails: details,
+            clearErrorMessage: true,
+          ),
+        );
+        emitViewState((state) {
+          return nextState;
+        });
+        if (!nextState.canContinue || nextState.isSubmittingHold) {
+          return;
+        }
+        sendNavEffect(
+          () => RequestBookingHoldPrefill(selectedSlotDetails: details),
+        );
+      case OnCreateBookingHoldRequested():
+        await _createBookingHold(intent);
       case OnSelectPeriod():
         emitViewState((state) {
           return _derivePresentationState(
             getCurrentAsLoaded().copyWith(
               selectedPeriod: intent.period,
               clearSelectedSlot: true,
+              clearSelectedSlotDetails: true,
               clearVisibleSelectedIndex: true,
               clearErrorMessage: true,
             ),
@@ -129,23 +171,14 @@ class BookingSubmissionSlotViewModel
         sendNavEffect(() => const NavigateBack());
       case OnContinueClick():
         final current = getCurrentAsLoaded();
-        final selectedSlot = current.selectedSlot;
-        if (!current.canContinue || selectedSlot == null) {
+        final selectedSlotDetails = current.selectedSlotDetails;
+        if (!current.canContinue || selectedSlotDetails == null) {
           return;
         }
 
         sendNavEffect(
-          () => NavigateToBookingSubmissionDetail(
-            slotId: selectedSlot.slotId,
-            playType: current.playTypeValue,
-            golfClubName: current.selectedClubName,
-            golfClubSlug: current.selectedClubSlug,
-            selectedDate: current.selectedDate,
-            teeTimeSlot: selectedSlot.time,
-            pricePerPerson: selectedSlot.price,
-            currency: selectedSlot.currency,
-            playerCount: current.playerCount,
-            selectedNine: null,
+          () => RequestBookingHoldPrefill(
+            selectedSlotDetails: selectedSlotDetails,
           ),
         );
     }
@@ -160,6 +193,263 @@ class BookingSubmissionSlotViewModel
     return BookingSubmissionSlotDataLoaded.initial(
       selectedClubSlug: _initialClubSlug,
     );
+  }
+
+  Future<void> _fetchSlotDetails(BookingSlotModel selectedSlot) async {
+    final current = _derivePresentationState(
+      getCurrentAsLoaded().copyWith(
+        selectedSlot: selectedSlot,
+        clearSelectedSlotDetails: true,
+        isLoadingSlotDetails: true,
+        clearErrorMessage: true,
+      ),
+    );
+    if (!current.canActivateCalendar || current.selectedClubSlug.isEmpty) {
+      return;
+    }
+
+    emitViewState((state) {
+      return current;
+    });
+
+    await _slotDetailsSubscription?.cancel();
+    final completer = Completer<void>();
+    _slotDetailsSubscription = _useCase
+        .onFetchSlotDetails(
+          slotId: selectedSlot.slotId,
+          clubSlug: current.selectedClubSlug,
+          date: DateUtil.formatApiDate(current.selectedDate),
+          playType: current.playTypeValue,
+          playerCount: current.playerCount,
+          selectedNine: null,
+        )
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final details = result.data;
+              emitViewState((state) {
+                return _derivePresentationState(
+                  getCurrentAsLoaded().copyWith(
+                    selectedSlot: selectedSlot,
+                    selectedSlotDetails: details,
+                    isLoadingSlotDetails: false,
+                    clearErrorMessage: true,
+                  ),
+                );
+              });
+              sendNavEffect(() => ShowSlotDetailsBottomSheet(details: details));
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            case DataStatus.error:
+              final message = result.apiMessage.isEmpty
+                  ? 'Failed to fetch slot details'
+                  : result.apiMessage;
+              emitViewState((state) {
+                return _derivePresentationState(
+                  getCurrentAsLoaded().copyWith(
+                    isLoadingSlotDetails: false,
+                    clearSelectedSlotDetails: true,
+                    errorSnackbarMessageModel: SnackbarMessageModel(
+                      message: message,
+                    ),
+                  ),
+                );
+              });
+              sendNavEffect(() => ShowErrorMessage(message));
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            default:
+              break;
+          }
+        });
+
+    return completer.future;
+  }
+
+  Future<void> _createBookingHold(OnCreateBookingHoldRequested intent) async {
+    final selectedSlotDetails = intent.selectedSlotDetails;
+    final selectedSlot = _slotForDetails(selectedSlotDetails);
+    final current = _derivePresentationState(
+      getCurrentAsLoaded().copyWith(
+        selectedSlot: selectedSlot,
+        selectedSlotDetails: selectedSlotDetails,
+        clearErrorMessage: true,
+      ),
+    );
+
+    if (selectedSlot == null || !current.canContinue) {
+      emitViewState((state) {
+        return _derivePresentationState(
+          current.copyWith(
+            isSubmittingHold: false,
+            errorSnackbarMessageModel: const SnackbarMessageModel(
+              message: 'Please select an available slot before continuing.',
+            ),
+          ),
+        );
+      });
+      return;
+    }
+
+    if (current.isSubmittingHold) {
+      return;
+    }
+
+    emitViewState((state) {
+      return current.copyWith(isSubmittingHold: true, clearErrorMessage: true);
+    });
+
+    await _holdSubscription?.cancel();
+    final completer = Completer<void>();
+    _holdSubscription = _useCase
+        .onCreateBookingHold(
+          request: _buildBookingHoldRequest(
+            selectedSlotDetails: selectedSlotDetails,
+            intent: intent,
+          ),
+        )
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final effect = _buildDetailNavEffect(
+                selectedSlotDetails: selectedSlotDetails,
+                hostName: intent.hostName,
+                hostPhoneNumber: intent.hostPhoneNumber,
+                guestId: intent.idempotencyKey,
+                holdResponse: result.data,
+              );
+              if (effect == null) {
+                _emitHoldFailure('Failed to hold booking. Please try again.');
+              } else {
+                emitViewState((state) {
+                  return getCurrentAsLoaded().copyWith(
+                    isSubmittingHold: false,
+                    clearErrorMessage: true,
+                  );
+                });
+                sendNavEffect(() => effect);
+              }
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            case DataStatus.error:
+              _emitHoldFailure(
+                result.apiMessage.isEmpty
+                    ? 'Failed to hold booking. Please try again.'
+                    : result.apiMessage,
+              );
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            default:
+              break;
+          }
+        });
+
+    return completer.future;
+  }
+
+  BookingHoldRequestModel _buildBookingHoldRequest({
+    required BookingSlotDetailsModel selectedSlotDetails,
+    required OnCreateBookingHoldRequested intent,
+  }) {
+    return BookingHoldRequestModel(
+      slotId: selectedSlotDetails.slotId,
+      accessToken: intent.accessToken,
+      quoteId: selectedSlotDetails.quoteId,
+      idempotencyKey: intent.idempotencyKey,
+      hostName: intent.hostName,
+      hostPhoneNumber: _normalizePhoneNumber(intent.hostPhoneNumber),
+      source: intent.source,
+      playType: selectedSlotDetails.playType,
+      selectedNine: selectedSlotDetails.selectedNine,
+      golfClubName: selectedSlotDetails.golfClubName,
+      golfClubSlug: selectedSlotDetails.golfClubSlug,
+      bookingDate: DateUtil.formatApiDate(selectedSlotDetails.bookingDate),
+      teeTimeSlot: selectedSlotDetails.teeTimeSlot,
+      playerCount: selectedSlotDetails.playerCount,
+      normalPlayerCount: selectedSlotDetails.playerCount,
+      seniorPlayerCount: 0,
+      caddieCount: 0,
+      golfCartCount: _defaultGolfCartCount(selectedSlotDetails.playerCount),
+      paymentMethod: 'pay_counter',
+    );
+  }
+
+  NavigateToBookingSubmissionDetail? _buildDetailNavEffect({
+    required BookingSlotDetailsModel selectedSlotDetails,
+    required String hostName,
+    required String hostPhoneNumber,
+    required String? guestId,
+    required dynamic holdResponse,
+  }) {
+    if (holdResponse is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final bookingSummary = _readMap(holdResponse['bookingSummary']);
+    final hostUser = _readMap(holdResponse['hostUser']);
+    final pricing = _readMap(bookingSummary['pricing']);
+    final playerCount =
+        _readInt(bookingSummary['playerCount']) ??
+        selectedSlotDetails.playerCount;
+    final bookingDate =
+        DateTime.tryParse(bookingSummary['bookingDate']?.toString() ?? '') ??
+        selectedSlotDetails.bookingDate;
+    final holdDurationSeconds =
+        _readInt(holdResponse['holdDurationSeconds']) ?? 300;
+    final holdExpiresAt =
+        DateTime.tryParse(holdResponse['holdExpiresAt']?.toString() ?? '') ??
+        DateTime.now().add(Duration(seconds: holdDurationSeconds));
+    final resolvedHostName = _readNonEmptyString(hostUser['name']) ?? hostName;
+    final resolvedHostPhoneNumber =
+        _readNonEmptyString(hostUser['phoneNumber']) ?? hostPhoneNumber;
+
+    return NavigateToBookingSubmissionDetail(
+      slotId: selectedSlotDetails.slotId,
+      bookingId: holdResponse['bookingId']?.toString() ?? emptyString,
+      bookingRef: holdResponse['bookingRef']?.toString() ?? emptyString,
+      holdDurationSeconds: holdDurationSeconds,
+      holdExpiresAt: holdExpiresAt,
+      playType:
+          bookingSummary['playType']?.toString() ??
+          selectedSlotDetails.playType,
+      golfClubName:
+          bookingSummary['golfClubName']?.toString() ??
+          selectedSlotDetails.golfClubName,
+      golfClubSlug:
+          bookingSummary['golfClubSlug']?.toString() ??
+          selectedSlotDetails.golfClubSlug,
+      selectedDate: bookingDate,
+      teeTimeSlot:
+          bookingSummary['teeTimeSlot']?.toString() ??
+          selectedSlotDetails.teeTimeSlot,
+      pricePerPerson: selectedSlotDetails.pricePerPerson,
+      currency: pricing['currency']?.toString() ?? selectedSlotDetails.currency,
+      playerCount: playerCount,
+      initialCaddieCount: _readInt(bookingSummary['caddieCount']) ?? 0,
+      initialGolfCartCount:
+          _readInt(bookingSummary['golfCartCount']) ??
+          _defaultGolfCartCount(playerCount),
+      selectedNine:
+          _readNonEmptyString(bookingSummary['selectedNine']) ??
+          selectedSlotDetails.selectedNine,
+      initialPlayerName: resolvedHostName,
+      initialPlayerPhoneNumber: _normalizePhoneNumber(resolvedHostPhoneNumber),
+      guestId: guestId,
+    );
+  }
+
+  void _emitHoldFailure(String message) {
+    emitViewState((state) {
+      return getCurrentAsLoaded().copyWith(
+        isSubmittingHold: false,
+        errorSnackbarMessageModel: SnackbarMessageModel(message: message),
+      );
+    });
+    sendNavEffect(() => ShowErrorMessage(message));
   }
 
   Future<void> onFetchGolfClubList() async {
@@ -226,6 +516,7 @@ class BookingSubmissionSlotViewModel
         current.copyWith(
           selectedDate: date,
           clearSelectedSlot: true,
+          clearSelectedSlotDetails: true,
           clearVisibleSelectedIndex: true,
           clearErrorMessage: true,
         ),
@@ -255,6 +546,7 @@ class BookingSubmissionSlotViewModel
           requestState.copyWith(
             bookingSlots: const <BookingSlotModel>[],
             clearSelectedSlot: true,
+            clearSelectedSlotDetails: true,
             clearVisibleSelectedIndex: true,
             isLoading: false,
             clearErrorMessage: true,
@@ -270,6 +562,7 @@ class BookingSubmissionSlotViewModel
           selectedClubSlug: clubSlug,
           selectedDate: date,
           clearSelectedSlot: true,
+          clearSelectedSlotDetails: true,
           clearVisibleSelectedIndex: true,
           isLoading: true,
           clearErrorMessage: true,
@@ -284,6 +577,7 @@ class BookingSubmissionSlotViewModel
           clubSlug: clubSlug,
           date: DateUtil.formatApiDate(date),
           playType: requestState.playTypeValue,
+          playerCount: requestState.playerCount,
           selectedNine: null,
         )
         .listen((result) {
@@ -368,6 +662,10 @@ class BookingSubmissionSlotViewModel
     final selectedSlotFitsCapacity =
         (state.selectedSlot?.remainingPlayerCapacity ?? 0) >=
         normalizedPlayerCount;
+    final selectedDetailsMatchesSlot =
+        state.selectedSlotDetails != null &&
+        state.selectedSlotDetails!.slotId == state.selectedSlot?.slotId &&
+        state.selectedSlotDetails!.playerCount == normalizedPlayerCount;
 
     return state.copyWith(
       playerCount: normalizedPlayerCount,
@@ -390,7 +688,8 @@ class BookingSubmissionSlotViewModel
       canContinue:
           state.selectedClubSlug.isNotEmpty &&
           state.selectedSlot?.isAvailable == true &&
-          selectedSlotFitsCapacity,
+          selectedSlotFitsCapacity &&
+          selectedDetailsMatchesSlot,
     );
   }
 
@@ -416,10 +715,65 @@ class BookingSubmissionSlotViewModel
     return null;
   }
 
+  BookingSlotModel? _slotForDetails(BookingSlotDetailsModel details) {
+    for (final slot in getCurrentAsLoaded().bookingSlots) {
+      if (slot.slotId == details.slotId) {
+        return slot;
+      }
+    }
+
+    return null;
+  }
+
+  Map<String, dynamic> _readMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    return <String, dynamic>{};
+  }
+
+  int? _readInt(dynamic value) {
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value?.toString() ?? emptyString);
+  }
+
+  String? _readNonEmptyString(dynamic value) {
+    final normalized = value?.toString().trim() ?? emptyString;
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  int _defaultGolfCartCount(int playerCount) {
+    if (playerCount <= 2) {
+      return 1;
+    }
+    if (playerCount <= 4) {
+      return 2;
+    }
+    return 3;
+  }
+
+  String _normalizePhoneNumber(String value) {
+    final parts = PhoneUtil.splitPhoneNumber(value);
+    if (parts.localNumber.isEmpty) {
+      return value.replaceAll(' ', emptyString);
+    }
+
+    return PhoneUtil.normalizeFullPhoneNumber(
+      countryCode: parts.countryCode,
+      localNumber: parts.localNumber,
+    );
+  }
+
   @override
   void dispose() {
     _golfClubSubscription?.cancel();
     _slotSubscription?.cancel();
+    _slotDetailsSubscription?.cancel();
+    _holdSubscription?.cancel();
     super.dispose();
   }
 }
