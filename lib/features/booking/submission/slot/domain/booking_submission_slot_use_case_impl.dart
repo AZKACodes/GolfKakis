@@ -1,9 +1,11 @@
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
+import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/network/api_exception.dart';
@@ -54,6 +56,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
     String? selectedNine,
   }) async* {
     try {
@@ -61,6 +64,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       //   clubSlug: clubSlug,
       //   date: date,
       //   playType: playType,
+      //   playerCount: playerCount,
       //   selectedNine: selectedNine,
       // );
       final slotModels = _mockAvailableSlots(
@@ -83,6 +87,53 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     } catch (error) {
       yield DataStatusModel<List<BookingSlotModel>>(
         data: const <BookingSlotModel>[],
+        status: DataStatus.error,
+        apiMessage: _messageFromError(error),
+      );
+    }
+  }
+
+  @override
+  Stream<DataStatusModel<BookingSlotDetailsModel>> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required String playType,
+    required int playerCount,
+    String? selectedNine,
+  }) async* {
+    try {
+      // final response = await _repository.onFetchSlotDetails(
+      //   slotId: slotId,
+      //   clubSlug: clubSlug,
+      //   date: date,
+      //   playType: playType,
+      //   playerCount: playerCount,
+      //   selectedNine: selectedNine,
+      // );
+      final response = _mockSlotDetails(
+        slotId: slotId,
+        clubSlug: clubSlug,
+        date: date,
+        playType: playType,
+        playerCount: playerCount,
+        selectedNine: selectedNine,
+      );
+
+      yield DataStatusModel<BookingSlotDetailsModel>(
+        data: response,
+        status: DataStatus.success,
+      );
+    } on ApiException catch (error) {
+      yield DataStatusModel<BookingSlotDetailsModel>(
+        data: _emptySlotDetails(),
+        status: DataStatus.error,
+        apiMessage: error.message,
+        rawResponseCode: error.statusCode ?? 0,
+      );
+    } catch (error) {
+      yield DataStatusModel<BookingSlotDetailsModel>(
+        data: _emptySlotDetails(),
         status: DataStatus.error,
         apiMessage: _messageFromError(error),
       );
@@ -314,6 +365,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
         'golfClubName': request.golfClubName,
         'golfClubSlug': request.golfClubSlug,
         'teeTimeSlot': request.teeTimeSlot,
+        'quoteId': request.quoteId,
         'playType': request.playType ?? '18_holes',
         'playerCount': request.playerCount ?? 2,
         'normalPlayerCount':
@@ -333,6 +385,94 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     };
     _lastMockHeldBooking = response;
     return response;
+  }
+
+  BookingSlotDetailsModel _mockSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required String playType,
+    required int playerCount,
+    String? selectedNine,
+  }) {
+    final slot =
+        _mockAvailableSlots(
+          clubSlug: clubSlug,
+          date: date,
+          playType: playType,
+        ).firstWhere(
+          (slot) => slot.slotId == slotId,
+          orElse: () => BookingSlotModel(
+            slotId: slotId,
+            time: '',
+            price: 0,
+            noOfHoles: 18,
+            isAvailable: false,
+          ),
+        );
+
+    if (!slot.isAvailable || slot.time.isEmpty) {
+      throw ApiException(message: 'This slot is no longer available.');
+    }
+
+    final bookingDate = DateTime.tryParse(date) ?? DateTime.now();
+    final playerTotal = slot.price * playerCount;
+    final golfCartCount = _defaultGolfCartCount(playerCount);
+    final cartFee = golfCartCount * 45.0;
+
+    return BookingSlotDetailsModel(
+      quoteId: 'quote-${slot.slotId}-${bookingDate.millisecondsSinceEpoch}',
+      slotId: slot.slotId,
+      golfClubSlug: clubSlug,
+      golfClubName: 'Kinrara Golf Club',
+      bookingDate: bookingDate,
+      teeTimeSlot: slot.time,
+      noOfHoles: slot.noOfHoles,
+      playerCount: playerCount,
+      playType: playType,
+      selectedNine: selectedNine,
+      currency: slot.currency,
+      pricePerPerson: slot.price,
+      totalEstimate: playerTotal + cartFee,
+      categoryPricing: <BookingSlotCategoryPriceModel>[
+        BookingSlotCategoryPriceModel(
+          label: 'Normal',
+          description: 'Standard adult green fee',
+          amount: slot.price,
+        ),
+        BookingSlotCategoryPriceModel(
+          label: 'Senior',
+          description: 'Reduced rate for senior players',
+          amount: slot.price * 0.88,
+        ),
+        BookingSlotCategoryPriceModel(
+          label: 'Junior',
+          description: 'Reduced rate for junior players',
+          amount: slot.price * 0.72,
+        ),
+      ],
+      pricingBreakdown: BookingSlotPricingBreakdownModel(
+        golfCartSurcharge: cartFee,
+        caddySurcharge: 0,
+      ),
+    );
+  }
+
+  BookingSlotDetailsModel _emptySlotDetails() {
+    return BookingSlotDetailsModel(
+      quoteId: emptyString,
+      slotId: emptyString,
+      golfClubSlug: emptyString,
+      golfClubName: emptyString,
+      bookingDate: DateTime.now(),
+      teeTimeSlot: emptyString,
+      noOfHoles: 0,
+      playerCount: 0,
+      playType: emptyString,
+      currency: DefaultConstantUtil.defaultCurrency,
+      pricePerPerson: 0,
+      totalEstimate: 0,
+    );
   }
 
   Map<String, dynamic> _mockBookingSubmissionResponse(
@@ -430,5 +570,15 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     }
 
     return DateTime(date.year, date.month, date.day, hour24, minute);
+  }
+
+  int _defaultGolfCartCount(int playerCount) {
+    if (playerCount <= 2) {
+      return 1;
+    }
+    if (playerCount <= 4) {
+      return 2;
+    }
+    return 3;
   }
 }

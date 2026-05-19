@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 
-class BookingSubmissionPeriodHeader extends StatelessWidget {
-  const BookingSubmissionPeriodHeader({
+class GolfKakisPeriodHeader extends StatelessWidget {
+  const GolfKakisPeriodHeader({
     required this.selectedPeriod,
     required this.onPeriodChanged,
     super.key,
@@ -15,7 +15,7 @@ class BookingSubmissionPeriodHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverPersistentHeader(
       pinned: true,
-      delegate: _BookingSubmissionPeriodHeaderDelegate(
+      delegate: _GolfKakisPeriodHeaderDelegate(
         selectedPeriod: selectedPeriod,
         onPeriodChanged: onPeriodChanged,
       ),
@@ -23,9 +23,8 @@ class BookingSubmissionPeriodHeader extends StatelessWidget {
   }
 }
 
-class _BookingSubmissionPeriodHeaderDelegate
-    extends SliverPersistentHeaderDelegate {
-  const _BookingSubmissionPeriodHeaderDelegate({
+class _GolfKakisPeriodHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _GolfKakisPeriodHeaderDelegate({
     required this.selectedPeriod,
     required this.onPeriodChanged,
   });
@@ -72,9 +71,7 @@ class _BookingSubmissionPeriodHeaderDelegate
   }
 
   @override
-  bool shouldRebuild(
-    covariant _BookingSubmissionPeriodHeaderDelegate oldDelegate,
-  ) {
+  bool shouldRebuild(covariant _GolfKakisPeriodHeaderDelegate oldDelegate) {
     return oldDelegate.selectedPeriod != selectedPeriod ||
         oldDelegate.onPeriodChanged != onPeriodChanged;
   }

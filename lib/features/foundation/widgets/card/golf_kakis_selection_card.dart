@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottomsheet/golf_club_picker.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
-import 'package:golf_kakis/features/foundation/widgets/icon_info_pill.dart';
 
-class GolfClubPickerCard extends StatelessWidget {
-  const GolfClubPickerCard({
-    required this.selectedClub,
-    required this.clubs,
+class GolfKakisSelectionCard extends StatelessWidget {
+  const GolfKakisSelectionCard({
+    required this.placeholder,
+    required this.unavailablePlaceholder,
+    required this.hasOptions,
     required this.isLoading,
     required this.enabled,
-    required this.onClubSelected,
+    this.loadingPlaceholder = 'Loading...',
+    this.icon = Icons.check_circle_outline_rounded,
+    this.selectedBuilder,
+    this.onTap,
     super.key,
   });
 
-  final GolfClubModel? selectedClub;
-  final List<GolfClubModel> clubs;
+  final String placeholder;
+  final String unavailablePlaceholder;
+  final String loadingPlaceholder;
+  final bool hasOptions;
   final bool isLoading;
   final bool enabled;
-  final ValueChanged<GolfClubModel> onClubSelected;
+  final IconData icon;
+  final WidgetBuilder? selectedBuilder;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final club = selectedClub;
-    final hasAvailableClubs = clubs.isNotEmpty;
+    final canTap = enabled && !isLoading && onTap != null;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: enabled ? () => showClubPicker(context) : null,
+        onTap: canTap ? onTap : null,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
           decoration: BoxDecoration(
@@ -58,10 +62,7 @@ class GolfClubPickerCard extends StatelessWidget {
                     color: const Color(0xFF0D7A3A),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
-                    Icons.golf_course_rounded,
-                    color: Colors.white,
-                  ),
+                  child: Icon(icon, color: Colors.white),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -78,7 +79,7 @@ class GolfClubPickerCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'Loading golf clubs...',
+                              loadingPlaceholder,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w600,
@@ -86,49 +87,15 @@ class GolfClubPickerCard extends StatelessWidget {
                             ),
                           ],
                         )
-                      : club == null
+                      : selectedBuilder == null
                       ? Text(
-                          hasAvailableClubs
-                              ? 'Select Golf Club'
-                              : 'No Golf Clubs Available',
+                          hasOptions ? placeholder : unavailablePlaceholder,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.black54,
                             fontWeight: FontWeight.w600,
                           ),
                         )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              club.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF0A1F1A),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              club.address,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                IconInfoPill(
-                                  icon: Icons.flag_outlined,
-                                  label: '${club.noOfHoles} holes',
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      : selectedBuilder!(context),
                 ),
                 const SizedBox(width: 12),
                 if (!isLoading)
@@ -150,15 +117,6 @@ class GolfClubPickerCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Future<void> showClubPicker(BuildContext context) async {
-    await GolfClubPicker.show(
-      context: context,
-      clubs: clubs,
-      selectedClub: selectedClub,
-      onClubSelected: onClubSelected,
     );
   }
 }

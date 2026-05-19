@@ -1,6 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 
@@ -11,6 +12,16 @@ abstract class BookingSubmissionSlotUseCase {
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
+    String? selectedNine,
+  });
+
+  Stream<DataStatusModel<BookingSlotDetailsModel>> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required String playType,
+    required int playerCount,
     String? selectedNine,
   });
 
