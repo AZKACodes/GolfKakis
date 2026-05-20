@@ -11,7 +11,7 @@ import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_su
 import 'package:golf_kakis/features/foundation/enums/session/session_status.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/util/user_util.dart';
-import 'package:golf_kakis/features/profile/register/method/profile_register_method_page.dart';
+import 'package:golf_kakis/features/profile/authentication/register/profile_register_page.dart';
 
 class BookingSubmissionSlotPage extends StatefulWidget {
   const BookingSubmissionSlotPage({this.initialClubSlug, super.key});
@@ -136,9 +136,8 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
 
     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
-        settings: const RouteSettings(name: _registerMethodRouteName),
-        builder: (_) =>
-            const ProfileRegisterMethodPage(requiresOccupation: false),
+        settings: const RouteSettings(name: _profileRegisterRouteName),
+        builder: (_) => const ProfileRegisterPage(),
       ),
     );
 
@@ -195,4 +194,4 @@ class _BookingContactPrefill {
   final String? bookingUuid;
 }
 
-const String _registerMethodRouteName = 'register_method';
+const String _profileRegisterRouteName = 'profile_register';
