@@ -56,6 +56,10 @@ class SessionManager extends ChangeNotifier {
     required String username,
     required UserRole role,
     String? accessToken,
+    String? refreshToken,
+    String? sessionId,
+    int? sessionExpiresInSeconds,
+    String? refreshExpiresAt,
     String? authUserId,
     String? authId,
     bool? isPhoneVerified,
@@ -68,10 +72,17 @@ class SessionManager extends ChangeNotifier {
     String? profilePhoneNumber,
     int? profileAvatarIndex,
     String? profileAvatarImagePath,
+    bool? hasPin,
+    bool? hasPasskey,
+    bool? hasOTPFallback,
   }) {
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
       accessToken: accessToken,
+      refreshToken: refreshToken,
+      sessionId: sessionId,
+      sessionExpiresInSeconds: sessionExpiresInSeconds,
+      refreshExpiresAt: refreshExpiresAt,
       authUserId: authUserId,
       authId: authId,
       isPhoneVerified: isPhoneVerified,
@@ -86,6 +97,23 @@ class SessionManager extends ChangeNotifier {
       profilePhoneNumber: profilePhoneNumber,
       profileAvatarIndex: profileAvatarIndex,
       profileAvatarImagePath: profileAvatarImagePath,
+      hasPin: hasPin,
+      hasPasskey: hasPasskey,
+      hasOTPFallback: hasOTPFallback,
+    );
+    unawaited(_persistState());
+    notifyListeners();
+  }
+
+  void updateLoginMethods({
+    required bool hasPin,
+    required bool hasPasskey,
+    required bool hasOTPFallback,
+  }) {
+    _state = _state.copyWith(
+      hasPin: hasPin,
+      hasPasskey: hasPasskey,
+      hasOTPFallback: hasOTPFallback,
     );
     unawaited(_persistState());
     notifyListeners();
