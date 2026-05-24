@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/root/root_screen.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/profile_otp_page.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/viewmodel/profile_otp_view_contract.dart';
+import 'package:golf_kakis/features/profile/authentication/pin/domain/profile_pin_use_case_impl.dart';
 
 import 'view/profile_pin_view.dart';
 import 'viewmodel/profile_pin_view_contract.dart';
@@ -44,7 +44,7 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
       pinSetupToken: widget.pinSetupToken,
       phoneNumber: widget.phoneNumber,
       hasOTPFallback: widget.hasOTPFallback,
-      useCase: ProfileRegisterUseCaseImpl.create(),
+      useCase: ProfilePinUseCaseImpl.create(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }

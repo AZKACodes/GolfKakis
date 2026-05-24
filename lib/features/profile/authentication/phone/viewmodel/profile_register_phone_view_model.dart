@@ -1,7 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case.dart';
+import 'package:golf_kakis/features/profile/authentication/phone/domain/profile_register_phone_use_case.dart';
 
 import 'profile_register_phone_view_contract.dart';
 
@@ -20,7 +20,7 @@ class ProfileRegisterPhoneViewModel
     required String nickname,
     required String occupation,
     required bool requiresOccupation,
-    required ProfileRegisterUseCase useCase,
+    required ProfileRegisterPhoneUseCase useCase,
   }) : _username = username,
        _password = password,
        _fullName = fullName,
@@ -35,7 +35,7 @@ class ProfileRegisterPhoneViewModel
   final String _nickname;
   final String _occupation;
   final bool _requiresOccupation;
-  final ProfileRegisterUseCase _useCase;
+  final ProfileRegisterPhoneUseCase _useCase;
 
   @override
   ProfileRegisterPhoneViewState createInitialState() {

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/profile_otp_page.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/viewmodel/profile_otp_view_contract.dart';
+import 'package:golf_kakis/features/profile/authentication/phone/domain/profile_register_phone_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/view/profile_register_phone_view.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/viewmodel/profile_register_phone_view_contract.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/viewmodel/profile_register_phone_view_model.dart';
@@ -46,7 +46,7 @@ class _ProfileRegisterPhonePageState extends State<ProfileRegisterPhonePage> {
       nickname: widget.nickname,
       occupation: widget.occupation,
       requiresOccupation: widget.requiresOccupation,
-      useCase: ProfileRegisterUseCaseImpl.create(),
+      useCase: ProfileRegisterPhoneUseCaseImpl.create(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }

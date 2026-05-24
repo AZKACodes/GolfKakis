@@ -135,25 +135,32 @@ class _ProfileOtpViewState extends State<ProfileOtpView> {
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
-                            child: TextField(
-                              controller: _controllers[index],
-                              focusNode: _focusNodes[index],
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              maxLength: 1,
-                              onChanged: (value) =>
-                                  _handleChanged(index, value),
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: const Color(0xFFF6F8FC),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide.none,
+                            child: SizedBox(
+                              height: 58,
+                              child: TextField(
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                textAlignVertical: TextAlignVertical.center,
+                                maxLength: 1,
+                                onChanged: (value) =>
+                                    _handleChanged(index, value),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  contentPadding: EdgeInsets.zero,
+                                  filled: true,
+                                  fillColor: const Color(0xFFF6F8FC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
                                 ),
-                              ),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w900,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontSize: 24,
+                                  height: 1,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                             ),
                           ),

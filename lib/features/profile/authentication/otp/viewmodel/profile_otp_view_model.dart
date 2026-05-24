@@ -4,8 +4,8 @@ import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/security/captcha/captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case.dart';
 import 'package:golf_kakis/features/profile/authentication/login/domain/profile_login_use_case.dart';
+import 'package:golf_kakis/features/profile/authentication/otp/domain/profile_otp_use_case.dart';
 
 import 'profile_otp_view_contract.dart';
 
@@ -22,20 +22,20 @@ class ProfileOtpViewModel
     required String username,
     required String phoneNumber,
     required ProfileLoginUseCase loginUseCase,
-    required ProfileRegisterUseCase registerUseCase,
+    required ProfileOtpUseCase otpUseCase,
     required CaptchaTokenProvider captchaTokenProvider,
   }) : _purpose = purpose,
        _username = username,
        _phoneNumber = phoneNumber,
        _loginUseCase = loginUseCase,
-       _registerUseCase = registerUseCase,
+       _otpUseCase = otpUseCase,
        _captchaTokenProvider = captchaTokenProvider;
 
   final ProfileOtpPurpose _purpose;
   final String _username;
   final String _phoneNumber;
   final ProfileLoginUseCase _loginUseCase;
-  final ProfileRegisterUseCase _registerUseCase;
+  final ProfileOtpUseCase _otpUseCase;
   final CaptchaTokenProvider _captchaTokenProvider;
   Timer? _otpTimer;
 
@@ -90,7 +90,7 @@ class ProfileOtpViewModel
       final captchaToken = await _captchaTokenProvider.execute(
         CaptchaTokenAction.requestOtp,
       );
-      final response = await _registerUseCase.sendWhatsAppOtp(
+      final response = await _otpUseCase.sendWhatsAppOtp(
         name: _username.trim(),
         phoneNumber: _phoneNumber.trim(),
         purpose: _purpose == ProfileOtpPurpose.pinReset
@@ -99,6 +99,19 @@ class ProfileOtpViewModel
         visitorId: visitorId,
         captchaToken: captchaToken,
       );
+
+      if (!response.success) {
+        emitViewState(
+          (state) => state.copyWith(
+            isSendingOtp: false,
+            errorSnackbarMessageModel: const SnackbarMessageModel(
+              message: 'Unable to send OTP. Please try again later',
+            ),
+          ),
+        );
+        return;
+      }
+
       final expiresInSeconds = response.otpExpiresInSeconds > 0
           ? response.otpExpiresInSeconds
           : 300;
@@ -108,16 +121,16 @@ class ProfileOtpViewModel
           isSendingOtp: false,
           otpRemainingSeconds: expiresInSeconds,
           maskedDestination: response.maskedDestination,
-          successMessage: response.message,
+          successMessage: 'OTP is sent through WhatsApp',
         ),
       );
       _startOtpTimer();
-    } on ApiException catch (error) {
+    } on ApiException {
       emitViewState(
         (state) => state.copyWith(
           isSendingOtp: false,
-          errorSnackbarMessageModel: SnackbarMessageModel(
-            message: error.message,
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Unable to send OTP. Please try again later',
           ),
         ),
       );
@@ -126,7 +139,7 @@ class ProfileOtpViewModel
         (state) => state.copyWith(
           isSendingOtp: false,
           errorSnackbarMessageModel: const SnackbarMessageModel(
-            message: 'Unable to send WhatsApp OTP right now.',
+            message: 'Unable to send OTP. Please try again later',
           ),
         ),
       );
@@ -175,7 +188,7 @@ class ProfileOtpViewModel
             ),
           );
         case ProfileOtpPurpose.register:
-          final response = await _registerUseCase.verifyRegisterOtp(
+          final response = await _otpUseCase.verifyRegisterOtp(
             name: _username.trim(),
             phoneNumber: currentState.phoneNumber.trim(),
             purpose: 'register',
@@ -192,7 +205,7 @@ class ProfileOtpViewModel
             ),
           );
         case ProfileOtpPurpose.pinReset:
-          final response = await _registerUseCase.verifyRegisterOtp(
+          final response = await _otpUseCase.verifyRegisterOtp(
             name: _username.trim(),
             phoneNumber: currentState.phoneNumber.trim(),
             purpose: 'pin_reset',

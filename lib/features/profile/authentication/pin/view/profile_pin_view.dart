@@ -254,11 +254,14 @@ class _PinBoxesField extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   obscureText: true,
                   textAlign: TextAlign.center,
+                  textAlignVertical: TextAlignVertical.center,
                   maxLength: 1,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (value) => onDigitChanged(index, value),
                   decoration: InputDecoration(
                     counterText: '',
+                    contentPadding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(height: 58),
                     filled: true,
                     fillColor: const Color(0xFFF6F8FC),
                     border: OutlineInputBorder(
@@ -266,7 +269,9 @@ class _PinBoxesField extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  style: theme.textTheme.headlineSmall?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 24,
+                    height: 1,
                     fontWeight: FontWeight.w900,
                   ),
                 ),

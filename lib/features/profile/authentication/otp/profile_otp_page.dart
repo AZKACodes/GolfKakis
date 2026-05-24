@@ -5,8 +5,8 @@ import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/security/captcha/turnstile_captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/login/domain/profile_login_use_case_impl.dart';
+import 'package:golf_kakis/features/profile/authentication/otp/domain/profile_otp_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/pin/profile_pin_page.dart';
 import 'package:golf_kakis/features/profile/authentication/pin/viewmodel/profile_pin_view_contract.dart';
 
@@ -44,7 +44,7 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       username: widget.username,
       phoneNumber: widget.phoneNumber,
       loginUseCase: ProfileLoginUseCaseImpl.create(),
-      registerUseCase: ProfileRegisterUseCaseImpl.create(),
+      otpUseCase: ProfileOtpUseCaseImpl.create(),
       captchaTokenProvider: TurnstileCaptchaTokenProvider(context: context),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);

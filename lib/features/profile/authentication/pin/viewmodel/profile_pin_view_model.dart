@@ -1,7 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case.dart';
+import 'package:golf_kakis/features/profile/authentication/pin/domain/profile_pin_use_case.dart';
 
 import 'profile_pin_view_contract.dart';
 
@@ -18,7 +18,7 @@ class ProfilePinViewModel
     required String pinSetupToken,
     required String phoneNumber,
     required bool hasOTPFallback,
-    required ProfileRegisterUseCase useCase,
+    required ProfilePinUseCase useCase,
   }) : _mode = mode,
        _pinSetupToken = pinSetupToken,
        _phoneNumber = phoneNumber,
@@ -29,7 +29,7 @@ class ProfilePinViewModel
   final String _pinSetupToken;
   final String _phoneNumber;
   final bool _hasOTPFallback;
-  final ProfileRegisterUseCase _useCase;
+  final ProfilePinUseCase _useCase;
 
   @override
   ProfilePinViewState createInitialState() {
