@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/foundation/security/captcha/captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 import 'package:golf_kakis/features/profile/authentication/domain/profile_register_use_case.dart';
 import 'package:golf_kakis/features/profile/authentication/login/domain/profile_login_use_case.dart';
@@ -22,17 +23,20 @@ class ProfileOtpViewModel
     required String phoneNumber,
     required ProfileLoginUseCase loginUseCase,
     required ProfileRegisterUseCase registerUseCase,
+    required CaptchaTokenProvider captchaTokenProvider,
   }) : _purpose = purpose,
        _username = username,
        _phoneNumber = phoneNumber,
        _loginUseCase = loginUseCase,
-       _registerUseCase = registerUseCase;
+       _registerUseCase = registerUseCase,
+       _captchaTokenProvider = captchaTokenProvider;
 
   final ProfileOtpPurpose _purpose;
   final String _username;
   final String _phoneNumber;
   final ProfileLoginUseCase _loginUseCase;
   final ProfileRegisterUseCase _registerUseCase;
+  final CaptchaTokenProvider _captchaTokenProvider;
   Timer? _otpTimer;
 
   @override
@@ -49,10 +53,7 @@ class ProfileOtpViewModel
       case OnProfileOtpInit():
         if (_purpose == ProfileOtpPurpose.register ||
             _purpose == ProfileOtpPurpose.pinReset) {
-          await onInitOTP(
-            visitorId: intent.visitorId,
-            captchaToken: intent.captchaToken,
-          );
+          await onInitOTP(visitorId: intent.visitorId);
         }
       case OnProfileOtpDigitChanged():
         final sanitized = intent.value.replaceAll(RegExp(r'[^0-9]'), '');
@@ -65,19 +66,13 @@ class ProfileOtpViewModel
       case OnProfileOtpVerifyClick():
         await _verifyOtp(visitorId: intent.visitorId);
       case OnProfileOtpResendClick():
-        await onInitOTP(
-          visitorId: intent.visitorId,
-          captchaToken: intent.captchaToken,
-        );
+        await onInitOTP(visitorId: intent.visitorId);
       case OnProfileOtpBackClick():
         sendNavEffect(() => const ProfileOtpNavigateBack());
     }
   }
 
-  Future<void> onInitOTP({
-    required String visitorId,
-    required String captchaToken,
-  }) async {
+  Future<void> onInitOTP({required String visitorId}) async {
     if (currentState.isSendingOtp) {
       return;
     }
@@ -92,6 +87,9 @@ class ProfileOtpViewModel
     );
 
     try {
+      final captchaToken = await _captchaTokenProvider.execute(
+        CaptchaTokenAction.requestOtp,
+      );
       final response = await _registerUseCase.sendWhatsAppOtp(
         name: _username.trim(),
         phoneNumber: _phoneNumber.trim(),

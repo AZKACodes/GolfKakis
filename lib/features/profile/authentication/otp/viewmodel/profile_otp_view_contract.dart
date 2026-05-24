@@ -96,10 +96,9 @@ sealed class ProfileOtpUserIntent extends UserIntent {
 }
 
 class OnProfileOtpInit extends ProfileOtpUserIntent {
-  const OnProfileOtpInit({required this.visitorId, this.captchaToken = ''});
+  const OnProfileOtpInit({required this.visitorId});
 
   final String visitorId;
-  final String captchaToken;
 }
 
 class OnProfileOtpDigitChanged extends ProfileOtpUserIntent {
@@ -116,13 +115,9 @@ class OnProfileOtpVerifyClick extends ProfileOtpUserIntent {
 }
 
 class OnProfileOtpResendClick extends ProfileOtpUserIntent {
-  const OnProfileOtpResendClick({
-    required this.visitorId,
-    this.captchaToken = '',
-  });
+  const OnProfileOtpResendClick({required this.visitorId});
 
   final String visitorId;
-  final String captchaToken;
 }
 
 class OnProfileOtpBackClick extends ProfileOtpUserIntent {

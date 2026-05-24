@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
@@ -33,8 +34,11 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final uri = _buildUri(path, queryParameters);
-    final response = await _client.get(uri, headers: _mergeHeaders(headers));
-    return _decodeJsonResponse(response);
+    return _sendJsonRequest(
+      method: 'GET',
+      uri: uri,
+      request: () => _client.get(uri, headers: _mergeHeaders(headers)),
+    );
   }
 
   Map<String, String> resolveHeaders(Map<String, String>? headers) {
@@ -48,12 +52,15 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final uri = _buildUri(path, queryParameters);
-    final response = await _client.post(
-      uri,
-      headers: _mergeHeaders(headers),
-      body: jsonEncode(body),
+    return _sendJsonRequest(
+      method: 'POST',
+      uri: uri,
+      request: () => _client.post(
+        uri,
+        headers: _mergeHeaders(headers),
+        body: jsonEncode(body),
+      ),
     );
-    return _decodeJsonResponse(response);
   }
 
   Future<dynamic> putJson(
@@ -63,12 +70,15 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final uri = _buildUri(path, queryParameters);
-    final response = await _client.put(
-      uri,
-      headers: _mergeHeaders(headers),
-      body: jsonEncode(body),
+    return _sendJsonRequest(
+      method: 'PUT',
+      uri: uri,
+      request: () => _client.put(
+        uri,
+        headers: _mergeHeaders(headers),
+        body: jsonEncode(body),
+      ),
     );
-    return _decodeJsonResponse(response);
   }
 
   Future<dynamic> patchJson(
@@ -78,12 +88,15 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final uri = _buildUri(path, queryParameters);
-    final response = await _client.patch(
-      uri,
-      headers: _mergeHeaders(headers),
-      body: jsonEncode(body),
+    return _sendJsonRequest(
+      method: 'PATCH',
+      uri: uri,
+      request: () => _client.patch(
+        uri,
+        headers: _mergeHeaders(headers),
+        body: jsonEncode(body),
+      ),
     );
-    return _decodeJsonResponse(response);
   }
 
   Future<dynamic> deleteJson(
@@ -93,12 +106,15 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final uri = _buildUri(path, queryParameters);
-    final response = await _client.delete(
-      uri,
-      headers: _mergeHeaders(headers),
-      body: body == null ? null : jsonEncode(body),
+    return _sendJsonRequest(
+      method: 'DELETE',
+      uri: uri,
+      request: () => _client.delete(
+        uri,
+        headers: _mergeHeaders(headers),
+        body: body == null ? null : jsonEncode(body),
+      ),
     );
-    return _decodeJsonResponse(response);
   }
 
   Future<dynamic> postMultipart(
@@ -124,9 +140,47 @@ class ApiClient {
       );
     }
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    return _decodeJsonResponse(response);
+    return _sendJsonRequest(
+      method: 'POST',
+      uri: uri,
+      request: () async {
+        final streamedResponse = await request.send();
+        return http.Response.fromStream(streamedResponse);
+      },
+    );
+  }
+
+  Future<dynamic> _sendJsonRequest({
+    required String method,
+    required Uri uri,
+    required Future<http.Response> Function() request,
+  }) async {
+    _logRequest(method, uri);
+
+    try {
+      final response = await request();
+      return _handleJsonResponse(method: method, uri: uri, response: response);
+    } catch (error) {
+      if (error is! ApiException) {
+        _logTransportError(method, uri, error);
+      }
+      rethrow;
+    }
+  }
+
+  dynamic _handleJsonResponse({
+    required String method,
+    required Uri uri,
+    required http.Response response,
+  }) {
+    try {
+      final decoded = _decodeJsonResponse(response);
+      _logSuccess(method, uri, response.statusCode);
+      return decoded;
+    } on ApiException catch (error) {
+      _logApiError(method, uri, error);
+      rethrow;
+    }
   }
 
   Uri _buildUri(String path, Map<String, dynamic>? queryParameters) {
@@ -150,8 +204,26 @@ class ApiClient {
     return <String, String>{
       ..._defaultHeaders,
       ...sharedHeaders,
-      if (headers != null) ...headers,
+      ...?headers,
     };
+  }
+
+  void _logRequest(String method, Uri uri) {
+    debugPrint('[API] $method $uri');
+  }
+
+  void _logSuccess(String method, Uri uri, int statusCode) {
+    debugPrint('[API] OK $statusCode $method $uri');
+  }
+
+  void _logApiError(String method, Uri uri, ApiException error) {
+    debugPrint(
+      '[API] FAILED ${error.statusCode} $method $uri - ${error.message}',
+    );
+  }
+
+  void _logTransportError(String method, Uri uri, Object error) {
+    debugPrint('[API] ERROR $method $uri - $error');
   }
 
   dynamic _decodeJsonResponse(http.Response response) {

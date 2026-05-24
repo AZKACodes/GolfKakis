@@ -1,4 +1,4 @@
-package com.example.xxx_demo_app
+package com.ezackly.golfkakis
 
 import android.provider.Settings
 import io.flutter.embedding.engine.FlutterEngine

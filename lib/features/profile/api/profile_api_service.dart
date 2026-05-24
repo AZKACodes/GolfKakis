@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 
@@ -17,7 +16,6 @@ class ProfileApiService {
       '/auth/me',
       headers: <String, String>{'Authorization': 'Bearer $accessToken'},
     );
-    debugPrint('onFetchUserDetails /auth/me response: $response');
 
     if (response is! Map<String, dynamic>) {
       throw ApiException(
@@ -138,7 +136,7 @@ class ProfileApiService {
     required String captchaToken,
   }) async {
     final response = await _apiClient.postJson(
-      '/api/auth/otp/send',
+      '/auth/otp/send',
       body: <String, dynamic>{
         if (name.trim().isNotEmpty) 'name': name,
         'phoneNumber': phoneNumber,
@@ -194,7 +192,7 @@ class ProfileApiService {
     required String visitorId,
   }) async {
     final response = await _apiClient.postJson(
-      '/api/auth/otp/verify',
+      '/auth/otp/verify',
       body: <String, dynamic>{
         if (name.trim().isNotEmpty && purpose != 'pin_reset') 'name': name,
         'phoneNumber': phoneNumber,
@@ -220,7 +218,7 @@ class ProfileApiService {
     required String confirmPin,
   }) async {
     final response = await _apiClient.postJson(
-      '/api/auth/pin/setup',
+      '/auth/pin/setup',
       body: <String, dynamic>{
         'pinSetupToken': pinSetupToken,
         'pin': pin,
@@ -243,7 +241,7 @@ class ProfileApiService {
     required String pin,
   }) async {
     final response = await _apiClient.postJson(
-      '/api/auth/login/pin',
+      '/auth/login/pin',
       body: <String, dynamic>{'phoneNumber': phoneNumber, 'pin': pin},
     );
 

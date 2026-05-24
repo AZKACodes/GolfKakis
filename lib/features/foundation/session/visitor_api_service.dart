@@ -14,7 +14,7 @@ class VisitorApiService {
     required String platform,
   }) async {
     final response = await _apiClient.postJson(
-      '/visitor/heartbeat',
+      '/visitors/heartbeat',
       body: <String, dynamic>{'visitor_id': visitorId, 'platform': platform},
     );
 
@@ -37,6 +37,10 @@ class VisitorApiService {
   }
 
   String resolvePlatform() {
+    if (kIsWeb) {
+      return 'web';
+    }
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
         return 'ios';
