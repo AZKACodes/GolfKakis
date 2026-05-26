@@ -44,65 +44,9 @@ class BookingSubmissionDetailSelectionSummary extends StatelessWidget {
             label: 'Tee Time',
             value: state.teeTimeSlot,
           ),
-
-          const SizedBox(height: 6),
-
-          BookingSubmissionDetailSelectionSummaryRow(
-            label: 'Buggy Type',
-            value: _buggyTypeLabel(state.effectiveBuggyType),
-          ),
-
-          const SizedBox(height: 6),
-
-          BookingSubmissionDetailSelectionSummaryRow(
-            label: 'Price',
-            value: '${state.pricePerPersonLabel} per person',
-          ),
-
-          const SizedBox(height: 10),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0x260D7A3A)),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Estimated Total',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  state.totalCostLabel,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF0D7A3A),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
-  }
-}
-
-String _buggyTypeLabel(String value) {
-  switch (value) {
-    case 'jumbo':
-      return 'Jumbo';
-    case 'normal':
-      return 'Normal';
-    default:
-      return value;
   }
 }
 

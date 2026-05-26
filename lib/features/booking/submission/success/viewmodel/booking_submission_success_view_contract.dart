@@ -27,8 +27,6 @@ class BookingSubmissionSuccessDataLoaded
     this.pricePerPerson = 0,
     this.currency = DefaultConstantUtil.defaultCurrency,
     this.playType = '18_holes',
-    this.caddiePreference = 'none',
-    this.buggySharingPreference = 'shared',
     this.hostName = emptyString,
     this.hostPhoneNumber = emptyString,
     this.playerCount = 0,
@@ -50,8 +48,6 @@ class BookingSubmissionSuccessDataLoaded
   final double pricePerPerson;
   final String currency;
   final String playType;
-  final String caddiePreference;
-  final String buggySharingPreference;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -77,8 +73,6 @@ class BookingSubmissionSuccessDataLoaded
     double? pricePerPerson,
     String? currency,
     String? playType,
-    String? caddiePreference,
-    String? buggySharingPreference,
     String? hostName,
     String? hostPhoneNumber,
     int? playerCount,
@@ -96,9 +90,6 @@ class BookingSubmissionSuccessDataLoaded
       pricePerPerson: pricePerPerson ?? this.pricePerPerson,
       currency: currency ?? this.currency,
       playType: playType ?? this.playType,
-      caddiePreference: caddiePreference ?? this.caddiePreference,
-      buggySharingPreference:
-          buggySharingPreference ?? this.buggySharingPreference,
       hostName: hostName ?? this.hostName,
       hostPhoneNumber: hostPhoneNumber ?? this.hostPhoneNumber,
       playerCount: playerCount ?? this.playerCount,

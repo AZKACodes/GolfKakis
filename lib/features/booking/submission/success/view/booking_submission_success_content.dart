@@ -112,20 +112,8 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
                         items: [
                           ('Players', '${state.playerCount}'),
                           ('Holes', _holeCountFromPlayType(state.playType)),
-                          (
-                            'Caddies',
-                            _formatMetricValue(
-                              count: state.caddieCount,
-                              preference: state.caddiePreference,
-                            ),
-                          ),
-                          (
-                            'Buggy',
-                            _formatMetricValue(
-                              count: state.golfCartCount,
-                              preference: state.buggySharingPreference,
-                            ),
-                          ),
+                          ('Caddies', '${state.caddieCount}'),
+                          ('Buggy', '${state.golfCartCount}'),
                         ],
                       ),
                     ],
@@ -189,30 +177,6 @@ String _formatBookingDate(String rawDate) {
 
 String _holeCountFromPlayType(String playType) {
   return playType == '18_holes' ? '18' : '9';
-}
-
-String _formatMetricValue({required int count, required String preference}) {
-  final formattedPreference = _formatEnumLabel(preference);
-  if (formattedPreference == 'None') {
-    return 'None';
-  }
-  if (formattedPreference == '-') {
-    return '$count';
-  }
-  return '$count • $formattedPreference';
-}
-
-String _formatEnumLabel(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
 }
 
 class _DetailCard extends StatelessWidget {

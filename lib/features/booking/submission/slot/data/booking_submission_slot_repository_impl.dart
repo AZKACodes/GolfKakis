@@ -1,9 +1,10 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 
 class BookingSubmissionSlotRepositoryImpl
@@ -46,12 +47,14 @@ class BookingSubmissionSlotRepositoryImpl
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
     String? selectedNine,
   }) async {
     final response = await _apiService.onFetchAvailableSlots(
       clubSlug: clubSlug,
       date: date,
       playType: playType,
+      playerCount: playerCount,
       selectedNine: selectedNine,
     );
 
@@ -90,6 +93,31 @@ class BookingSubmissionSlotRepositoryImpl
     }
 
     return parseAvailableSlots(response);
+  }
+
+  @override
+  Future<BookingSlotDetailsModel> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required String playType,
+    required int playerCount,
+    String? selectedNine,
+  }) async {
+    final response = await _apiService.onFetchSlotDetails(
+      slotId: slotId,
+      clubSlug: clubSlug,
+      date: date,
+      playType: playType,
+      playerCount: playerCount,
+      selectedNine: selectedNine,
+    );
+    final payload = _extractPayload(response);
+    if (payload == null) {
+      throw ApiException(message: 'Invalid slot details response.');
+    }
+
+    return BookingSlotDetailsModel.fromJson(payload);
   }
 
   @override
@@ -153,7 +181,12 @@ class BookingSubmissionSlotRepositoryImpl
       return null;
     }
 
-    final nested = response['data'] ?? response['booking'] ?? response['item'];
+    final nested =
+        response['data'] ??
+        response['details'] ??
+        response['quote'] ??
+        response['booking'] ??
+        response['item'];
     if (nested is Map<String, dynamic>) {
       return nested;
     }

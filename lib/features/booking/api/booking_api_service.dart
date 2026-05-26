@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../foundation/network/network.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
 
 class BookingApiService {
   BookingApiService({ApiClient? apiClient})
@@ -24,6 +24,14 @@ class BookingApiService {
 
   Future<dynamic> onFetchGolfClubDetail({required String slug}) {
     return onFetchGolfClubs(slug: slug);
+  }
+
+  Future<dynamic> onFetchCourseDetails({required String slug}) {
+    return onFetchGolfClubDetail(slug: slug);
+  }
+
+  Future<dynamic> onFetchCourseExtraDetails({required String slug}) {
+    return _apiClient.getJson('/booking/golf-clubs/$slug/extra-details');
   }
 
   Future<dynamic> onQuickBook({
@@ -65,17 +73,26 @@ class BookingApiService {
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
     String? selectedNine,
   }) {
     return _apiClient.postJson(
       '/booking/available-slots',
-      body: <String, dynamic>{
-        'golfClubSlug': clubSlug,
-        'bookingDate': date,
-        'playType': playType,
-        if (selectedNine != null && selectedNine.trim().isNotEmpty)
-          'selectedNine': selectedNine,
-      },
+      body: <String, dynamic>{'golfClubSlug': clubSlug, 'bookingDate': date},
+    );
+  }
+
+  Future<dynamic> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required int playerCount,
+    required String playType,
+    String? selectedNine,
+  }) {
+    return _apiClient.postJson(
+      '/booking/slots/$slotId/details',
+      body: <String, dynamic>{'slotId': slotId},
     );
   }
 
@@ -108,7 +125,7 @@ class BookingApiService {
     debugPrint('onCreateBookingHold body: $body');
 
     return _apiClient
-        .postJson('/booking/hold', body: body, headers: additionalHeaders)
+        .postJson('/booking/holds', body: body, headers: additionalHeaders)
         .then((response) {
           debugPrint('onCreateBookingHold response: $response');
           return response;

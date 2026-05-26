@@ -18,8 +18,8 @@ class WeatherApiService {
           'latitude': latitude.toString(),
           'longitude': longitude.toString(),
           'current': 'temperature_2m,weather_code,wind_speed_10m',
-          'daily': 'temperature_2m_max,temperature_2m_min',
-          'forecast_days': '1',
+          'daily': 'weather_code,temperature_2m_max,temperature_2m_min',
+          'forecast_days': '7',
           'timezone': 'auto',
         });
 

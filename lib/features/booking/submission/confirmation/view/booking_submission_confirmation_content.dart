@@ -122,14 +122,6 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
                 const SizedBox(height: 16),
                 _InfoRow(label: 'Host', value: state.hostName),
                 _InfoRow(label: 'Phone', value: state.hostPhoneNumber),
-                _InfoRow(
-                  label: 'Starting Course',
-                  value: _formatSentenceLabel(state.selectedNine),
-                ),
-                _InfoRow(
-                  label: 'Buggy Type',
-                  value: _formatEnumLabel(state.buggyType),
-                ),
                 const SizedBox(height: 12),
                 _RoundConfigurationTabs(state: state),
               ],
@@ -233,6 +225,10 @@ class _PlayerDetailsTab extends StatelessWidget {
             label: 'Player ${i + 1}',
             value: state.playerDetails[i].name,
           ),
+          _InfoRow(
+            label: 'Category',
+            value: _playerCategoryLabel(state.playerDetails[i].category),
+          ),
           _InfoRow(label: 'Phone', value: state.playerDetails[i].phoneNumber),
           if (i != state.playerDetails.length - 1) const Divider(height: 20),
         ],
@@ -294,30 +290,17 @@ String _resolveHoleCount(String teeTimeSlot) {
   return eighteenHoleSlots.contains(teeTimeSlot) ? '18' : '9';
 }
 
-String _formatEnumLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
+String _playerCategoryLabel(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'senior':
+    case 'senior_citizen':
+      return 'Senior Citizen';
+    case 'junior':
+      return 'Junior';
+    case 'normal':
+    default:
+      return 'Normal';
   }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
-}
-
-String _formatSentenceLabel(String? value) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    return '-';
-  }
-
-  return normalized
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
 }
 
 class _ErrorBanner extends StatelessWidget {

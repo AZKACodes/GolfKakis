@@ -1,8 +1,12 @@
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 
 abstract class ProfileOverviewRepository {
-  Future<ProfileOverviewResult> onFetchUserProfile({
+  Future<ProfileOverviewResult> onFetchUserDetails({
+    required SessionState session,
+  });
+
+  Future<ProfileOverviewResult> onBuildGuestProfile({
     required SessionState session,
   });
 }

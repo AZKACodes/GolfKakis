@@ -1,7 +1,8 @@
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 
 abstract class BookingSubmissionSlotRepository {
   Future<List<GolfClubModel>> onFetchGolfClubList();
@@ -10,6 +11,16 @@ abstract class BookingSubmissionSlotRepository {
     required String clubSlug,
     required String date,
     required String playType,
+    required int playerCount,
+    String? selectedNine,
+  });
+
+  Future<BookingSlotDetailsModel> onFetchSlotDetails({
+    required String slotId,
+    required String clubSlug,
+    required String date,
+    required String playType,
+    required int playerCount,
     String? selectedNine,
   });
 
