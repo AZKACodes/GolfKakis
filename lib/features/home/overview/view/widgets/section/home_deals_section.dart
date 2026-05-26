@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home_hot_deal_view_data.dart';
 
 import '../item/home_deals_item.dart';
 

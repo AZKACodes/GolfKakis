@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_content.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 
 class BookingSubmissionDetailView extends StatelessWidget {

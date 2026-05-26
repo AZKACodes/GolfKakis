@@ -1,6 +1,6 @@
-import 'package:golf_kakis/features/foundation/model/home/home_announcement_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_user_details_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_announcement_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_hot_deal_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_user_details_item.dart';
 
 class HomeOverviewResult {
   const HomeOverviewResult({

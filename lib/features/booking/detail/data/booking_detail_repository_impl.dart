@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/booking/detail/data/booking_detail_repository.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 
 class BookingDetailRepositoryImpl implements BookingDetailRepository {

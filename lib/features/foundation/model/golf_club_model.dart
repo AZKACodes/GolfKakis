@@ -103,14 +103,18 @@ class GolfClubModel {
     );
   }
 
-  static List<GolfClubFacilityModel> _parseFacilities(Map<String, dynamic> json) {
+  static List<GolfClubFacilityModel> _parseFacilities(
+    Map<String, dynamic> json,
+  ) {
     final dynamic value = json['facilities'];
 
     if (value is List) {
       return value
           .whereType<Map<String, dynamic>>()
           .map(GolfClubFacilityModel.fromJson)
-          .where((item) => item.facilityType.isNotEmpty || item.title.isNotEmpty)
+          .where(
+            (item) => item.facilityType.isNotEmpty || item.title.isNotEmpty,
+          )
           .toList();
     }
 
@@ -205,9 +209,6 @@ class GolfClubFacilityModel {
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'facility_type': facilityType,
-      'title': title,
-    };
+    return <String, dynamic>{'facility_type': facilityType, 'title': title};
   }
 }

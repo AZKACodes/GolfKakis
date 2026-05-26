@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/overview/view/widgets/booking_details_item.dart';
 import 'package:golf_kakis/features/booking/overview/viewmodel/booking_overview_view_contract.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 
 class BookingOverviewView extends StatelessWidget {
   const BookingOverviewView({

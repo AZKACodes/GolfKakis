@@ -1,5 +1,5 @@
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/home/api/weather_api_service.dart';
 

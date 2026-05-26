@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_announcement_item.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_announcement_view_data.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_view_data.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_hot_deal_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_announcement_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_announcement_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home_hot_deal_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home_hot_deal_item.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 

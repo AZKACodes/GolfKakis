@@ -1,10 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/profile_otp_page.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/viewmodel/profile_otp_view_contract.dart';
-import 'package:golf_kakis/features/profile/authentication/phone/domain/profile_register_phone_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/view/profile_register_phone_view.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/viewmodel/profile_register_phone_view_contract.dart';
 import 'package:golf_kakis/features/profile/authentication/phone/viewmodel/profile_register_phone_view_model.dart';
@@ -46,7 +44,6 @@ class _ProfileRegisterPhonePageState extends State<ProfileRegisterPhonePage> {
       nickname: widget.nickname,
       occupation: widget.occupation,
       requiresOccupation: widget.requiresOccupation,
-      useCase: ProfileRegisterPhoneUseCaseImpl.create(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
   }
@@ -66,16 +63,14 @@ class _ProfileRegisterPhonePageState extends State<ProfileRegisterPhonePage> {
     switch (effect) {
       case RegisterPhoneNavigateBack():
         Navigator.of(context).maybePop();
-      case RegisterPhoneRequestOtpSucceeded():
+      case RegisterPhoneOtpRequested():
         await Navigator.of(context).push<void>(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: _registerOtpRouteName),
             builder: (_) => ProfileOtpPage(
               purpose: ProfileOtpPurpose.register,
               username: effect.username,
-              phoneNumber: effect.response.normalizedPhoneNumber.isNotEmpty
-                  ? effect.response.normalizedPhoneNumber
-                  : effect.response.phoneNumber,
+              phoneNumber: effect.phoneNumber,
             ),
           ),
         );
@@ -100,11 +95,8 @@ class _ProfileRegisterPhonePageState extends State<ProfileRegisterPhonePage> {
             state: _viewModel.viewState,
             onPhoneChanged: (value) =>
                 _viewModel.onUserIntent(OnRegisterPhoneChanged(value)),
-            onContinueClick: () => _viewModel.onUserIntent(
-              OnRegisterPhoneContinueClick(
-                visitorId: SessionScope.of(context).deviceId,
-              ),
-            ),
+            onContinueClick: () =>
+                _viewModel.onUserIntent(const OnRegisterPhoneContinueClick()),
           ),
         );
       },

@@ -3,21 +3,21 @@
 Use one section below as one slide. Replace each screenshot placeholder with your latest app captures.
 
 ## Slide 1 - Title
-- **Project:** `xxx_demo_app`
+- **Project:** GolfKakis
 - **Focus:** Current UI implementation progress
-- **Scope note:** Backend/API integration intentionally excluded for this presentation
+- **Scope note:** Current app shell, booking, home, and profile implementation
 - **Presenter:** [Your Name]
 - **Screenshot placeholder:** `[Insert app logo / splash / hero screenshot here]`
 
 ## Slide 2 - What Is Already Implemented
-- 4-tab app shell with independent navigation stacks:
+- 3-tab app shell with independent navigation stacks:
   - Home
   - Booking
-  - Activity
   - Profile
 - Material 3 scaffold with consistent theme seed and shared color tokens
-- UI-first development for all key user journeys
-- **Screenshot placeholder:** `[Insert bottom navigation screenshot (Home/Booking/Activity/Profile)]`
+- Shared session/device headers, localization, theme, and reusable foundation widgets
+- User-facing booking, course discovery, and profile journeys are in place
+- **Screenshot placeholder:** `[Insert bottom navigation screenshot (Home/Booking/Profile)]`
 
 ## Slide 3 - Home Tab Progress
 - "Today at a Glance" hero card with gradient + status chips
@@ -67,17 +67,14 @@ Use one section below as one slide. Replace each screenshot placeholder with you
 - Full front-end flow is in place from start to successful completion
 - **Screenshot placeholder:** `[Insert Booking Submission - Success screen screenshot]`
 
-## Slide 9 - Activity Tab Progress
-- Activity Center dashboard implemented:
-  - Booking list touchpoint
-  - Upcoming round card
-  - Recent rounds cards with key stats (score, fairway, GIR, putts)
-- Supporting pages implemented:
-  - My Bookings list
+## Slide 9 - Booking Management Progress
+- Booking management screens implemented:
+  - Booking Overview dashboard
   - Booking Detail view
   - Edit Booking Details view
-- **Screenshot placeholder:** `[Insert Activity dashboard screenshot]`
-- **Screenshot placeholder:** `[Insert Activity booking detail/edit screenshot]`
+- Supporting states and reusable booking UI components are available across the flow
+- **Screenshot placeholder:** `[Insert Booking Overview screenshot]`
+- **Screenshot placeholder:** `[Insert Booking Detail/Edit screenshot]`
 
 ## Slide 10 - Profile Tab Progress
 - Distinct futuristic visual direction already implemented:
@@ -107,10 +104,9 @@ Use one section below as one slide. Replace each screenshot placeholder with you
 - **Current status**
   - Main navigation and key user flows are visually implemented
   - Booking flow (slot -> detail -> confirmation -> success) is complete on UI side
-  - Activity and Profile sections have meaningful, presentation-ready UI depth
+  - Home, Booking, and Profile sections have meaningful, presentation-ready UI depth
 - **Next UI polish opportunities**
   - Add final motion/micro-interactions for transitions
   - Improve responsive spacing for very small devices
   - Standardize a reusable design-token documentation page
 - **Screenshot placeholder:** `[Insert collage of all major screens]`
-

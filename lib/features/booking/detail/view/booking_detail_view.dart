@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';

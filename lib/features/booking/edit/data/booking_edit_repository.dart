@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 
 abstract class BookingEditRepository {
   Future<BookingEditSaveResult> onSaveBooking({required BookingModel booking});

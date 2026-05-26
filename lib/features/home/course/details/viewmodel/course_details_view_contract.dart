@@ -1,5 +1,5 @@
 import 'package:golf_kakis/features/home/course/details/data/course_details_repository.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 

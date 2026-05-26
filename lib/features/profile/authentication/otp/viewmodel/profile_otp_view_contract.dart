@@ -1,8 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
-enum ProfileOtpPurpose { login, register, pinReset }
+enum ProfileOtpPurpose { register, pinReset }
 
 abstract class ProfileOtpViewContract {
   ProfileOtpViewState get viewState;
@@ -130,13 +129,6 @@ sealed class ProfileOtpNavEffect extends NavEffect {
 
 class ProfileOtpNavigateBack extends ProfileOtpNavEffect {
   const ProfileOtpNavigateBack();
-}
-
-class ProfileOtpVerified extends ProfileOtpNavEffect {
-  const ProfileOtpVerified({required this.response, required this.username});
-
-  final VerifyOtpResponse response;
-  final String username;
 }
 
 class ProfileOtpPinSetupRequired extends ProfileOtpNavEffect {

@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import '../domain/course_details_use_case.dart';

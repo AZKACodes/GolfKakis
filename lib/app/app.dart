@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         child: ListenableBuilder(
           listenable: languageController,
           builder: (context, _) => MaterialApp(
-            title: 'Bottom Nav Demo',
+            title: 'GolfKakis',
             debugShowCheckedModeBanner: false,
             locale: languageController.locale,
             supportedLocales: AppLanguageControllerSupportedLocales.values,
@@ -52,9 +52,5 @@ class MyApp extends StatelessWidget {
 }
 
 abstract final class AppLanguageControllerSupportedLocales {
-  static const values = [
-    Locale('en'),
-    Locale('ms'),
-    Locale('zh'),
-  ];
+  static const values = [Locale('en'), Locale('ms'), Locale('zh')];
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_quick_book_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home_quick_book_view_data.dart';
 
 class HomeQuickBookCard extends StatelessWidget {
   const HomeQuickBookCard({required this.item, required this.onTap, super.key});

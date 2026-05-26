@@ -1,6 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
-import 'package:golf_kakis/features/foundation/model/home/courses_list_item_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/courses_list_item_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 

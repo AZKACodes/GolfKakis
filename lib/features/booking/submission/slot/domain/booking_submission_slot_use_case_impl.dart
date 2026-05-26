@@ -1,12 +1,12 @@
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository.dart';
 import 'package:golf_kakis/features/booking/submission/slot/data/booking_submission_slot_repository_impl.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/network/api_exception.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';

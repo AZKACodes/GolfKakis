@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 
 class SlotDetailsBottomSheet extends StatefulWidget {

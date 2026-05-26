@@ -1,8 +1,8 @@
 import 'package:golf_kakis/features/foundation/enums/booking/time_period.dart';
 import 'package:golf_kakis/features/foundation/default_values.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_details_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';

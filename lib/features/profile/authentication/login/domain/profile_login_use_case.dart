@@ -1,19 +1,7 @@
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/response/login_methods_response.dart';
 
 abstract class ProfileLoginUseCase {
   Future<LoginMethodsResponse> onFetchLoginMethods({
     required String phoneNumber,
-  });
-
-  Future<RequestOtpResponse> requestOtp({
-    required String phoneNumber,
-    required String visitorId,
-  });
-
-  Future<VerifyOtpResponse> verifyOtp({
-    required String username,
-    required String phoneNumber,
-    required String otp,
-    required String visitorId,
   });
 }

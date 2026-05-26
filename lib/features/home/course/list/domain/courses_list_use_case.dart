@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 
 class CoursesListResult {
   const CoursesListResult({required this.clubs});

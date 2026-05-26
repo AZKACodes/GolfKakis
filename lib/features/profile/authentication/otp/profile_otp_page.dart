@@ -1,11 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/security/captcha/turnstile_captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
-import 'package:golf_kakis/features/profile/authentication/login/domain/profile_login_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/domain/profile_otp_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/authentication/pin/profile_pin_page.dart';
 import 'package:golf_kakis/features/profile/authentication/pin/viewmodel/profile_pin_view_contract.dart';
@@ -43,7 +40,6 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       purpose: widget.purpose,
       username: widget.username,
       phoneNumber: widget.phoneNumber,
-      loginUseCase: ProfileLoginUseCaseImpl.create(),
       otpUseCase: ProfileOtpUseCaseImpl.create(),
       captchaTokenProvider: TurnstileCaptchaTokenProvider(context: context),
     );
@@ -84,14 +80,6 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
     switch (effect) {
       case ProfileOtpNavigateBack():
         Navigator.of(context).maybePop();
-      case ProfileOtpVerified():
-        Navigator.of(context).pop(
-          ProfileOtpSuccessResult(
-            response: effect.response,
-            username: effect.username,
-            role: UserRole.user,
-          ),
-        );
       case ProfileOtpPinSetupRequired():
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
@@ -146,16 +134,4 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       },
     );
   }
-}
-
-class ProfileOtpSuccessResult {
-  const ProfileOtpSuccessResult({
-    required this.response,
-    required this.username,
-    required this.role,
-  });
-
-  final VerifyOtpResponse response;
-  final String username;
-  final UserRole role;
 }

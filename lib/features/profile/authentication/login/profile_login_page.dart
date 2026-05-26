@@ -79,8 +79,8 @@ class _ProfileLoginPageState extends State<ProfileLoginPage> {
   }
 
   Future<void> _openPinResetOtp(String phoneNumber) async {
-    await Navigator.of(context).push<ProfileOtpSuccessResult>(
-      MaterialPageRoute<ProfileOtpSuccessResult>(
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
         settings: const RouteSettings(name: _loginOtpRouteName),
         builder: (_) => ProfileOtpPage(
           purpose: ProfileOtpPurpose.pinReset,

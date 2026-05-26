@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'profile_friends_repository.dart';

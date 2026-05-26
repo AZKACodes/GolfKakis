@@ -5,8 +5,8 @@ import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booki
 import 'package:golf_kakis/features/booking/submission/detail/view/widgets/booking_submission_detail_selection_summary.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 

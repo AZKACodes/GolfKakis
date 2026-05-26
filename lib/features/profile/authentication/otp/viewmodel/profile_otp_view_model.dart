@@ -4,7 +4,6 @@ import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/security/captcha/captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:golf_kakis/features/profile/authentication/login/domain/profile_login_use_case.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/domain/profile_otp_use_case.dart';
 
 import 'profile_otp_view_contract.dart';
@@ -21,20 +20,17 @@ class ProfileOtpViewModel
     required ProfileOtpPurpose purpose,
     required String username,
     required String phoneNumber,
-    required ProfileLoginUseCase loginUseCase,
     required ProfileOtpUseCase otpUseCase,
     required CaptchaTokenProvider captchaTokenProvider,
   }) : _purpose = purpose,
        _username = username,
        _phoneNumber = phoneNumber,
-       _loginUseCase = loginUseCase,
        _otpUseCase = otpUseCase,
        _captchaTokenProvider = captchaTokenProvider;
 
   final ProfileOtpPurpose _purpose;
   final String _username;
   final String _phoneNumber;
-  final ProfileLoginUseCase _loginUseCase;
   final ProfileOtpUseCase _otpUseCase;
   final CaptchaTokenProvider _captchaTokenProvider;
   Timer? _otpTimer;
@@ -173,20 +169,6 @@ class ProfileOtpViewModel
 
     try {
       switch (_purpose) {
-        case ProfileOtpPurpose.login:
-          final response = await _loginUseCase.verifyOtp(
-            username: _username.trim(),
-            phoneNumber: currentState.phoneNumber.trim(),
-            otp: currentState.otpDigits.join(),
-            visitorId: visitorId,
-          );
-          emitViewState((state) => state.copyWith(isSubmitting: false));
-          sendNavEffect(
-            () => ProfileOtpVerified(
-              response: response,
-              username: _username.trim(),
-            ),
-          );
         case ProfileOtpPurpose.register:
           final response = await _otpUseCase.verifyRegisterOtp(
             name: _username.trim(),

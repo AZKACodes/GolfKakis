@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/home/home_announcement_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/home_announcement_view_data.dart';
 
 import '../item/home_announcement_item.dart';
 

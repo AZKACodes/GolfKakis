@@ -1,6 +1,6 @@
 import 'package:golf_kakis/features/booking/detail/data/booking_detail_repository.dart';
 import 'package:golf_kakis/features/booking/detail/data/booking_detail_repository_impl.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 
 import 'booking_detail_use_case.dart';
 

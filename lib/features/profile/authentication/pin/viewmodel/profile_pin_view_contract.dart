@@ -1,6 +1,6 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
+import 'package:golf_kakis/features/foundation/model/response/setup_user_pin_response.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 enum ProfilePinMode { setup, login }
 

@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/response/setup_user_pin_response.dart';
 
 abstract class ProfilePinUseCase {
   Future<SetupUserPinResponse> setupUserPin({

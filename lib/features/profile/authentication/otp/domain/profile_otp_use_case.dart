@@ -1,4 +1,5 @@
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
+import 'package:golf_kakis/features/foundation/model/response/register_otp_verify_response.dart';
+import 'package:golf_kakis/features/foundation/model/response/send_whatsapp_otp_response.dart';
 
 abstract class ProfileOtpUseCase {
   Future<SendWhatsAppOtpResponse> sendWhatsAppOtp({

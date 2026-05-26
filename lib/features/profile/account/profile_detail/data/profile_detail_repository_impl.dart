@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/account/profile_detail/data/profile_detail_repository.dart';

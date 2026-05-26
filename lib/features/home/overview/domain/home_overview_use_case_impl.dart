@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/home/home_user_details_item.dart';
+import 'package:golf_kakis/features/foundation/model/home_user_details_item.dart';
 
 import '../data/home_repository.dart';
 import '../data/home_repository_impl.dart';

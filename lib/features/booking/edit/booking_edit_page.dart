@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/edit/domain/booking_edit_use_case_impl.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 
 import 'view/booking_edit_view.dart';
 import 'viewmodel/booking_edit_view_contract.dart';

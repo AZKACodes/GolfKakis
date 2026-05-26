@@ -1,6 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';

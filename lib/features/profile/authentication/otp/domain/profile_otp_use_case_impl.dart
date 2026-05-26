@@ -1,3 +1,5 @@
+import 'package:golf_kakis/features/foundation/model/response/register_otp_verify_response.dart';
+import 'package:golf_kakis/features/foundation/model/response/send_whatsapp_otp_response.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 import 'profile_otp_use_case.dart';

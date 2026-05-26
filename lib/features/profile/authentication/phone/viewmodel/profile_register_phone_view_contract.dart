@@ -1,6 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
-import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 abstract class ProfileRegisterPhoneViewContract {
   ProfileRegisterPhoneViewState get viewState;
@@ -94,9 +93,7 @@ class OnRegisterPhoneChanged extends ProfileRegisterPhoneUserIntent {
 }
 
 class OnRegisterPhoneContinueClick extends ProfileRegisterPhoneUserIntent {
-  const OnRegisterPhoneContinueClick({required this.visitorId});
-
-  final String visitorId;
+  const OnRegisterPhoneContinueClick();
 }
 
 class OnRegisterPhoneBackClick extends ProfileRegisterPhoneUserIntent {
@@ -111,9 +108,9 @@ class RegisterPhoneNavigateBack extends ProfileRegisterPhoneNavEffect {
   const RegisterPhoneNavigateBack();
 }
 
-class RegisterPhoneRequestOtpSucceeded extends ProfileRegisterPhoneNavEffect {
-  const RegisterPhoneRequestOtpSucceeded({
-    required this.response,
+class RegisterPhoneOtpRequested extends ProfileRegisterPhoneNavEffect {
+  const RegisterPhoneOtpRequested({
+    required this.phoneNumber,
     required this.username,
     required this.password,
     required this.fullName,
@@ -122,7 +119,7 @@ class RegisterPhoneRequestOtpSucceeded extends ProfileRegisterPhoneNavEffect {
     required this.requiresOccupation,
   });
 
-  final RequestOtpResponse response;
+  final String phoneNumber;
   final String username;
   final String password;
   final String fullName;

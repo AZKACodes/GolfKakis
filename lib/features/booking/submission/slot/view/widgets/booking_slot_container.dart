@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_slot_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/icon_info_pill.dart';
 

@@ -7,7 +7,7 @@ import 'package:golf_kakis/features/booking/submission/confirmation/view/booking
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
 import 'package:golf_kakis/features/booking/submission/success/booking_submission_success_page.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({

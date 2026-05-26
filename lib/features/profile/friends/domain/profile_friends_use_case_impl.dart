@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 
 import '../data/profile_friends_repository.dart';
 import '../data/profile_friends_repository_impl.dart';

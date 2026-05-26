@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/account/profile_detail/domain/profile_detail_use_case_impl.dart';

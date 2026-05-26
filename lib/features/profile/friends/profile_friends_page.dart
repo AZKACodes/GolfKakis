@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/friends/view/profile_friends_view.dart';
 import 'package:golf_kakis/features/profile/friends/viewmodel/profile_friends_view_contract.dart';

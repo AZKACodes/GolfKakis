@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 
 import '../item/profile_overview_logout_button.dart';
 import 'profile_overview_account_preferences_section.dart';

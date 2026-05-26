@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 

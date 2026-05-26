@@ -1,3 +1,6 @@
+import 'package:golf_kakis/features/foundation/model/auth/auth_session.dart';
+import 'package:golf_kakis/features/foundation/model/auth/pin_setup_user.dart';
+import 'package:golf_kakis/features/foundation/model/response/setup_user_pin_response.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
 
 import 'profile_pin_use_case.dart';

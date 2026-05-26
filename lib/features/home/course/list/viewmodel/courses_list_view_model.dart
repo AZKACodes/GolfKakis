@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
-import 'package:golf_kakis/features/foundation/model/home/courses_list_item_view_data.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/courses_list_item_view_data.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';

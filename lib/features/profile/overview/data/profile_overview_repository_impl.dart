@@ -1,6 +1,7 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/auth/auth_user.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
@@ -23,9 +24,7 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       throw ApiException(message: 'Missing access token for user profile.');
     }
 
-    final user = await _apiService.onFetchUserDetails(
-      accessToken: accessToken,
-    );
+    final user = await _apiService.onFetchUserDetails(accessToken: accessToken);
     return ProfileOverviewResult(
       profile: _buildAuthenticatedProfile(session, user),
       isFallback: false,

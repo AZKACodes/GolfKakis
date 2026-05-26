@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/detail/domain/booking_detail_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/edit/booking_edit_page.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 
 import 'view/booking_detail_view.dart';

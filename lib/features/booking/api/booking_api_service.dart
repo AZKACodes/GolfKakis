@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../foundation/network/network.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_hold_request_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/booking_submission_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
+import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
 
 class BookingApiService {
   BookingApiService({ApiClient? apiClient})

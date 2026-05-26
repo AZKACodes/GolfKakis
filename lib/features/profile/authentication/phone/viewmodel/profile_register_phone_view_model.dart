@@ -1,7 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
-import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
-import 'package:golf_kakis/features/profile/authentication/phone/domain/profile_register_phone_use_case.dart';
 
 import 'profile_register_phone_view_contract.dart';
 
@@ -20,14 +18,12 @@ class ProfileRegisterPhoneViewModel
     required String nickname,
     required String occupation,
     required bool requiresOccupation,
-    required ProfileRegisterPhoneUseCase useCase,
   }) : _username = username,
        _password = password,
        _fullName = fullName,
        _nickname = nickname,
        _occupation = occupation,
-       _requiresOccupation = requiresOccupation,
-       _useCase = useCase;
+       _requiresOccupation = requiresOccupation;
 
   final String _username;
   final String _password;
@@ -35,7 +31,6 @@ class ProfileRegisterPhoneViewModel
   final String _nickname;
   final String _occupation;
   final bool _requiresOccupation;
-  final ProfileRegisterPhoneUseCase _useCase;
 
   @override
   ProfileRegisterPhoneViewState createInitialState() {
@@ -60,13 +55,13 @@ class ProfileRegisterPhoneViewModel
           ),
         );
       case OnRegisterPhoneContinueClick():
-        await _requestOtp(visitorId: intent.visitorId);
+        _continueToOtp();
       case OnRegisterPhoneBackClick():
         sendNavEffect(() => const RegisterPhoneNavigateBack());
     }
   }
 
-  Future<void> _requestOtp({required String visitorId}) async {
+  void _continueToOtp() {
     final phoneNumber = currentState.phoneNumber.trim();
     if (phoneNumber.isEmpty) {
       emitViewState(
@@ -79,48 +74,16 @@ class ProfileRegisterPhoneViewModel
       return;
     }
 
-    emitViewState(
-      (state) => state.copyWith(isSubmitting: true, clearErrorMessage: true),
-    );
-
-    try {
-      final response = await _useCase.requestOtp(
+    sendNavEffect(
+      () => RegisterPhoneOtpRequested(
+        phoneNumber: phoneNumber,
         username: currentState.username.trim(),
         password: currentState.password,
-        phoneNumber: phoneNumber,
-        visitorId: visitorId,
-      );
-
-      emitViewState((state) => state.copyWith(isSubmitting: false));
-      sendNavEffect(
-        () => RegisterPhoneRequestOtpSucceeded(
-          response: response,
-          username: currentState.username.trim(),
-          password: currentState.password,
-          fullName: currentState.fullName.trim(),
-          nickname: currentState.nickname.trim(),
-          occupation: currentState.occupation.trim(),
-          requiresOccupation: currentState.requiresOccupation,
-        ),
-      );
-    } on ApiException catch (error) {
-      emitViewState(
-        (state) => state.copyWith(
-          isSubmitting: false,
-          errorSnackbarMessageModel: SnackbarMessageModel(
-            message: error.message,
-          ),
-        ),
-      );
-    } catch (_) {
-      emitViewState(
-        (state) => state.copyWith(
-          isSubmitting: false,
-          errorSnackbarMessageModel: const SnackbarMessageModel(
-            message: 'Unable to request OTP right now.',
-          ),
-        ),
-      );
-    }
+        fullName: currentState.fullName.trim(),
+        nickname: currentState.nickname.trim(),
+        occupation: currentState.occupation.trim(),
+        requiresOccupation: currentState.requiresOccupation,
+      ),
+    );
   }
 }

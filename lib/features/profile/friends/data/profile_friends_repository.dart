@@ -1,4 +1,4 @@
-import 'package:golf_kakis/features/foundation/model/profile/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 
 abstract class ProfileFriendsRepository {
   Future<ProfileFriendsResult> fetchFriends({required String ownerId});

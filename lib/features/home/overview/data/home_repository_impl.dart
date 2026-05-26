@@ -1,8 +1,8 @@
-import '../../../foundation/model/home/home_announcement_item.dart';
-import '../../../foundation/model/home/home_hot_deal_item.dart';
-import '../../../foundation/model/home/home_smart_rebook_item.dart';
-import '../../../foundation/model/home/home_user_details_item.dart';
-import '../../../foundation/model/home/home_weather_summary.dart';
+import '../../../foundation/model/home_announcement_item.dart';
+import '../../../foundation/model/home_hot_deal_item.dart';
+import '../../../foundation/model/home_smart_rebook_item.dart';
+import '../../../foundation/model/home_user_details_item.dart';
+import '../../../foundation/model/home_weather_summary.dart';
 import '../../../foundation/network/network.dart';
 import '../../api/home_api_service.dart';
 import '../../../profile/api/profile_api_service.dart';
@@ -165,8 +165,7 @@ class HomeRepositoryImpl implements HomeRepository {
                 item['description']?.toString() ??
                 '',
             imageUrl:
-                item['image_url']?.toString() ??
-                item['imageUrl']?.toString(),
+                item['image_url']?.toString() ?? item['imageUrl']?.toString(),
           ),
         )
         .where((item) => item.title.trim().isNotEmpty)
@@ -209,13 +208,9 @@ class HomeRepositoryImpl implements HomeRepository {
         .map(
           (item) => HomeHotDealItem(
             dealId:
-                item['deal_id']?.toString() ??
-                item['dealId']?.toString() ??
-                '',
+                item['deal_id']?.toString() ?? item['dealId']?.toString() ?? '',
             slotId:
-                item['slot_id']?.toString() ??
-                item['slotId']?.toString() ??
-                '',
+                item['slot_id']?.toString() ?? item['slotId']?.toString() ?? '',
             title: item['title']?.toString() ?? '',
             description:
                 item['description']?.toString() ??
@@ -249,8 +244,7 @@ class HomeRepositoryImpl implements HomeRepository {
                 _parseInt(item['noOfHoles']) ??
                 18,
             imageUrl:
-                item['image_url']?.toString() ??
-                item['imageUrl']?.toString(),
+                item['image_url']?.toString() ?? item['imageUrl']?.toString(),
           ),
         )
         .where((item) => item.title.trim().isNotEmpty)
@@ -352,19 +346,22 @@ const List<HomeAnnouncementItem> _fallbackAnnouncements = [
     announcementId: 'announcement-club-notice',
     announcementType: 'Club Notice',
     title: 'Weekend tee sheet opens earlier this Friday',
-    subtitle: 'Members can secure preferred morning slots from 6:00 PM onwards.',
+    subtitle:
+        'Members can secure preferred morning slots from 6:00 PM onwards.',
   ),
   HomeAnnouncementItem(
     announcementId: 'announcement-course-update',
     announcementType: 'Course Update',
     title: 'Kinrara greens maintenance scheduled tomorrow',
-    subtitle: 'Expect smoother front-nine play with light maintenance on selected holes.',
+    subtitle:
+        'Expect smoother front-nine play with light maintenance on selected holes.',
   ),
   HomeAnnouncementItem(
     announcementId: 'announcement-promo',
     announcementType: 'Promo',
     title: 'Early-bird weekday rounds now from MYR 39',
-    subtitle: 'Book selected morning sessions and lock in lower rates before noon.',
+    subtitle:
+        'Book selected morning sessions and lock in lower rates before noon.',
   ),
 ];
 
