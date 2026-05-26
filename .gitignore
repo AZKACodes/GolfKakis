@@ -44,3 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 dartsdk-macos-arm64-release.zip
+dartsdk-macos-arm64-release.zip
+*.zip
