@@ -8,6 +8,7 @@ class ProfilePinView extends StatefulWidget {
     required this.state,
     required this.onPinChanged,
     required this.onConfirmPinChanged,
+    required this.onSubmitClick,
     required this.onForgotPinClick,
     super.key,
   });
@@ -15,6 +16,7 @@ class ProfilePinView extends StatefulWidget {
   final ProfilePinViewState state;
   final ValueChanged<String> onPinChanged;
   final ValueChanged<String> onConfirmPinChanged;
+  final VoidCallback onSubmitClick;
   final VoidCallback onForgotPinClick;
 
   @override
@@ -113,7 +115,30 @@ class _ProfilePinViewState extends State<ProfilePinView> {
 
     if (digit.isNotEmpty && index < focusNodes.length - 1) {
       focusNodes[index + 1].requestFocus();
+    } else if (digit.isEmpty && index > 0) {
+      focusNodes[index - 1].requestFocus();
     }
+  }
+
+  KeyEventResult _handleDigitKeyEvent({
+    required List<TextEditingController> controllers,
+    required List<FocusNode> focusNodes,
+    required int index,
+    required KeyEvent event,
+  }) {
+    final isDeleteKey =
+        event.logicalKey == LogicalKeyboardKey.backspace ||
+        event.logicalKey == LogicalKeyboardKey.delete;
+    if (event is! KeyDownEvent || !isDeleteKey || index == 0) {
+      return KeyEventResult.ignored;
+    }
+
+    if (controllers[index].text.isEmpty) {
+      focusNodes[index - 1].requestFocus();
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -179,6 +204,13 @@ class _ProfilePinViewState extends State<ProfilePinView> {
                       controllers: _pinControllers,
                       focusNodes: _pinFocusNodes,
                       onDigitChanged: _handlePinChanged,
+                      onDigitKeyEvent: ({required index, required event}) =>
+                          _handleDigitKeyEvent(
+                            controllers: _pinControllers,
+                            focusNodes: _pinFocusNodes,
+                            index: index,
+                            event: event,
+                          ),
                     ),
                     if (widget.state.mode == ProfilePinMode.setup) ...[
                       const SizedBox(height: 14),
@@ -187,22 +219,54 @@ class _ProfilePinViewState extends State<ProfilePinView> {
                         controllers: _confirmPinControllers,
                         focusNodes: _confirmPinFocusNodes,
                         onDigitChanged: _handleConfirmPinChanged,
+                        onDigitKeyEvent: ({required index, required event}) =>
+                            _handleDigitKeyEvent(
+                              controllers: _confirmPinControllers,
+                              focusNodes: _confirmPinFocusNodes,
+                              index: index,
+                              event: event,
+                            ),
                       ),
                     ],
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: widget.state.canSubmit
+                            ? widget.onSubmitClick
+                            : null,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: widget.state.isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                widget.state.mode == ProfilePinMode.login
+                                    ? 'Verify PIN'
+                                    : 'Create PIN',
+                              ),
+                      ),
+                    ),
                     if (widget.state.mode == ProfilePinMode.login &&
                         widget.state.hasOTPFallback) ...[
                       const SizedBox(height: 12),
                       Align(
-                        alignment: Alignment.centerRight,
+                        alignment: Alignment.center,
                         child: TextButton(
                           onPressed: widget.onForgotPinClick,
                           child: const Text('Forgot Pin?'),
                         ),
                       ),
-                    ],
-                    if (widget.state.isSubmitting) ...[
-                      const SizedBox(height: 18),
-                      const Center(child: CircularProgressIndicator()),
                     ],
                   ],
                 ),
@@ -221,12 +285,15 @@ class _PinBoxesField extends StatelessWidget {
     required this.controllers,
     required this.focusNodes,
     required this.onDigitChanged,
+    required this.onDigitKeyEvent,
   });
 
   final String label;
   final List<TextEditingController> controllers;
   final List<FocusNode> focusNodes;
   final void Function(int index, String value) onDigitChanged;
+  final KeyEventResult Function({required int index, required KeyEvent event})
+  onDigitKeyEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -248,31 +315,35 @@ class _PinBoxesField extends StatelessWidget {
             return Expanded(
               child: Padding(
                 padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
-                child: TextField(
-                  controller: controllers[index],
-                  focusNode: focusNodes[index],
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
-                  maxLength: 1,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (value) => onDigitChanged(index, value),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    contentPadding: EdgeInsets.zero,
-                    constraints: const BoxConstraints.tightFor(height: 58),
-                    filled: true,
-                    fillColor: const Color(0xFFF6F8FC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+                child: Focus(
+                  onKeyEvent: (_, event) =>
+                      onDigitKeyEvent(index: index, event: event),
+                  child: TextField(
+                    controller: controllers[index],
+                    focusNode: focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                    textAlign: TextAlign.center,
+                    textAlignVertical: TextAlignVertical.center,
+                    maxLength: 1,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (value) => onDigitChanged(index, value),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      contentPadding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(height: 58),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F8FC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                  ),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 24,
-                    height: 1,
-                    fontWeight: FontWeight.w900,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 24,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),

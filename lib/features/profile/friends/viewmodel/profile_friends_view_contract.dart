@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class ProfileFriendsViewContract {
@@ -68,55 +69,55 @@ sealed class ProfileFriendsUserIntent extends UserIntent {
 }
 
 class OnInitFriends extends ProfileFriendsUserIntent {
-  const OnInitFriends(this.ownerId);
+  const OnInitFriends(this.session);
 
-  final String ownerId;
+  final SessionState session;
 }
 
 class OnRefreshFriends extends ProfileFriendsUserIntent {
-  const OnRefreshFriends(this.ownerId);
+  const OnRefreshFriends(this.session);
 
-  final String ownerId;
+  final SessionState session;
 }
 
 class OnRetryContactsPermission extends ProfileFriendsUserIntent {
-  const OnRetryContactsPermission(this.ownerId);
+  const OnRetryContactsPermission(this.session);
 
-  final String ownerId;
+  final SessionState session;
 }
 
 class OnGrantContactsPermission extends ProfileFriendsUserIntent {
-  const OnGrantContactsPermission(this.ownerId);
+  const OnGrantContactsPermission(this.session);
 
-  final String ownerId;
+  final SessionState session;
 }
 
 class OnSaveFriendNickname extends ProfileFriendsUserIntent {
   const OnSaveFriendNickname({
-    required this.ownerId,
+    required this.session,
     required this.contactKey,
     required this.nickname,
   });
 
-  final String ownerId;
+  final SessionState session;
   final String contactKey;
   final String nickname;
 }
 
 class OnAddFriendToGolfKakis extends ProfileFriendsUserIntent {
-  const OnAddFriendToGolfKakis({required this.ownerId, required this.friend});
+  const OnAddFriendToGolfKakis({required this.session, required this.friend});
 
-  final String ownerId;
+  final SessionState session;
   final ProfileFriendModel friend;
 }
 
 class OnRemoveFriendFromGolfKakis extends ProfileFriendsUserIntent {
   const OnRemoveFriendFromGolfKakis({
-    required this.ownerId,
+    required this.session,
     required this.contactKey,
   });
 
-  final String ownerId;
+  final SessionState session;
   final String contactKey;
 }
 

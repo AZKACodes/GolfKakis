@@ -7,6 +7,7 @@ class SessionState {
   const SessionState({
     required this.status,
     required this.deviceId,
+    this.clientPlatform,
     this.accessToken,
     this.refreshToken,
     this.sessionId,
@@ -34,6 +35,7 @@ class SessionState {
 
   final SessionStatus status;
   final String deviceId;
+  final String? clientPlatform;
   final String? accessToken;
   final String? refreshToken;
   final String? sessionId;
@@ -80,6 +82,7 @@ class SessionState {
   SessionState copyWith({
     SessionStatus? status,
     String? deviceId,
+    String? clientPlatform,
     String? accessToken,
     String? refreshToken,
     String? sessionId,
@@ -112,6 +115,7 @@ class SessionState {
     return SessionState(
       status: status ?? this.status,
       deviceId: deviceId ?? this.deviceId,
+      clientPlatform: clientPlatform ?? this.clientPlatform,
       accessToken: clearAuthSession ? null : (accessToken ?? this.accessToken),
       refreshToken: clearAuthSession
           ? null
@@ -174,6 +178,7 @@ class SessionState {
     return <String, dynamic>{
       'status': status.name,
       'deviceId': deviceId,
+      'clientPlatform': clientPlatform,
       'accessToken': accessToken,
       'refreshToken': refreshToken,
       'sessionId': sessionId,
@@ -204,6 +209,7 @@ class SessionState {
     return SessionState(
       status: _sessionStatusFromName(json['status'] as String?),
       deviceId: json['deviceId'] as String? ?? SessionState.initial.deviceId,
+      clientPlatform: json['clientPlatform'] as String?,
       accessToken: json['accessToken'] as String?,
       refreshToken: json['refreshToken'] as String?,
       sessionId: json['sessionId'] as String?,

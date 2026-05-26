@@ -15,14 +15,17 @@ Future<void> main() async {
   await languageController.initialize();
   ApiClient.configureSharedHeaders(() {
     final deviceId = sessionManager.deviceId.trim();
+    final clientPlatform = sessionManager.clientPlatform.trim();
     final accessToken = sessionManager.state.accessToken?.trim();
 
     return <String, String>{
       if (deviceId.isNotEmpty) 'X-Device-ID': deviceId,
+      if (clientPlatform.isNotEmpty) 'x-client-platform': clientPlatform,
       if (accessToken != null && accessToken.isNotEmpty)
         'Authorization': 'Bearer $accessToken',
     };
   });
+  ApiClient.configureSessionRefresh(sessionManager.refreshSession);
 
   runApp(
     MyApp(

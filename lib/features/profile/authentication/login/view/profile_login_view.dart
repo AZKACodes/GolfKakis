@@ -188,10 +188,6 @@ class _ProfileLoginViewState extends State<ProfileLoginView> {
                       ],
                     ),
                   ),
-                  if (state.isSubmitting) ...[
-                    const SizedBox(height: 18),
-                    const LinearProgressIndicator(),
-                  ],
                 ],
               ),
             ),

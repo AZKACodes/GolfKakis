@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/auth/auth_user.dart';
+import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/model/response/login_methods_response.dart';
 import 'package:golf_kakis/features/foundation/model/response/register_otp_verify_response.dart';
 import 'package:golf_kakis/features/foundation/model/response/send_whatsapp_otp_response.dart';
@@ -14,6 +15,68 @@ class ProfileApiService {
 
   Future<dynamic> onFetchUserProfile() {
     return _apiClient.getJson('/profile/me');
+  }
+
+  Future<List<ProfileFriendModel>> onFetchFriendList({
+    required String accessToken,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/profile/friends',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
+
+    return _friendListFromResponse(response);
+  }
+
+  Future<ProfileFriendModel> onAddFriend({
+    required String accessToken,
+    required ProfileFriendModel friend,
+  }) async {
+    final response = await _apiClient.postJson(
+      '/profile/friends',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+      body: <String, dynamic>{
+        'contactKey': friend.contactKey,
+        'displayName': friend.displayName,
+        'phoneNumber': friend.phoneNumber,
+        if (friend.nickname.trim().isNotEmpty)
+          'nickname': friend.nickname.trim(),
+      },
+    );
+
+    return _friendFromResponse(response, fallback: friend);
+  }
+
+  Future<void> onDeleteFriend({
+    required String accessToken,
+    required String contactKey,
+  }) {
+    return _apiClient.deleteJson(
+      '/profile/friends/${Uri.encodeComponent(contactKey)}',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
+  }
+
+  Future<ProfileFriendModel> onUpdateFriendDetails({
+    required String accessToken,
+    required String contactKey,
+    required String nickname,
+  }) async {
+    final response = await _apiClient.patchJson(
+      '/profile/friends/${Uri.encodeComponent(contactKey)}',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+      body: <String, dynamic>{'nickname': nickname.trim()},
+    );
+
+    return _friendFromResponse(
+      response,
+      fallback: ProfileFriendModel(
+        contactKey: contactKey,
+        displayName: '',
+        phoneNumber: '',
+        nickname: nickname.trim(),
+      ),
+    );
   }
 
   Future<AuthUser> onFetchUserDetails({required String accessToken}) async {
@@ -228,5 +291,113 @@ class ProfileApiService {
     }
 
     return 'Account deactivated successfully.';
+  }
+
+  List<ProfileFriendModel> _friendListFromResponse(dynamic response) {
+    final list = switch (response) {
+      List() => response,
+      Map<String, dynamic>() => _extractFriendList(response),
+      _ => null,
+    };
+
+    if (list is! List) {
+      throw ApiException(
+        statusCode: 500,
+        message: 'Friend list returned an invalid response.',
+      );
+    }
+
+    return list
+        .whereType<Map>()
+        .map((item) => _friendFromJson(Map<String, dynamic>.from(item)))
+        .whereType<ProfileFriendModel>()
+        .toList();
+  }
+
+  dynamic _extractFriendList(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is List) {
+      return data;
+    }
+    if (data is Map<String, dynamic>) {
+      return data['friends'] ?? data['items'] ?? data['friendList'];
+    }
+
+    return response['friends'] ?? response['items'] ?? response['friendList'];
+  }
+
+  ProfileFriendModel _friendFromResponse(
+    dynamic response, {
+    required ProfileFriendModel fallback,
+  }) {
+    final json = switch (response) {
+      Map<String, dynamic>() => _extractFriendJson(response),
+      _ => null,
+    };
+
+    if (json is Map<String, dynamic>) {
+      return _friendFromJson(json) ?? fallback;
+    }
+
+    return fallback;
+  }
+
+  Map<String, dynamic>? _extractFriendJson(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      final friend = data['friend'];
+      if (friend is Map<String, dynamic>) {
+        return friend;
+      }
+      return data;
+    }
+
+    final friend = response['friend'];
+    if (friend is Map<String, dynamic>) {
+      return friend;
+    }
+
+    return response;
+  }
+
+  ProfileFriendModel? _friendFromJson(Map<String, dynamic> json) {
+    final phoneNumber =
+        (json['phoneNumber'] ??
+                json['phone_number'] ??
+                json['phone'] ??
+                json['mobileNumber'] ??
+                '')
+            .toString()
+            .trim();
+    final contactKey =
+        (json['contactKey'] ??
+                json['contact_key'] ??
+                json['friendId'] ??
+                json['friend_id'] ??
+                json['id'] ??
+                phoneNumber)
+            .toString()
+            .trim();
+
+    if (contactKey.isEmpty && phoneNumber.isEmpty) {
+      return null;
+    }
+
+    final displayName =
+        (json['displayName'] ??
+                json['display_name'] ??
+                json['name'] ??
+                json['fullName'] ??
+                json['full_name'] ??
+                'Golf Kaki')
+            .toString()
+            .trim();
+
+    return ProfileFriendModel(
+      contactKey: contactKey.isEmpty ? phoneNumber : contactKey,
+      displayName: displayName.isEmpty ? 'Golf Kaki' : displayName,
+      phoneNumber: phoneNumber,
+      nickname: (json['nickname'] ?? json['nickName'] ?? '').toString().trim(),
+    );
   }
 }

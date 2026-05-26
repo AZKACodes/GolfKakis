@@ -68,12 +68,9 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
           return;
         }
         final session = SessionScope.of(context).state;
-        final ownerId = session.authUserId?.trim().isNotEmpty == true
-            ? session.authUserId!.trim()
-            : session.deviceId;
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) => ProfileFriendsPage(ownerId: ownerId),
+            builder: (_) => ProfileFriendsPage(session: session),
           ),
         );
       }

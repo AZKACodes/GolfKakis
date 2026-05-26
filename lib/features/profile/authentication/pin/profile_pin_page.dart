@@ -136,6 +136,8 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
                 _viewModel.onUserIntent(OnProfilePinChanged(value)),
             onConfirmPinChanged: (value) =>
                 _viewModel.onUserIntent(OnProfileConfirmPinChanged(value)),
+            onSubmitClick: () =>
+                _viewModel.onUserIntent(const OnProfilePinSubmitClick()),
             onForgotPinClick: () =>
                 _viewModel.onUserIntent(const OnProfileForgotPinClick()),
           ),

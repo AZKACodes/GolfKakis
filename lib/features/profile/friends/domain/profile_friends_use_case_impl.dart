@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 
 import '../data/profile_friends_repository.dart';
 import '../data/profile_friends_repository_impl.dart';
@@ -14,8 +15,19 @@ class ProfileFriendsUseCaseImpl implements ProfileFriendsUseCase {
   final ProfileFriendsRepository _repository;
 
   @override
-  Future<ProfileFriendsResult> fetchFriends({required String ownerId}) {
-    return _repository.fetchFriends(ownerId: ownerId);
+  Future<ProfileFriendsResult> onFetchFriendList({
+    required SessionState session,
+  }) async {
+    final friends = await _repository.onFetchFriendList(session: session);
+    final availableContacts = await _repository.onFetchAvailableContacts(
+      savedFriends: friends,
+    );
+
+    return ProfileFriendsResult(
+      hasPermission: await _repository.hasContactsPermission(),
+      friends: friends,
+      availableContacts: availableContacts,
+    );
   }
 
   @override
@@ -24,29 +36,29 @@ class ProfileFriendsUseCaseImpl implements ProfileFriendsUseCase {
   }
 
   @override
-  Future<void> addFriend({
-    required String ownerId,
+  Future<ProfileFriendModel> onAddFriend({
+    required SessionState session,
     required ProfileFriendModel friend,
   }) {
-    return _repository.addFriend(ownerId: ownerId, friend: friend);
+    return _repository.onAddFriend(session: session, friend: friend);
   }
 
   @override
-  Future<void> removeFriend({
-    required String ownerId,
+  Future<void> onDeleteFriend({
+    required SessionState session,
     required String contactKey,
   }) {
-    return _repository.removeFriend(ownerId: ownerId, contactKey: contactKey);
+    return _repository.onDeleteFriend(session: session, contactKey: contactKey);
   }
 
   @override
-  Future<void> saveNickname({
-    required String ownerId,
+  Future<ProfileFriendModel> onUpdateFriendDetails({
+    required SessionState session,
     required String contactKey,
     required String nickname,
   }) {
-    return _repository.saveNickname(
-      ownerId: ownerId,
+    return _repository.onUpdateFriendDetails(
+      session: session,
       contactKey: contactKey,
       nickname: nickname,
     );

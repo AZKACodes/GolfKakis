@@ -155,7 +155,7 @@ class _ContactsPermissionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Allow contact access so we can turn your phonebook into your My Golf Kakis friend list.',
+            'Enable permission to add your fellow kakis from your contacts.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 14),

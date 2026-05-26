@@ -8,6 +8,7 @@ import 'api_config.dart';
 import 'api_exception.dart';
 
 typedef HeaderProvider = Map<String, String> Function();
+typedef SessionRefreshProvider = Future<bool> Function();
 
 class ApiClient {
   ApiClient({http.Client? client, String? baseUrl})
@@ -15,6 +16,7 @@ class ApiClient {
       _baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   static HeaderProvider? _sharedHeaderProvider;
+  static SessionRefreshProvider? _sessionRefreshProvider;
 
   final http.Client _client;
   final String _baseUrl;
@@ -26,6 +28,10 @@ class ApiClient {
 
   static void configureSharedHeaders(HeaderProvider? provider) {
     _sharedHeaderProvider = provider;
+  }
+
+  static void configureSessionRefresh(SessionRefreshProvider? provider) {
+    _sessionRefreshProvider = provider;
   }
 
   Future<dynamic> getJson(
@@ -58,6 +64,25 @@ class ApiClient {
       request: () => _client.post(
         uri,
         headers: _mergeHeaders(headers),
+        body: jsonEncode(body),
+      ),
+    );
+  }
+
+  Future<dynamic> postJsonWithoutSharedHeaders(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    return _sendJsonRequest(
+      method: 'POST',
+      uri: uri,
+      shouldRefreshSession: false,
+      request: () => _client.post(
+        uri,
+        headers: _mergeHeaders(headers, includeSharedHeaders: false),
         body: jsonEncode(body),
       ),
     );
@@ -126,8 +151,7 @@ class ApiClient {
   }) async {
     final uri = _buildUri(path, queryParameters);
     final request = http.MultipartRequest('POST', uri);
-    final resolvedHeaders = _mergeHeaders(headers)
-      ..remove('Content-Type');
+    final resolvedHeaders = _mergeHeaders(headers)..remove('Content-Type');
     request.headers.addAll(resolvedHeaders);
     request.fields.addAll(fields);
     for (final file in files) {
@@ -154,12 +178,27 @@ class ApiClient {
     required String method,
     required Uri uri,
     required Future<http.Response> Function() request,
+    bool shouldRefreshSession = true,
   }) async {
     _logRequest(method, uri);
 
     try {
       final response = await request();
       return _handleJsonResponse(method: method, uri: uri, response: response);
+    } on ApiException catch (error) {
+      if (shouldRefreshSession && await _shouldRetryAfterRefresh(error)) {
+        debugPrint('[API] refreshing app session before retrying $method $uri');
+        final refreshed = await _sessionRefreshProvider!.call();
+        if (refreshed) {
+          final response = await request();
+          return _handleJsonResponse(
+            method: method,
+            uri: uri,
+            response: response,
+          );
+        }
+      }
+      rethrow;
     } catch (error) {
       if (error is! ApiException) {
         _logTransportError(method, uri, error);
@@ -198,14 +237,22 @@ class ApiClient {
     );
   }
 
-  Map<String, String> _mergeHeaders(Map<String, String>? headers) {
-    final sharedHeaders =
-        _sharedHeaderProvider?.call() ?? const <String, String>{};
-    return <String, String>{
-      ..._defaultHeaders,
-      ...sharedHeaders,
-      ...?headers,
-    };
+  Map<String, String> _mergeHeaders(
+    Map<String, String>? headers, {
+    bool includeSharedHeaders = true,
+  }) {
+    final sharedHeaders = includeSharedHeaders
+        ? (_sharedHeaderProvider?.call() ?? const <String, String>{})
+        : const <String, String>{};
+    return <String, String>{..._defaultHeaders, ...sharedHeaders, ...?headers};
+  }
+
+  Future<bool> _shouldRetryAfterRefresh(ApiException error) async {
+    if (_sessionRefreshProvider == null || error.statusCode != 401) {
+      return false;
+    }
+
+    return error.message.toLowerCase().contains('invalid app session token');
   }
 
   void _logRequest(String method, Uri uri) {
@@ -301,6 +348,5 @@ class MultipartFilePayload {
   final String path;
   final String? filename;
 
-  String get resolvedFilename =>
-      filename ?? File(path).uri.pathSegments.last;
+  String get resolvedFilename => filename ?? File(path).uri.pathSegments.last;
 }

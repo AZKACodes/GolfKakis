@@ -94,6 +94,10 @@ class OnProfileConfirmPinChanged extends ProfilePinUserIntent {
   final String value;
 }
 
+class OnProfilePinSubmitClick extends ProfilePinUserIntent {
+  const OnProfilePinSubmitClick();
+}
+
 class OnProfilePinBackClick extends ProfilePinUserIntent {
   const OnProfilePinBackClick();
 }

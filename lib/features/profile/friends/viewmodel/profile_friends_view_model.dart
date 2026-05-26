@@ -1,5 +1,7 @@
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
+import 'package:golf_kakis/features/foundation/network/network.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import '../domain/profile_friends_use_case.dart';
@@ -26,53 +28,48 @@ class ProfileFriendsViewModel
   Future<void> handleIntent(ProfileFriendsUserIntent intent) async {
     switch (intent) {
       case OnInitFriends():
-        await _loadFriends(intent.ownerId);
+        await _grantPermissionAndLoad(intent.session);
       case OnRefreshFriends():
-        await _loadFriends(intent.ownerId);
+        await _loadFriends(intent.session);
       case OnRetryContactsPermission():
-        await _grantPermissionAndLoad(intent.ownerId);
+        await _grantPermissionAndLoad(intent.session);
       case OnGrantContactsPermission():
-        await _grantPermissionAndLoad(intent.ownerId);
+        await _grantPermissionAndLoad(intent.session);
       case OnAddFriendToGolfKakis():
-        await _addFriend(ownerId: intent.ownerId, friend: intent.friend);
+        await _addFriend(session: intent.session, friend: intent.friend);
       case OnRemoveFriendFromGolfKakis():
         await _removeFriend(
-          ownerId: intent.ownerId,
+          session: intent.session,
           contactKey: intent.contactKey,
         );
       case OnSaveFriendNickname():
         await _saveNickname(
-          ownerId: intent.ownerId,
+          session: intent.session,
           contactKey: intent.contactKey,
           nickname: intent.nickname,
         );
     }
   }
 
-  Future<void> _grantPermissionAndLoad(String ownerId) async {
+  Future<void> _grantPermissionAndLoad(SessionState session) async {
     emitViewState(
       (state) => state.copyWith(isLoading: true, clearErrorMessage: true),
     );
 
     try {
       final hasPermission = await _useCase.requestContactsPermission();
+      await _loadFriends(session);
+
       if (!hasPermission) {
         emitViewState(
           (state) => state.copyWith(
-            isLoading: false,
             hasPermission: false,
-            friends: const <ProfileFriendModel>[],
-            availableContacts: const <ProfileFriendModel>[],
-            clearSavingContactKey: true,
             errorSnackbarMessageModel: const SnackbarMessageModel(
-              message: 'Contacts access was not granted.',
+              message: 'Enable permission to add your fellow kakis.',
             ),
           ),
         );
-        return;
       }
-
-      await _loadFriends(ownerId);
     } catch (_) {
       emitViewState(
         (state) => state.copyWith(
@@ -87,13 +84,13 @@ class ProfileFriendsViewModel
     }
   }
 
-  Future<void> _loadFriends(String ownerId) async {
+  Future<void> _loadFriends(SessionState session) async {
     emitViewState(
       (state) => state.copyWith(isLoading: true, clearErrorMessage: true),
     );
 
     try {
-      final result = await _useCase.fetchFriends(ownerId: ownerId);
+      final result = await _useCase.onFetchFriendList(session: session);
       emitViewState(
         (state) => state.copyWith(
           isLoading: false,
@@ -102,6 +99,15 @@ class ProfileFriendsViewModel
           availableContacts: result.availableContacts,
           clearSavingContactKey: true,
           clearErrorMessage: true,
+        ),
+      );
+    } on ApiException catch (error) {
+      emitViewState(
+        (state) => state.copyWith(
+          isLoading: false,
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: error.message,
+          ),
         ),
       );
     } catch (_) {
@@ -117,7 +123,7 @@ class ProfileFriendsViewModel
   }
 
   Future<void> _addFriend({
-    required String ownerId,
+    required SessionState session,
     required ProfileFriendModel friend,
   }) async {
     emitViewState(
@@ -128,14 +134,17 @@ class ProfileFriendsViewModel
     );
 
     try {
-      await _useCase.addFriend(ownerId: ownerId, friend: friend);
+      final savedFriend = await _useCase.onAddFriend(
+        session: session,
+        friend: friend,
+      );
 
       final nextFriends = [...currentState.friends];
       final alreadyExists = nextFriends.any(
-        (savedFriend) => savedFriend.contactKey == friend.contactKey,
+        (friend) => friend.contactKey == savedFriend.contactKey,
       );
       if (!alreadyExists) {
-        nextFriends.add(friend);
+        nextFriends.add(savedFriend);
         nextFriends.sort(
           (left, right) => left.effectiveDisplayName.toLowerCase().compareTo(
             right.effectiveDisplayName.toLowerCase(),
@@ -153,7 +162,7 @@ class ProfileFriendsViewModel
 
       sendNavEffect(
         () => ShowFriendsFeedback(
-          '${friend.displayName} added to My Golf Kakis.',
+          '${savedFriend.displayName} added to My Golf Kakis.',
         ),
       );
     } catch (_) {
@@ -169,7 +178,7 @@ class ProfileFriendsViewModel
   }
 
   Future<void> _saveNickname({
-    required String ownerId,
+    required SessionState session,
     required String contactKey,
     required String nickname,
   }) async {
@@ -179,8 +188,8 @@ class ProfileFriendsViewModel
     );
 
     try {
-      await _useCase.saveNickname(
-        ownerId: ownerId,
+      final updatedFriend = await _useCase.onUpdateFriendDetails(
+        session: session,
         contactKey: contactKey,
         nickname: nickname,
       );
@@ -190,7 +199,7 @@ class ProfileFriendsViewModel
           friends: state.friends
               .map(
                 (friend) => friend.contactKey == contactKey
-                    ? friend.copyWith(nickname: nickname.trim())
+                    ? friend.copyWith(nickname: updatedFriend.nickname)
                     : friend,
               )
               .toList(),
@@ -219,7 +228,7 @@ class ProfileFriendsViewModel
   }
 
   Future<void> _removeFriend({
-    required String ownerId,
+    required SessionState session,
     required String contactKey,
   }) async {
     emitViewState(
@@ -228,7 +237,7 @@ class ProfileFriendsViewModel
     );
 
     try {
-      await _useCase.removeFriend(ownerId: ownerId, contactKey: contactKey);
+      await _useCase.onDeleteFriend(session: session, contactKey: contactKey);
 
       emitViewState(
         (state) => state.copyWith(

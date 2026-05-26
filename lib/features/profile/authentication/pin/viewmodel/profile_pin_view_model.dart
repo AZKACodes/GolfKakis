@@ -49,7 +49,7 @@ class ProfilePinViewModel
             clearErrorMessage: true,
           ),
         );
-        await _submitIfReady();
+        await _submitIfComplete();
       case OnProfileConfirmPinChanged():
         emitViewState(
           (state) => state.copyWith(
@@ -57,7 +57,9 @@ class ProfilePinViewModel
             clearErrorMessage: true,
           ),
         );
-        await _submitIfReady();
+        await _submitIfComplete();
+      case OnProfilePinSubmitClick():
+        await _submit();
       case OnProfilePinBackClick():
         sendNavEffect(() => const ProfilePinNavigateBack());
       case OnProfileForgotPinClick():
@@ -70,7 +72,13 @@ class ProfilePinViewModel
     return digits.length > 6 ? digits.substring(0, 6) : digits;
   }
 
-  Future<void> _submitIfReady() async {
+  Future<void> _submitIfComplete() async {
+    if (currentState.canSubmit) {
+      await _submit();
+    }
+  }
+
+  Future<void> _submit() async {
     if (_mode == ProfilePinMode.setup &&
         currentState.hasCompletePin &&
         currentState.hasCompleteConfirmPin &&
@@ -86,6 +94,15 @@ class ProfilePinViewModel
     }
 
     if (!currentState.canSubmit) {
+      emitViewState(
+        (state) => state.copyWith(
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: _mode == ProfilePinMode.login
+                ? 'Enter your 6-digit PIN.'
+                : 'Enter and confirm your 6-digit PIN.',
+          ),
+        ),
+      );
       return;
     }
 
@@ -115,7 +132,7 @@ class ProfilePinViewModel
         (state) => state.copyWith(
           isSubmitting: false,
           errorSnackbarMessageModel: SnackbarMessageModel(
-            message: error.message,
+            message: _pinErrorMessage(error),
           ),
         ),
       );
@@ -124,10 +141,25 @@ class ProfilePinViewModel
         (state) => state.copyWith(
           isSubmitting: false,
           errorSnackbarMessageModel: const SnackbarMessageModel(
-            message: 'Unable to set up PIN right now.',
+            message: 'Unable to continue right now.',
           ),
         ),
       );
     }
+  }
+
+  String _pinErrorMessage(ApiException error) {
+    final isInvalidPin =
+        _mode == ProfilePinMode.login &&
+        (error.statusCode == 401 ||
+            error.message.toLowerCase().contains(
+              'invalid phone number or pin',
+            ));
+
+    if (isInvalidPin) {
+      return 'Invalid PIN.';
+    }
+
+    return error.message;
   }
 }

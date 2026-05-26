@@ -1,25 +1,38 @@
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
-
-import '../data/profile_friends_repository.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 
 abstract class ProfileFriendsUseCase {
-  Future<ProfileFriendsResult> fetchFriends({required String ownerId});
+  Future<ProfileFriendsResult> onFetchFriendList({
+    required SessionState session,
+  });
 
   Future<bool> requestContactsPermission();
 
-  Future<void> addFriend({
-    required String ownerId,
+  Future<ProfileFriendModel> onAddFriend({
+    required SessionState session,
     required ProfileFriendModel friend,
   });
 
-  Future<void> removeFriend({
-    required String ownerId,
+  Future<void> onDeleteFriend({
+    required SessionState session,
     required String contactKey,
   });
 
-  Future<void> saveNickname({
-    required String ownerId,
+  Future<ProfileFriendModel> onUpdateFriendDetails({
+    required SessionState session,
     required String contactKey,
     required String nickname,
   });
+}
+
+class ProfileFriendsResult {
+  const ProfileFriendsResult({
+    required this.hasPermission,
+    required this.friends,
+    required this.availableContacts,
+  });
+
+  final bool hasPermission;
+  final List<ProfileFriendModel> friends;
+  final List<ProfileFriendModel> availableContacts;
 }

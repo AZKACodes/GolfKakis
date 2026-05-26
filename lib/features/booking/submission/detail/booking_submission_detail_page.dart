@@ -7,6 +7,7 @@ import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
 
 class BookingSubmissionDetailPage extends StatefulWidget {
@@ -65,7 +66,7 @@ class _BookingSubmissionDetailPageState
   StreamSubscription<BookingSubmissionDetailNavEffect>? _navEffectSubscription;
   List<ProfileFriendModel> _savedFriends = const <ProfileFriendModel>[];
   bool _isLoadingFriends = false;
-  String? _friendsOwnerId;
+  SessionState? _friendsSession;
   bool _didLoadFriends = false;
 
   @override
@@ -110,9 +111,7 @@ class _BookingSubmissionDetailPageState
     }
     _didLoadFriends = true;
     final session = SessionScope.of(context).state;
-    _friendsOwnerId = session.authUserId?.trim().isNotEmpty == true
-        ? session.authUserId!.trim()
-        : session.deviceId;
+    _friendsSession = session;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -205,8 +204,8 @@ class _BookingSubmissionDetailPageState
   }
 
   Future<void> _loadSavedFriends() async {
-    final ownerId = _friendsOwnerId;
-    if (ownerId == null || ownerId.isEmpty) {
+    final session = _friendsSession;
+    if (session == null || session.accessToken?.trim().isEmpty != false) {
       return;
     }
 
@@ -215,7 +214,7 @@ class _BookingSubmissionDetailPageState
     });
 
     try {
-      final result = await _friendsUseCase.fetchFriends(ownerId: ownerId);
+      final result = await _friendsUseCase.onFetchFriendList(session: session);
       if (!mounted) {
         return;
       }
@@ -234,12 +233,15 @@ class _BookingSubmissionDetailPageState
   }
 
   Future<void> _saveFriendFromBooking(ProfileFriendModel friend) async {
-    final ownerId = _friendsOwnerId;
-    if (ownerId == null || ownerId.isEmpty) {
+    final session = _friendsSession;
+    if (session == null || session.accessToken?.trim().isEmpty != false) {
       return;
     }
 
-    await _friendsUseCase.addFriend(ownerId: ownerId, friend: friend);
+    final savedFriend = await _friendsUseCase.onAddFriend(
+      session: session,
+      friend: friend,
+    );
     if (!mounted) {
       return;
     }
@@ -247,12 +249,12 @@ class _BookingSubmissionDetailPageState
     setState(() {
       final nextFriends = [..._savedFriends];
       final existingIndex = nextFriends.indexWhere(
-        (item) => item.contactKey == friend.contactKey,
+        (item) => item.contactKey == savedFriend.contactKey,
       );
       if (existingIndex == -1) {
-        nextFriends.add(friend);
+        nextFriends.add(savedFriend);
       } else {
-        nextFriends[existingIndex] = friend;
+        nextFriends[existingIndex] = savedFriend;
       }
       nextFriends.sort(
         (left, right) => left.effectiveDisplayName.toLowerCase().compareTo(
@@ -266,7 +268,7 @@ class _BookingSubmissionDetailPageState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${friend.displayName} added to My Golf Kakis.'),
+          content: Text('${savedFriend.displayName} added to My Golf Kakis.'),
           behavior: SnackBarBehavior.floating,
         ),
       );

@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/friends/view/profile_friends_view.dart';
 import 'package:golf_kakis/features/profile/friends/viewmodel/profile_friends_view_contract.dart';
 import 'package:golf_kakis/features/profile/friends/viewmodel/profile_friends_view_model.dart';
 
 class ProfileFriendsPage extends StatefulWidget {
-  const ProfileFriendsPage({required this.ownerId, super.key});
+  const ProfileFriendsPage({required this.session, super.key});
 
-  final String ownerId;
+  final SessionState session;
 
   @override
   State<ProfileFriendsPage> createState() => _ProfileFriendsPageState();
@@ -32,7 +33,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
       if (!mounted) {
         return;
       }
-      _viewModel.onUserIntent(OnInitFriends(widget.ownerId));
+      _viewModel.onUserIntent(OnInitFriends(widget.session));
     });
   }
 
@@ -78,7 +79,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
     }
 
     _viewModel.onUserIntent(
-      OnAddFriendToGolfKakis(ownerId: widget.ownerId, friend: selectedFriend),
+      OnAddFriendToGolfKakis(session: widget.session, friend: selectedFriend),
     );
   }
 
@@ -94,7 +95,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
 
     _viewModel.onUserIntent(
       OnSaveFriendNickname(
-        ownerId: widget.ownerId,
+        session: widget.session,
         contactKey: friend.contactKey,
         nickname: result,
       ),
@@ -134,7 +135,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
 
     _viewModel.onUserIntent(
       OnRemoveFriendFromGolfKakis(
-        ownerId: widget.ownerId,
+        session: widget.session,
         contactKey: friend.contactKey,
       ),
     );
@@ -151,15 +152,15 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
           body: ProfileFriendsView(
             state: viewState,
             onRefresh: () async {
-              _viewModel.onUserIntent(OnRefreshFriends(widget.ownerId));
+              _viewModel.onUserIntent(OnRefreshFriends(widget.session));
             },
             onRetryPermission: () => _viewModel.onUserIntent(
-              OnGrantContactsPermission(widget.ownerId),
+              OnGrantContactsPermission(widget.session),
             ),
             onAddFriend: () {
               if (!viewState.hasPermission) {
                 _viewModel.onUserIntent(
-                  OnGrantContactsPermission(widget.ownerId),
+                  OnGrantContactsPermission(widget.session),
                 );
                 return;
               }
