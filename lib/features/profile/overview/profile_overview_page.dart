@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
-import 'package:golf_kakis/features/profile/edit/profile_edit_page.dart';
-import 'package:golf_kakis/features/profile/login/profile_login_page.dart';
-import 'package:golf_kakis/features/profile/overview/data/profile_overview_repository_impl.dart';
+import 'package:golf_kakis/features/profile/account/profile_detail/profile_detail_page.dart';
+import 'package:golf_kakis/features/profile/friends/profile_friends_page.dart';
+import 'package:golf_kakis/features/profile/authentication/login/profile_login_page.dart';
+import 'package:golf_kakis/features/profile/overview/domain/profile_overview_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/overview/view/profile_overview_view.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_contract.dart';
 import 'package:golf_kakis/features/profile/overview/viewmodel/profile_overview_view_model.dart';
+import 'package:golf_kakis/features/profile/systemsetting/language/profile_language_page.dart';
+import 'package:golf_kakis/features/profile/systemsetting/notification/profile_notification_page.dart';
 
 class ProfileOverviewPage extends StatefulWidget {
   const ProfileOverviewPage({super.key});
@@ -25,7 +28,7 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
   void initState() {
     super.initState();
     _viewModel = ProfileOverviewViewModel(
-      repository: ProfileOverviewRepositoryImpl(),
+      useCase: const ProfileOverviewUseCaseImpl(),
     );
     _navEffectSubscription = _viewModel.navEffects.listen((effect) {
       if (effect is LogoutRequested) {
@@ -55,7 +58,39 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
         }
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) => ProfileEditPage(profile: profile),
+            builder: (_) => ProfileDetailPage(profile: profile),
+          ),
+        );
+      }
+
+      if (effect is MyGolfKakisRequested) {
+        if (!mounted) {
+          return;
+        }
+        final session = SessionScope.of(context).state;
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ProfileFriendsPage(session: session),
+          ),
+        );
+      }
+
+      if (effect is LanguageSettingsRequested) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(builder: (_) => const ProfileLanguagePage()),
+        );
+      }
+
+      if (effect is NotificationSettingsRequested) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ProfileNotificationPage(),
           ),
         );
       }
@@ -68,7 +103,7 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
     final sessionState = SessionScope.of(context).state;
     if (_lastSessionState != sessionState) {
       _lastSessionState = sessionState;
-      _viewModel.onUserIntent(OnInit(sessionState));
+      _viewModel.onUserIntent(OnInitProfile(sessionState));
     }
   }
 
@@ -91,6 +126,12 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
             onRefresh: () => _viewModel.refresh(sessionState),
             onPrimaryTouchpointClick: () =>
                 _viewModel.onUserIntent(const OnPrimaryTouchpointClick()),
+            onMyGolfKakisClick: () =>
+                _viewModel.onUserIntent(const OnMyGolfKakisTouchpointClick()),
+            onLanguageClick: () =>
+                _viewModel.onUserIntent(const OnLanguageClick()),
+            onNotificationClick: () =>
+                _viewModel.onUserIntent(const OnNotificationClick()),
             onLogoutClick: () => _viewModel.onUserIntent(const OnLogoutClick()),
           ),
         );

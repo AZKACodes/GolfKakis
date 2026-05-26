@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GolfKakis Security Check</title>
+    <style>
+      html,
+      body {
+        align-items: center;
+        background: #ffffff;
+        display: flex;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        height: 100%;
+        justify-content: center;
+        margin: 0;
+      }
+    </style>
+    <script>
+      function queryValue(name) {
+        return new URLSearchParams(window.location.search).get(name) || "";
+      }
+
+      function sendToken(token) {
+        if (window.flutter_inappwebview) {
+          window.flutter_inappwebview.callHandler("turnstileToken", token);
+          return;
+        }
+
+        window.location.href =
+          "golfkakis-turnstile://token?token=" + encodeURIComponent(token);
+      }
+
+      function sendError(message) {
+        if (window.flutter_inappwebview) {
+          window.flutter_inappwebview.callHandler("turnstileError", message);
+        }
+      }
+
+      window.onloadTurnstileCallback = function () {
+        var sitekey = queryValue("sitekey");
+        var action = queryValue("action") || "request_otp";
+
+        turnstile.render("#turnstile-container", {
+          sitekey: sitekey,
+          action: action,
+          callback: sendToken,
+          "error-callback": function (code) {
+            sendError("Security check failed: " + code);
+          },
+          "expired-callback": function () {
+            sendError("Security check expired. Please try again.");
+          },
+          "timeout-callback": function () {
+            sendError("Security check timed out. Please try again.");
+          },
+        });
+      };
+    </script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onloadTurnstileCallback"
+      async
+      defer
+    ></script>
+  </head>
+  <body>
+    <div id="turnstile-container"></div>
+  </body>
+</html>

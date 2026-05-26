@@ -25,6 +25,14 @@ class HomeApiService {
     return _apiClient.getJson('/home/hot-deals');
   }
 
+  Future<dynamic> getAnnouncementList() {
+    return _apiClient.getJson('/announcement/list');
+  }
+
+  Future<dynamic> getDealsList() {
+    return _apiClient.getJson('/home/overview/deals');
+  }
+
   Future<dynamic> getKinraraWeather() {
     return _weatherApiService.getKinraraWeather();
   }

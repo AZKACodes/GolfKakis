@@ -1,3 +1,4 @@
+import '../default_values.dart';
 import '../enums/session/session_status.dart';
 import '../enums/session/user_role.dart';
 import 'session_visitor.dart';
@@ -6,7 +7,12 @@ class SessionState {
   const SessionState({
     required this.status,
     required this.deviceId,
+    this.clientPlatform,
     this.accessToken,
+    this.refreshToken,
+    this.sessionId,
+    this.sessionExpiresInSeconds,
+    this.refreshExpiresAt,
     this.authUserId,
     this.authId,
     this.isPhoneVerified,
@@ -20,12 +26,21 @@ class SessionState {
     this.profileEmail,
     this.profilePhoneNumber,
     this.profileAvatarIndex,
+    this.profileAvatarImagePath,
+    this.hasPin,
+    this.hasPasskey,
+    this.hasOTPFallback,
     this.visitor,
   });
 
   final SessionStatus status;
   final String deviceId;
+  final String? clientPlatform;
   final String? accessToken;
+  final String? refreshToken;
+  final String? sessionId;
+  final int? sessionExpiresInSeconds;
+  final String? refreshExpiresAt;
   final String? authUserId;
   final String? authId;
   final bool? isPhoneVerified;
@@ -39,6 +54,10 @@ class SessionState {
   final String? profileEmail;
   final String? profilePhoneNumber;
   final int? profileAvatarIndex;
+  final String? profileAvatarImagePath;
+  final bool? hasPin;
+  final bool? hasPasskey;
+  final bool? hasOTPFallback;
   final SessionVisitor? visitor;
 
   bool get isLoggedIn => status == SessionStatus.loggedIn;
@@ -63,7 +82,12 @@ class SessionState {
   SessionState copyWith({
     SessionStatus? status,
     String? deviceId,
+    String? clientPlatform,
     String? accessToken,
+    String? refreshToken,
+    String? sessionId,
+    int? sessionExpiresInSeconds,
+    String? refreshExpiresAt,
     String? authUserId,
     String? authId,
     bool? isPhoneVerified,
@@ -77,6 +101,10 @@ class SessionState {
     String? profileEmail,
     String? profilePhoneNumber,
     int? profileAvatarIndex,
+    String? profileAvatarImagePath,
+    bool? hasPin,
+    bool? hasPasskey,
+    bool? hasOTPFallback,
     SessionVisitor? visitor,
     bool clearAuthenticatedUsername = false,
     bool clearAuthenticatedUserRole = false,
@@ -87,7 +115,18 @@ class SessionState {
     return SessionState(
       status: status ?? this.status,
       deviceId: deviceId ?? this.deviceId,
+      clientPlatform: clientPlatform ?? this.clientPlatform,
       accessToken: clearAuthSession ? null : (accessToken ?? this.accessToken),
+      refreshToken: clearAuthSession
+          ? null
+          : (refreshToken ?? this.refreshToken),
+      sessionId: clearAuthSession ? null : (sessionId ?? this.sessionId),
+      sessionExpiresInSeconds: clearAuthSession
+          ? null
+          : (sessionExpiresInSeconds ?? this.sessionExpiresInSeconds),
+      refreshExpiresAt: clearAuthSession
+          ? null
+          : (refreshExpiresAt ?? this.refreshExpiresAt),
       authUserId: clearAuthSession ? null : (authUserId ?? this.authUserId),
       authId: clearAuthSession ? null : (authId ?? this.authId),
       isPhoneVerified: clearAuthSession
@@ -123,6 +162,14 @@ class SessionState {
       profileAvatarIndex: clearProfileDetails
           ? null
           : (profileAvatarIndex ?? this.profileAvatarIndex),
+      profileAvatarImagePath: clearProfileDetails
+          ? null
+          : (profileAvatarImagePath ?? this.profileAvatarImagePath),
+      hasPin: clearAuthSession ? null : (hasPin ?? this.hasPin),
+      hasPasskey: clearAuthSession ? null : (hasPasskey ?? this.hasPasskey),
+      hasOTPFallback: clearAuthSession
+          ? null
+          : (hasOTPFallback ?? this.hasOTPFallback),
       visitor: clearVisitor ? null : (visitor ?? this.visitor),
     );
   }
@@ -131,7 +178,12 @@ class SessionState {
     return <String, dynamic>{
       'status': status.name,
       'deviceId': deviceId,
+      'clientPlatform': clientPlatform,
       'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      'sessionId': sessionId,
+      'sessionExpiresInSeconds': sessionExpiresInSeconds,
+      'refreshExpiresAt': refreshExpiresAt,
       'authUserId': authUserId,
       'authId': authId,
       'isPhoneVerified': isPhoneVerified,
@@ -145,6 +197,10 @@ class SessionState {
       'profileEmail': profileEmail,
       'profilePhoneNumber': profilePhoneNumber,
       'profileAvatarIndex': profileAvatarIndex,
+      'profileAvatarImagePath': profileAvatarImagePath,
+      'hasPin': hasPin,
+      'hasPasskey': hasPasskey,
+      'hasOTPFallback': hasOTPFallback,
       'visitor': visitor?.toJson(),
     };
   }
@@ -153,7 +209,12 @@ class SessionState {
     return SessionState(
       status: _sessionStatusFromName(json['status'] as String?),
       deviceId: json['deviceId'] as String? ?? SessionState.initial.deviceId,
+      clientPlatform: json['clientPlatform'] as String?,
       accessToken: json['accessToken'] as String?,
+      refreshToken: json['refreshToken'] as String?,
+      sessionId: json['sessionId'] as String?,
+      sessionExpiresInSeconds: json['sessionExpiresInSeconds'] as int?,
+      refreshExpiresAt: json['refreshExpiresAt'] as String?,
       authUserId: json['authUserId'] as String?,
       authId: json['authId'] as String?,
       isPhoneVerified: json['isPhoneVerified'] as bool?,
@@ -169,12 +230,16 @@ class SessionState {
       profileEmail: json['profileEmail'] as String?,
       profilePhoneNumber: json['profilePhoneNumber'] as String?,
       profileAvatarIndex: json['profileAvatarIndex'] as int?,
+      profileAvatarImagePath: json['profileAvatarImagePath'] as String?,
+      hasPin: json['hasPin'] as bool?,
+      hasPasskey: json['hasPasskey'] as bool?,
+      hasOTPFallback: json['hasOTPFallback'] as bool?,
       visitor: _visitorFromJson(json['visitor']),
     );
   }
 
   static SessionStatus _sessionStatusFromName(String? name) {
-    if (name == null || name.isEmpty) {
+    if (name.getValueOrEmpty().isEmpty) {
       return SessionStatus.loggedOut;
     }
 
@@ -188,7 +253,7 @@ class SessionState {
   }
 
   static UserRole? _userRoleFromName(String? name) {
-    if (name == null || name.isEmpty) {
+    if (name.getValueOrEmpty().isEmpty) {
       return null;
     }
 

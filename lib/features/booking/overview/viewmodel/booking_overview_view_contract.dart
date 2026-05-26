@@ -1,94 +1,98 @@
-import 'package:golf_kakis/features/foundation/model/booking/booking_model.dart';
-import 'package:golf_kakis/features/foundation/model/booking/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/model/booking_model.dart';
+import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 abstract class BookingOverviewViewContract {
   BookingOverviewViewState get viewState;
   Stream<BookingOverviewNavEffect> get navEffects;
   void onUserIntent(BookingOverviewUserIntent intent);
+  Future<void> onRefresh(BookingOverviewTab tab);
 }
 
-class BookingOverviewViewState {
+class BookingOverviewViewState extends ViewState {
   const BookingOverviewViewState({
-    this.isLoggedIn = false,
-    this.isUpcomingLoading = false,
-    this.upcomingBooking,
-  });
+    required this.upcomingBookings,
+    required this.pastBookings,
+    required this.isUpcomingLoading,
+    required this.isPastLoading,
+    required this.hasLoadedUpcoming,
+    required this.hasLoadedPast,
+  }) : super();
 
-  static const initial = BookingOverviewViewState();
+  static const initial = BookingOverviewViewState(
+    upcomingBookings: <BookingModel>[],
+    pastBookings: <BookingModel>[],
+    isUpcomingLoading: false,
+    isPastLoading: false,
+    hasLoadedUpcoming: false,
+    hasLoadedPast: false,
+  );
 
-  final bool isLoggedIn;
+  final List<BookingModel> upcomingBookings;
+  final List<BookingModel> pastBookings;
   final bool isUpcomingLoading;
-  final BookingModel? upcomingBooking;
+  final bool isPastLoading;
+  final bool hasLoadedUpcoming;
+  final bool hasLoadedPast;
 
   BookingOverviewViewState copyWith({
-    bool? isLoggedIn,
+    List<BookingModel>? upcomingBookings,
+    List<BookingModel>? pastBookings,
     bool? isUpcomingLoading,
-    BookingModel? upcomingBooking,
-    bool clearUpcomingBooking = false,
+    bool? isPastLoading,
+    bool? hasLoadedUpcoming,
+    bool? hasLoadedPast,
   }) {
     return BookingOverviewViewState(
-      isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+      upcomingBookings: upcomingBookings ?? this.upcomingBookings,
+      pastBookings: pastBookings ?? this.pastBookings,
       isUpcomingLoading: isUpcomingLoading ?? this.isUpcomingLoading,
-      upcomingBooking: clearUpcomingBooking
-          ? null
-          : (upcomingBooking ?? this.upcomingBooking),
+      isPastLoading: isPastLoading ?? this.isPastLoading,
+      hasLoadedUpcoming: hasLoadedUpcoming ?? this.hasLoadedUpcoming,
+      hasLoadedPast: hasLoadedPast ?? this.hasLoadedPast,
     );
   }
 }
 
-sealed class BookingOverviewUserIntent {
+enum BookingOverviewTab { upcoming, past }
+
+sealed class BookingOverviewUserIntent implements UserIntent {
   const BookingOverviewUserIntent();
 }
 
-class OnBookingSubmissionClick extends BookingOverviewUserIntent {
-  const OnBookingSubmissionClick();
-}
-
-class OnInit extends BookingOverviewUserIntent {
-  const OnInit({required this.isLoggedIn, this.accessToken});
+class OnInitBookingOverview extends BookingOverviewUserIntent {
+  const OnInitBookingOverview({
+    required this.isLoggedIn,
+    required this.accessToken,
+  });
 
   final bool isLoggedIn;
-  final String? accessToken;
+  final String accessToken;
 }
 
-class OnPopularClubClick extends BookingOverviewUserIntent {
-  const OnPopularClubClick(this.club);
+class OnTabChanged extends BookingOverviewUserIntent {
+  const OnTabChanged(this.tab);
 
-  final GolfClubModel club;
+  final BookingOverviewTab tab;
 }
 
-class OnBookingListClick extends BookingOverviewUserIntent {
-  const OnBookingListClick();
+class OnViewBookingDetailClick extends BookingOverviewUserIntent {
+  const OnViewBookingDetailClick(this.booking);
+
+  final BookingModel booking;
 }
 
-class OnUpcomingBookingDetailClick extends BookingOverviewUserIntent {
-  const OnUpcomingBookingDetailClick();
-}
-
-sealed class NavEffect {
-  const NavEffect();
-}
-
-sealed class BookingOverviewNavEffect extends NavEffect {
+sealed class BookingOverviewNavEffect implements NavEffect {
   const BookingOverviewNavEffect();
-}
-
-class NavigateToBookingSubmission extends BookingOverviewNavEffect {
-  const NavigateToBookingSubmission();
-}
-
-class NavigateToGolfClubDetail extends BookingOverviewNavEffect {
-  const NavigateToGolfClubDetail(this.club);
-
-  final GolfClubModel club;
-}
-
-class NavigateToBookingList extends BookingOverviewNavEffect {
-  const NavigateToBookingList();
 }
 
 class NavigateToBookingDetail extends BookingOverviewNavEffect {
   const NavigateToBookingDetail(this.booking);
 
   final BookingModel booking;
+}
+
+class ShowBookingOverviewError extends BookingOverviewNavEffect {
+  const ShowBookingOverviewError(this.message);
+
+  final String message;
 }

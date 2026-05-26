@@ -22,6 +22,14 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSContactsUsageDescription</key>
+	<string>GolfKakis uses your contacts to help you build your My Golf Kakis friend list and save in-app nicknames.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GolfKakis uses your location to sort nearby courses and show how far away they are.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>GolfKakis lets you choose a profile picture from your photo library.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>GolfKakis may save selected profile images while updating your account profile.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -45,5 +53,26 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneDelegateClassName</key>
+					<string>FlutterSceneDelegate</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 </dict>
 </plist>

@@ -1,38 +1,96 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/list/booking_list_page.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
-import 'package:golf_kakis/features/home/golf_club_list/home_golf_club_list_page.dart';
+import 'package:golf_kakis/features/foundation/root/root_screen.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/home/course/list/courses_list_page.dart';
+import 'package:golf_kakis/features/home/overview/domain/home_overview_use_case_impl.dart';
 
 import 'view/home_overview_view.dart';
+import 'viewmodel/home_view_contract.dart';
+import 'viewmodel/home_view_model.dart';
 
-class HomeOverviewPage extends StatelessWidget {
+class HomeOverviewPage extends StatefulWidget {
   const HomeOverviewPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return HomeView(
-      onNewBookingTap: () {
+  State<HomeOverviewPage> createState() => _HomeOverviewPageState();
+}
+
+class _HomeOverviewPageState extends State<HomeOverviewPage> {
+  late final HomeViewModel _viewModel;
+  StreamSubscription<HomeNavEffect>? _navEffectSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _viewModel = HomeViewModel(HomeOverviewUseCaseImpl.create());
+    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final session = SessionScope.of(context).state;
+      _viewModel.onUserIntent(
+        OnHomeOverviewInit(
+          isLoggedIn: session.isLoggedIn,
+          accessToken: session.accessToken,
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _navEffectSubscription?.cancel();
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  void _handleNavEffect(HomeNavEffect effect) {
+    if (!mounted) {
+      return;
+    }
+
+    switch (effect) {
+      case NavigateToBookingSlotSubmission():
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
             builder: (_) => const BookingSubmissionSlotPage(),
           ),
         );
-      },
-      onCoursesTap: () {
+      case NavigateToGolfClubList():
         Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(builder: (_) => const HomeGolfClubListPage()),
+          MaterialPageRoute<void>(builder: (_) => const CoursesListPage()),
         );
-      },
-      onMyTeeTimesTap: () {
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(builder: (_) => const BookingListPage()),
-        );
-      },
-      onQuickBookTap: (clubSlug) {
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                BookingSubmissionSlotPage(initialClubSlug: clubSlug),
+      case NavigateToBookingOverview():
+        RootScreen.selectTab(1);
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    final session = SessionScope.of(context).state;
+    await _viewModel.handleIntent(
+      OnRefreshHomeOverview(
+        isLoggedIn: session.isLoggedIn,
+        accessToken: session.accessToken,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: HomeView(
+            state: _viewModel.viewState,
+            onUserIntent: _viewModel.onUserIntent,
           ),
         );
       },

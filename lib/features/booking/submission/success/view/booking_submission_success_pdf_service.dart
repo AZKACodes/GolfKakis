@@ -80,20 +80,8 @@ class BookingSubmissionSuccessPdfService {
                         items: [
                           ('Players', '${state.playerCount}'),
                           ('Holes', state.playType == '18_holes' ? '18' : '9'),
-                          (
-                            'Caddies',
-                            _formatMetricValue(
-                              count: state.caddieCount,
-                              preference: state.caddiePreference,
-                            ),
-                          ),
-                          (
-                            'Buggy',
-                            _formatMetricValue(
-                              count: state.golfCartCount,
-                              preference: state.buggySharingPreference,
-                            ),
-                          ),
+                          ('Caddies', '${state.caddieCount}'),
+                          ('Buggy', '${state.golfCartCount}'),
                         ],
                       ),
                     ],
@@ -267,35 +255,6 @@ class BookingSubmissionSuccessPdfService {
     ];
     final month = months[parsed.month - 1];
     return '${parsed.day} $month ${parsed.year}';
-  }
-
-  static String _formatMetricValue({
-    required int count,
-    required String preference,
-  }) {
-    final formattedPreference = _formatEnumLabel(preference);
-    if (formattedPreference == 'None') {
-      return 'None';
-    }
-    if (formattedPreference == '-') {
-      return '$count';
-    }
-    return '$count - $formattedPreference';
-  }
-
-  static String _formatEnumLabel(String value) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      return '-';
-    }
-
-    return _safeText(
-      normalized
-          .split('_')
-          .where((part) => part.isNotEmpty)
-          .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-          .join(' '),
-    );
   }
 
   static String _safeText(String value) {

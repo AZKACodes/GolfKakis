@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
-import 'package:flutter/services.dart';
+import 'package:golf_kakis/features/foundation/widgets/input/golf_kakis_phone_number_input.dart';
 
 import '../viewmodel/booking_edit_view_contract.dart';
 
@@ -25,8 +25,6 @@ class BookingEditView extends StatefulWidget {
 class _BookingEditViewState extends State<BookingEditView> {
   final List<TextEditingController> _nameControllers =
       <TextEditingController>[];
-  final List<TextEditingController> _phoneControllers =
-      <TextEditingController>[];
 
   @override
   void initState() {
@@ -43,9 +41,6 @@ class _BookingEditViewState extends State<BookingEditView> {
   @override
   void dispose() {
     for (final controller in _nameControllers) {
-      controller.dispose();
-    }
-    for (final controller in _phoneControllers) {
       controller.dispose();
     }
     super.dispose();
@@ -110,17 +105,9 @@ class _BookingEditViewState extends State<BookingEditView> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: _phoneControllers[i],
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+\- ]')),
-                  ],
+                GolfKakisPhoneNumberInput(
+                  phoneNumber: booking.playerDetails[i].phoneNumber,
                   onChanged: (value) => widget.onPlayerPhoneChanged(i, value),
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
                 if (i != booking.playerDetails.length - 1) ...[
                   const SizedBox(height: 14),
@@ -151,20 +138,15 @@ class _BookingEditViewState extends State<BookingEditView> {
 
     while (_nameControllers.length < players.length) {
       _nameControllers.add(TextEditingController());
-      _phoneControllers.add(TextEditingController());
     }
 
     while (_nameControllers.length > players.length) {
       _nameControllers.removeLast().dispose();
-      _phoneControllers.removeLast().dispose();
     }
 
     for (var i = 0; i < players.length; i++) {
       if (_nameControllers[i].text != players[i].name) {
         _nameControllers[i].text = players[i].name;
-      }
-      if (_phoneControllers[i].text != players[i].phoneNumber) {
-        _phoneControllers[i].text = players[i].phoneNumber;
       }
     }
   }

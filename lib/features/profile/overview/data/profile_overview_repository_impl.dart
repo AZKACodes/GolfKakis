@@ -1,5 +1,7 @@
+import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
-import 'package:golf_kakis/features/foundation/model/profile/user_profile_model.dart';
+import 'package:golf_kakis/features/foundation/model/auth/auth_user.dart';
+import 'package:golf_kakis/features/foundation/model/user_profile_model.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/api/profile_api_service.dart';
@@ -14,24 +16,25 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
   final ProfileApiService _apiService;
 
   @override
-  Future<ProfileOverviewResult> onFetchUserProfile({
+  Future<ProfileOverviewResult> onFetchUserDetails({
     required SessionState session,
   }) async {
-    if (session.isLoggedIn) {
-      final accessToken = session.accessToken?.trim();
-      if (accessToken == null || accessToken.isEmpty) {
-        throw ApiException(message: 'Missing access token for user profile.');
-      }
-
-      final user = await _apiService.onFetchUserDetails(
-        accessToken: accessToken,
-      );
-      return ProfileOverviewResult(
-        profile: _buildAuthenticatedProfile(session, user),
-        isFallback: false,
-      );
+    final accessToken = session.accessToken?.trim();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw ApiException(message: 'Missing access token for user profile.');
     }
 
+    final user = await _apiService.onFetchUserDetails(accessToken: accessToken);
+    return ProfileOverviewResult(
+      profile: _buildAuthenticatedProfile(session, user),
+      isFallback: false,
+    );
+  }
+
+  @override
+  Future<ProfileOverviewResult> onBuildGuestProfile({
+    required SessionState session,
+  }) async {
     return ProfileOverviewResult(
       profile: _buildGuestProfile(session),
       isFallback: false,
@@ -51,7 +54,8 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       occupation: session.profileOccupation ?? 'Golfer',
       email: session.profileEmail ?? '-',
       phoneNumber: user.phoneNumber,
-      avatarIndex: session.profileAvatarIndex ?? 0,
+      avatarIndex: session.profileAvatarIndex ?? emptyInt,
+      avatarImagePath: session.profileAvatarImagePath,
       role: role,
       membershipLabel: _defaultMembershipLabel(role),
       isLoggedIn: true,
@@ -68,6 +72,7 @@ class ProfileOverviewRepositoryImpl implements ProfileOverviewRepository {
       email: '-',
       phoneNumber: '-',
       avatarIndex: 0,
+      avatarImagePath: session.profileAvatarImagePath,
       role: UserRole.guest,
       membershipLabel: _defaultMembershipLabel(UserRole.guest),
       isLoggedIn: false,
