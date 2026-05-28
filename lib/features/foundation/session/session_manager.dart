@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -34,6 +35,7 @@ class SessionManager extends ChangeNotifier {
   bool _initialized = false;
   bool get isInitialized => _initialized;
   Future<bool>? _refreshSessionFuture;
+  static const Duration _refreshSkew = Duration(seconds: 60);
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -85,12 +87,17 @@ class SessionManager extends ChangeNotifier {
     bool? hasPasskey,
     bool? hasOTPFallback,
   }) {
+    final resolvedAccessTokenExpiresAt = _resolveAccessTokenExpiresAt(
+      accessToken: accessToken,
+      expiresInSeconds: sessionExpiresInSeconds,
+    );
     _state = _state.copyWith(
       status: SessionStatus.loggedIn,
       accessToken: accessToken,
       refreshToken: refreshToken,
       sessionId: sessionId,
       sessionExpiresInSeconds: sessionExpiresInSeconds,
+      accessTokenExpiresAt: resolvedAccessTokenExpiresAt,
       refreshExpiresAt: refreshExpiresAt,
       authUserId: authUserId,
       authId: authId,
@@ -151,7 +158,12 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
+  Future<bool> logout() async {
+    final loggedOutRemotely = await _notifyRemoteLogout();
+    if (!loggedOutRemotely) {
+      return false;
+    }
+
     _state = _state.copyWith(
       status: SessionStatus.loggedOut,
       clearAuthSession: true,
@@ -163,12 +175,52 @@ class SessionManager extends ChangeNotifier {
     unawaited(_persistState());
     notifyListeners();
     unawaited(_refreshVisitorAfterLogout());
+    return true;
+  }
+
+  Future<bool> _notifyRemoteLogout() async {
+    final accessToken = _state.accessToken?.trim();
+    if (accessToken == null || accessToken.isEmpty) {
+      return false;
+    }
+
+    try {
+      final response = await _apiClient.postJson(
+        '/auth/logout',
+        headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+      );
+      debugPrint('onLogout response: $response');
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('onLogout error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
+    }
   }
 
   Future<bool> refreshSession() {
     return _refreshSessionFuture ??= _refreshSession().whenComplete(() {
       _refreshSessionFuture = null;
     });
+  }
+
+  bool shouldRefreshSession() {
+    final refreshToken = _state.refreshToken?.trim();
+    final accessToken = _state.accessToken?.trim();
+    if (!_state.isLoggedIn ||
+        refreshToken == null ||
+        refreshToken.isEmpty ||
+        accessToken == null ||
+        accessToken.isEmpty) {
+      return false;
+    }
+
+    final expiresAt = _accessTokenExpiresAt();
+    if (expiresAt == null) {
+      return false;
+    }
+
+    return !DateTime.now().toUtc().add(_refreshSkew).isBefore(expiresAt);
   }
 
   Future<bool> _refreshSession() async {
@@ -196,10 +248,18 @@ class SessionManager extends ChangeNotifier {
         'refreshToken',
       ], fallback: _readString(sessionJson, <String>['refreshToken']));
 
+      final expiresInSeconds = _readInt(
+        sessionJson['expiresInSeconds'] ??
+            sessionJson['sessionExpiresInSeconds'] ??
+            response['expiresInSeconds'] ??
+            response['sessionExpiresInSeconds'],
+      );
+
       if (nextAccessToken.isEmpty || nextRefreshToken.isEmpty) {
         return false;
       }
 
+      final userJson = _extractRefreshUserJson(response);
       _state = _state.copyWith(
         accessToken: nextAccessToken,
         refreshToken: nextRefreshToken,
@@ -207,12 +267,45 @@ class SessionManager extends ChangeNotifier {
           'sessionId',
         ], fallback: _state.sessionId ?? ''),
         sessionExpiresInSeconds:
-            sessionJson['expiresInSeconds'] as int? ??
-            sessionJson['sessionExpiresInSeconds'] as int? ??
-            _state.sessionExpiresInSeconds,
+            expiresInSeconds ?? _state.sessionExpiresInSeconds,
+        accessTokenExpiresAt:
+            _resolveAccessTokenExpiresAt(
+              accessToken: nextAccessToken,
+              expiresInSeconds: expiresInSeconds,
+            ) ??
+            _state.accessTokenExpiresAt,
         refreshExpiresAt: _readString(sessionJson, <String>[
           'refreshExpiresAt',
         ], fallback: _state.refreshExpiresAt ?? ''),
+        authUserId: _readString(userJson, <String>[
+          'userId',
+        ], fallback: _state.authUserId ?? ''),
+        authId: _readString(userJson, <String>[
+          'authId',
+        ], fallback: _state.authId ?? ''),
+        isPhoneVerified:
+            _readBool(userJson['isPhoneVerified']) ?? _state.isPhoneVerified,
+        authCreatedAt: _readString(userJson, <String>[
+          'createdAt',
+        ], fallback: _state.authCreatedAt ?? ''),
+        authUpdatedAt: _readString(userJson, <String>[
+          'updatedAt',
+        ], fallback: _state.authUpdatedAt ?? ''),
+        authenticatedUsername: _readString(userJson, <String>[
+          'name',
+          'username',
+        ], fallback: _state.authenticatedUsername ?? ''),
+        authenticatedUserRole:
+            _userRoleFromName(_readString(userJson, <String>['roleName'])) ??
+            _state.authenticatedUserRole,
+        profileFullName: _readString(userJson, <String>[
+          'name',
+        ], fallback: _state.profileFullName ?? ''),
+        profilePhoneNumber: _readString(userJson, <String>[
+          'phoneNumber',
+        ], fallback: _state.profilePhoneNumber ?? ''),
+        hasPin: _readBool(userJson['hasPin']) ?? _state.hasPin,
+        hasPasskey: _readBool(userJson['hasPasskey']) ?? _state.hasPasskey,
       );
       await _persistState();
       notifyListeners();
@@ -279,6 +372,23 @@ class SessionManager extends ChangeNotifier {
     return json;
   }
 
+  Map<String, dynamic> _extractRefreshUserJson(Map<String, dynamic> json) {
+    final data = json['data'];
+    if (data is Map<String, dynamic>) {
+      final user = data['user'];
+      if (user is Map<String, dynamic>) {
+        return user;
+      }
+    }
+
+    final user = json['user'];
+    if (user is Map<String, dynamic>) {
+      return user;
+    }
+
+    return const <String, dynamic>{};
+  }
+
   String _readString(
     Map<String, dynamic> json,
     List<String> keys, {
@@ -291,5 +401,90 @@ class SessionManager extends ChangeNotifier {
       }
     }
     return fallback;
+  }
+
+  int? _readInt(dynamic value) {
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  bool? _readBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    final text = value?.toString().toLowerCase();
+    if (text == 'true') {
+      return true;
+    }
+    if (text == 'false') {
+      return false;
+    }
+    return null;
+  }
+
+  UserRole? _userRoleFromName(String name) {
+    if (name.trim().isEmpty) {
+      return null;
+    }
+    for (final role in UserRole.values) {
+      if (role.name == name.trim().toLowerCase()) {
+        return role;
+      }
+    }
+    return null;
+  }
+
+  DateTime? _accessTokenExpiresAt() {
+    final stored = DateTime.tryParse(_state.accessTokenExpiresAt ?? '');
+    if (stored != null) {
+      return stored.toUtc();
+    }
+    final fromJwt = _expiresAtFromJwt(_state.accessToken);
+    if (fromJwt != null) {
+      return fromJwt;
+    }
+    return null;
+  }
+
+  String? _resolveAccessTokenExpiresAt({
+    required String? accessToken,
+    required int? expiresInSeconds,
+  }) {
+    final fromJwt = _expiresAtFromJwt(accessToken);
+    if (fromJwt != null) {
+      return fromJwt.toIso8601String();
+    }
+    if (expiresInSeconds != null && expiresInSeconds > 0) {
+      return DateTime.now()
+          .toUtc()
+          .add(Duration(seconds: expiresInSeconds))
+          .toIso8601String();
+    }
+    return null;
+  }
+
+  DateTime? _expiresAtFromJwt(String? token) {
+    final parts = token?.split('.') ?? const <String>[];
+    if (parts.length < 2) {
+      return null;
+    }
+
+    try {
+      final normalizedPayload = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(normalizedPayload));
+      final payload = jsonDecode(decoded);
+      if (payload is! Map) {
+        return null;
+      }
+      final exp = _readInt(payload['exp']);
+      if (exp == null || exp <= 0) {
+        return null;
+      }
+      return DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);
+    } catch (_) {
+      return null;
+    }
   }
 }

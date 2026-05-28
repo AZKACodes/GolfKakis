@@ -5,7 +5,9 @@ import 'package:golf_kakis/features/booking/submission/slot/booking_submission_s
 import 'package:golf_kakis/features/foundation/root/root_screen.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/home/course/list/courses_list_page.dart';
+import 'package:golf_kakis/features/home/deals/deals_page.dart';
 import 'package:golf_kakis/features/home/overview/domain/home_overview_use_case_impl.dart';
+import 'package:golf_kakis/features/home/stayplay/stay_play_page.dart';
 
 import 'view/home_overview_view.dart';
 import 'viewmodel/home_view_contract.dart';
@@ -68,6 +70,16 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
         );
       case NavigateToBookingOverview():
         RootScreen.selectTab(1);
+      case NavigateToDeals():
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(MaterialPageRoute<void>(builder: (_) => const DealsPage()));
+      case NavigateToStayPlay():
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(MaterialPageRoute<void>(builder: (_) => const StayPlayPage()));
     }
   }
 

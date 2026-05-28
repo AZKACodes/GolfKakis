@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class CourseDetailsMapSection extends StatelessWidget {
   const CourseDetailsMapSection({
-    required this.courseName,
     required this.address,
     required this.latitude,
     required this.longitude,
@@ -10,7 +10,6 @@ class CourseDetailsMapSection extends StatelessWidget {
     super.key,
   });
 
-  final String courseName;
   final String address;
   final double? latitude;
   final double? longitude;
@@ -19,9 +18,6 @@ class CourseDetailsMapSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCoordinates = latitude != null && longitude != null;
-    final staticMapUrl = hasCoordinates
-        ? 'https://staticmap.openstreetmap.de/staticmap.php?center=$latitude,$longitude&zoom=14&size=1200x500&markers=$latitude,$longitude,red-pushpin'
-        : null;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -44,18 +40,13 @@ class CourseDetailsMapSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: staticMapUrl == null
-                  ? _MapFallback(courseName: courseName, address: address)
-                  : Image.network(
-                      staticMapUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _MapFallback(
-                          courseName: courseName,
-                          address: address,
-                        );
-                      },
-                    ),
+              child: hasCoordinates
+                  ? _LiveMapPreview(
+                      latitude: latitude!,
+                      longitude: longitude!,
+                      onTap: onDirectionsTap,
+                    )
+                  : _MapFallback(onTap: onDirectionsTap),
             ),
           ),
           const SizedBox(height: 12),
@@ -91,45 +82,73 @@ class CourseDetailsMapSection extends StatelessWidget {
 }
 
 class _MapFallback extends StatelessWidget {
-  const _MapFallback({required this.courseName, required this.address});
+  const _MapFallback({required this.onTap});
 
-  final String courseName;
-  final String address;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFEAF6F0), Color(0xFFDDEBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return InkWell(
+      onTap: onTap,
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: <Color>[Color(0xFFEAF6F0), Color(0xFFDDEBFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Icon(Icons.map_outlined, size: 40, color: Color(0xFF173B7A)),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.map_outlined, size: 28, color: Color(0xFF173B7A)),
-            const Spacer(),
-            Text(
-              courseName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0A1F1A),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              address,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
-            ),
-          ],
+    );
+  }
+}
+
+class _LiveMapPreview extends StatelessWidget {
+  const _LiveMapPreview({
+    required this.latitude,
+    required this.longitude,
+    required this.onTap,
+  });
+
+  final double latitude;
+  final double longitude;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final delta = 0.012;
+    final bbox =
+        '${longitude - delta},${latitude - delta},${longitude + delta},${latitude + delta}';
+    final uri = Uri.https(
+      'www.openstreetmap.org',
+      '/export/embed.html',
+      <String, String>{
+        'bbox': bbox,
+        'layer': 'mapnik',
+        'marker': '$latitude,$longitude',
+      },
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        InAppWebView(
+          initialUrlRequest: URLRequest(url: WebUri(uri.toString())),
+          initialSettings: InAppWebViewSettings(
+            transparentBackground: true,
+            supportZoom: false,
+            disableHorizontalScroll: true,
+            disableVerticalScroll: true,
+          ),
         ),
-      ),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(onTap: onTap),
+        ),
+      ],
     );
   }
 }

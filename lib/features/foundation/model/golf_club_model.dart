@@ -8,11 +8,14 @@ class GolfClubModel {
     this.latitude,
     this.longitude,
     this.isEnabled = false,
+    this.isBookable = false,
+    this.availabilityLabel = '',
     this.supportsNineHoles = false,
     this.supportedNines = const <String>[],
     this.buggyPolicy = '',
     this.paymentMethods = const <String>[],
     this.facilities = const <GolfClubFacilityModel>[],
+    this.coverPhotoUrl,
     this.updatedAt = '',
   });
 
@@ -24,11 +27,14 @@ class GolfClubModel {
   final double? latitude;
   final double? longitude;
   final bool isEnabled;
+  final bool isBookable;
+  final String availabilityLabel;
   final bool supportsNineHoles;
   final List<String> supportedNines;
   final String buggyPolicy;
   final List<String> paymentMethods;
   final List<GolfClubFacilityModel> facilities;
+  final String? coverPhotoUrl;
   final String updatedAt;
 
   factory GolfClubModel.fromJson(Map<String, dynamic> json) {
@@ -41,11 +47,14 @@ class GolfClubModel {
       latitude: _parseNullableDouble(json['latitude'] ?? json['lat']),
       longitude: _parseNullableDouble(json['longitude'] ?? json['lng']),
       isEnabled: _parseIsEnabled(json),
+      isBookable: _parseIsBookable(json),
+      availabilityLabel: json['availabilityLabel']?.toString() ?? '',
       supportsNineHoles: _parseSupportsNineHoles(json),
       supportedNines: _parseSupportedNines(json),
       buggyPolicy: json['buggyPolicy']?.toString() ?? '',
       paymentMethods: _parsePaymentMethods(json),
       facilities: _parseFacilities(json),
+      coverPhotoUrl: _parseCoverPhotoUrl(json),
       updatedAt: json['updatedAt']?.toString() ?? '',
     );
   }
@@ -60,11 +69,14 @@ class GolfClubModel {
       'latitude': latitude,
       'longitude': longitude,
       'isEnabled': isEnabled,
+      'isBookable': isBookable,
+      'availabilityLabel': availabilityLabel,
       'supportsNineHoles': supportsNineHoles,
       'supportedNines': supportedNines,
       'buggyPolicy': buggyPolicy,
       'paymentMethods': paymentMethods,
       'facilities': facilities.map((item) => item.toJson()).toList(),
+      'coverPhotoUrl': coverPhotoUrl,
       'updatedAt': updatedAt,
     };
   }
@@ -78,11 +90,14 @@ class GolfClubModel {
     double? latitude,
     double? longitude,
     bool? isEnabled,
+    bool? isBookable,
+    String? availabilityLabel,
     bool? supportsNineHoles,
     List<String>? supportedNines,
     String? buggyPolicy,
     List<String>? paymentMethods,
     List<GolfClubFacilityModel>? facilities,
+    String? coverPhotoUrl,
     String? updatedAt,
   }) {
     return GolfClubModel(
@@ -94,13 +109,28 @@ class GolfClubModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       isEnabled: isEnabled ?? this.isEnabled,
+      isBookable: isBookable ?? this.isBookable,
+      availabilityLabel: availabilityLabel ?? this.availabilityLabel,
       supportsNineHoles: supportsNineHoles ?? this.supportsNineHoles,
       supportedNines: supportedNines ?? this.supportedNines,
       buggyPolicy: buggyPolicy ?? this.buggyPolicy,
       paymentMethods: paymentMethods ?? this.paymentMethods,
       facilities: facilities ?? this.facilities,
+      coverPhotoUrl: coverPhotoUrl ?? this.coverPhotoUrl,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  static String? _parseCoverPhotoUrl(Map<String, dynamic> json) {
+    final value =
+        json['coverPhotoUrl'] ??
+        json['cover_photo_url'] ??
+        json['coverImageUrl'] ??
+        json['cover_image_url'] ??
+        json['imageUrl'] ??
+        json['image_url'];
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 
   static List<GolfClubFacilityModel> _parseFacilities(
@@ -129,7 +159,7 @@ class GolfClubModel {
       return value.toInt();
     }
 
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+    return int.tryParse(value?.toString() ?? '') ?? 18;
   }
 
   static List<String> _parseSupportedNines(Map<String, dynamic> json) {
@@ -179,6 +209,15 @@ class GolfClubModel {
     final slug = json['slug']?.toString().trim().toLowerCase() ?? '';
     final name = json['name']?.toString().trim().toLowerCase() ?? '';
     return slug == 'kinrara-golf-club' || name == 'kinrara golf club';
+  }
+
+  static bool _parseIsBookable(Map<String, dynamic> json) {
+    final dynamic value =
+        json['isBookable'] ?? json['is_bookable'] ?? json['bookable'];
+    if (value is bool) {
+      return value;
+    }
+    return value?.toString().toLowerCase() == 'true';
   }
 
   static double? _parseNullableDouble(dynamic value) {

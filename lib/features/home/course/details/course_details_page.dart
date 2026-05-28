@@ -76,30 +76,32 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
       builder: (context, _) {
         final club = _viewModel.viewState.detail.club;
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              club.name.trim().isNotEmpty ? club.name : 'Course Details',
-            ),
-            leading: IconButton(
-              onPressed: () => _viewModel.onUserIntent(const OnBackClick()),
-              icon: const Icon(Icons.arrow_back),
-            ),
-          ),
-          body: SafeArea(
-            child: CourseDetailsView(
-              state: _viewModel.viewState,
-              onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
-              onDirectionsTap: () => _openDirections(club),
-            ),
+          extendBody: true,
+          body: CourseDetailsView(
+            state: _viewModel.viewState,
+            onRefresh: () async => _viewModel.onUserIntent(const OnRefresh()),
+            onBackTap: () => _viewModel.onUserIntent(const OnBackClick()),
+            onDirectionsTap: () => _openDirections(club),
           ),
           bottomNavigationBar: CourseDetailsBottomBarSection(
             onBookNowTap: () => _viewModel.onUserIntent(const OnBookNowClick()),
-            onQuickBookTap: () =>
-                _viewModel.onUserIntent(const OnQuickBookClick()),
+            onCallTap: _showContactNumberUnavailable,
+            onDirectionsTap: () => _openDirections(club),
           ),
         );
       },
     );
+  }
+
+  void _showContactNumberUnavailable() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Golf club contact number will be available soon.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   Future<void> _openDirections(GolfClubModel club) async {

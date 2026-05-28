@@ -258,7 +258,7 @@ class ProfileApiService {
     required String phoneNumber,
     required String pin,
   }) async {
-    final response = await _apiClient.postJson(
+    final response = await _apiClient.postJsonWithoutSharedHeaders(
       '/auth/login/pin',
       body: <String, dynamic>{'phoneNumber': phoneNumber, 'pin': pin},
     );

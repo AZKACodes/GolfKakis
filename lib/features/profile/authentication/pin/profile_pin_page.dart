@@ -81,14 +81,17 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
 
         SessionScope.of(context).login(
           username: displayName,
-          role: UserRole.user,
+          role: _roleFromName(response.user.roleName),
           accessToken: accessToken,
           refreshToken: refreshToken,
           sessionId: response.session.sessionId,
           sessionExpiresInSeconds: response.session.expiresInSeconds,
           refreshExpiresAt: response.session.refreshExpiresAt,
           authUserId: response.user.userId,
+          authId: response.user.authId,
           isPhoneVerified: response.user.isPhoneVerified,
+          authCreatedAt: response.user.createdAt,
+          authUpdatedAt: response.user.updatedAt,
           profileFullName: displayName,
           profilePhoneNumber: phoneNumber,
           hasPin: response.user.hasPin,
@@ -145,4 +148,13 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
       },
     );
   }
+}
+
+UserRole _roleFromName(String roleName) {
+  for (final role in UserRole.values) {
+    if (role.name == roleName.trim().toLowerCase()) {
+      return role;
+    }
+  }
+  return UserRole.user;
 }

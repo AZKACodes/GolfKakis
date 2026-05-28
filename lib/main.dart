@@ -19,13 +19,14 @@ Future<void> main() async {
     final accessToken = sessionManager.state.accessToken?.trim();
 
     return <String, String>{
-      if (deviceId.isNotEmpty) 'X-Device-ID': deviceId,
+      if (deviceId.isNotEmpty) 'x-device-id': deviceId,
       if (clientPlatform.isNotEmpty) 'x-client-platform': clientPlatform,
       if (accessToken != null && accessToken.isNotEmpty)
         'Authorization': 'Bearer $accessToken',
     };
   });
   ApiClient.configureSessionRefresh(sessionManager.refreshSession);
+  ApiClient.configureSessionRefreshCheck(sessionManager.shouldRefreshSession);
 
   runApp(
     MyApp(

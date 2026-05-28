@@ -5,11 +5,13 @@ class HomeAnnouncementItemCard extends StatelessWidget {
   const HomeAnnouncementItemCard({
     required this.item,
     required this.index,
+    this.onTap,
     super.key,
   });
 
   final HomeAnnouncementViewData item;
   final int index;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -17,142 +19,136 @@ class HomeAnnouncementItemCard extends StatelessWidget {
     final imageUrl = item.imageUrl?.trim();
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (hasImage)
-              Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _GradientAnnouncementBackground(index: index);
-                },
-              )
-            else
-              _GradientAnnouncementBackground(index: index),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: hasImage
-                      ? <Color>[
-                          Colors.black.withValues(alpha: 0.18),
-                          Colors.black.withValues(alpha: 0.62),
-                        ]
-                      : <Color>[
-                          Colors.white.withValues(alpha: 0.0),
-                          Colors.black.withValues(alpha: 0.10),
-                        ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 18,
+                offset: Offset(0, 10),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasImage)
+                  Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _GradientAnnouncementBackground(index: index);
+                    },
+                  )
+                else
+                  _GradientAnnouncementBackground(index: index),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: hasImage
+                          ? <Color>[
+                              Colors.black.withValues(alpha: 0.16),
+                              Colors.black.withValues(alpha: 0.58),
+                            ]
+                          : <Color>[
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.black.withValues(alpha: 0.18),
+                            ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: 18,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 6,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
+                          color: Colors.white.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
                         ),
                         child: Text(
                           item.announcementType,
-                          style: theme.textTheme.labelMedium?.copyWith(
+                          style: theme.textTheme.labelSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      Icon(
-                        _announcementIcons[index % _announcementIcons.length],
-                        color: Colors.white70,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    item.title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (item.subtitle.trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      item.subtitle,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        height: 1.35,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.campaign_outlined,
+                      const SizedBox(height: 10),
+                      Text(
+                        item.title,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
-                          size: 18,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 24,
+                          height: 1.05,
                         ),
-                        const SizedBox(width: 8),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (item.subtitle.trim().isNotEmpty) ...[
+                        const SizedBox(height: 6),
                         Text(
-                          'View announcement',
+                          item.subtitle,
+                          textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            height: 1.3,
+                            fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 14,
+                  top: 14,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: Icon(
+                      _announcementIcons[index % _announcementIcons.length],
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -179,9 +175,9 @@ class _GradientAnnouncementBackground extends StatelessWidget {
 }
 
 const List<List<Color>> _announcementGradients = <List<Color>>[
-  <Color>[Color(0xFF173B7A), Color(0xFF2F7BFF)],
-  <Color>[Color(0xFF14532D), Color(0xFF2F855A)],
-  <Color>[Color(0xFF7C2D12), Color(0xFFEA580C)],
+  <Color>[Color(0xFF0A1F1A), Color(0xFF2FBF71)],
+  <Color>[Color(0xFF12332A), Color(0xFFC6A969)],
+  <Color>[Color(0xFF1E5B4A), Color(0xFF35C7A5)],
 ];
 
 const List<IconData> _announcementIcons = <IconData>[

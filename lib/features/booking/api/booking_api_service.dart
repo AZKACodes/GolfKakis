@@ -19,7 +19,10 @@ class BookingApiService {
   }
 
   Future<dynamic> onFetchGolfClubList() {
-    return onFetchGolfClubs();
+    return _apiClient.getJsonWithoutSharedHeaders(
+      '/booking/golf-clubs',
+      headers: const <String, String>{'Content-Type': 'application/json'},
+    );
   }
 
   Future<dynamic> onFetchGolfClubDetail({required String slug}) {
@@ -76,9 +79,14 @@ class BookingApiService {
     required int playerCount,
     String? selectedNine,
   }) {
-    return _apiClient.postJson(
+    return _apiClient.postJsonWithoutSharedHeaders(
       '/booking/available-slots',
-      body: <String, dynamic>{'golfClubSlug': clubSlug, 'bookingDate': date},
+      body: <String, dynamic>{
+        'golfClubSlug': clubSlug,
+        'bookingDate': date,
+        'playType': playType,
+      },
+      headers: const <String, String>{'Content-Type': 'application/json'},
     );
   }
 
@@ -90,9 +98,10 @@ class BookingApiService {
     required String playType,
     String? selectedNine,
   }) {
-    return _apiClient.postJson(
+    return _apiClient.postJsonWithoutSharedHeaders(
       '/booking/slots/$slotId/details',
       body: <String, dynamic>{'slotId': slotId},
+      headers: const <String, String>{'Content-Type': 'application/json'},
     );
   }
 
@@ -103,11 +112,25 @@ class BookingApiService {
       if (request.accessToken != null && request.accessToken!.isNotEmpty)
         'Authorization': 'Bearer ${request.accessToken!}',
     };
-    return _apiClient.postJson(
-      '/booking/submit',
-      body: request.toJson(),
-      headers: additionalHeaders.isEmpty ? null : additionalHeaders,
-    );
+    final body = request.toJson();
+
+    debugPrint('onSubmitBooking headers: ${additionalHeaders.keys.toList()}');
+    debugPrint('onSubmitBooking body: $body');
+
+    return _apiClient
+        .postJson(
+          '/booking/submit',
+          body: body,
+          headers: additionalHeaders.isEmpty ? null : additionalHeaders,
+        )
+        .then((response) {
+          debugPrint('onSubmitBooking response: $response');
+          return response;
+        })
+        .catchError((error) {
+          debugPrint('onSubmitBooking error: $error');
+          throw error;
+        });
   }
 
   Future<dynamic> onCreateBookingHold({
@@ -116,7 +139,7 @@ class BookingApiService {
     final additionalHeaders = <String, String>{
       'Authorization': 'Bearer ${request.accessToken}',
       if (request.idempotencyKey != null && request.idempotencyKey!.isNotEmpty)
-        'Idempotency-Key': request.idempotencyKey!,
+        'idempotency-key': request.idempotencyKey!,
     };
     final resolvedHeaders = _apiClient.resolveHeaders(additionalHeaders);
     final body = request.toJson();
@@ -125,7 +148,7 @@ class BookingApiService {
     debugPrint('onCreateBookingHold body: $body');
 
     return _apiClient
-        .postJson('/booking/holds', body: body, headers: additionalHeaders)
+        .postJson('/booking/hold', body: body, headers: additionalHeaders)
         .then((response) {
           debugPrint('onCreateBookingHold response: $response');
           return response;
@@ -134,6 +157,27 @@ class BookingApiService {
           debugPrint('onCreateBookingHold error: $error');
           throw error;
         });
+  }
+
+  Future<dynamic> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  }) {
+    return _apiClient.postJson(
+      '/booking/$bookingRef/extend-hold',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
+  }
+
+  Future<dynamic> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  }) {
+    return _apiClient.postJson(
+      '/booking/preview',
+      body: request,
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
   }
 
   Future<dynamic> onFetchBookingDetails({

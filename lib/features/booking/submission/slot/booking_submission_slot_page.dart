@@ -26,6 +26,7 @@ class BookingSubmissionSlotPage extends StatefulWidget {
 class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
   late final BookingSubmissionSlotViewModel _viewModel;
   StreamSubscription<BookingSubmissionSlotNavEffect>? _navEffectSubscription;
+  bool _isSlotDetailsSheetOpen = false;
 
   @override
   void initState() {
@@ -54,15 +55,29 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
       case RequestBookingHoldPrefill():
         await _handleBookingHoldPrefillRequest(effect);
       case ShowSlotDetailsBottomSheet():
-        await SlotDetailsBottomSheet.show(
-          context: context,
-          details: effect.details,
-          isSubmittingHold: _viewModel.getCurrentAsLoaded().isSubmittingHold,
-          onConfirmSlot: (details) {
-            _viewModel.onUserIntent(OnConfirmSlotClick(details));
-          },
-        );
+        _isSlotDetailsSheetOpen = true;
+        try {
+          await SlotDetailsBottomSheet.show(
+            context: context,
+            viewModel: _viewModel,
+            onConfirmSlot: (details) {
+              _viewModel.onUserIntent(OnConfirmSlotClick(details));
+            },
+            onDismissed: () {
+              _viewModel.onUserIntent(const OnSlotDetailsDismissed());
+            },
+          );
+        } finally {
+          _isSlotDetailsSheetOpen = false;
+        }
       case NavigateToBookingSubmissionDetail():
+        if (_isSlotDetailsSheetOpen) {
+          _isSlotDetailsSheetOpen = false;
+          await Navigator.of(context, rootNavigator: true).maybePop();
+        }
+        if (!mounted) {
+          return;
+        }
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionDetailPage(

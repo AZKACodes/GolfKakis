@@ -47,6 +47,7 @@ class BookingSubmissionSlotView extends StatelessWidget {
     final selectedClub = state.selectedGolfClub;
     final hasSelectedClub = selectedClub != null;
     final hasAvailableGolfClubs = state.golfClubList.isNotEmpty;
+    final hasSelectableGolfClubs = state.hasSelectableGolfClubs;
     final canActivateCalendar = state.canActivateCalendar;
 
     return RefreshIndicator(
@@ -125,7 +126,7 @@ class BookingSubmissionSlotView extends StatelessWidget {
                     loadingPlaceholder: 'Loading golf clubs...',
                     hasOptions: hasAvailableGolfClubs,
                     isLoading: state.isLoading && state.golfClubList.isEmpty,
-                    enabled: hasAvailableGolfClubs,
+                    enabled: hasAvailableGolfClubs && hasSelectableGolfClubs,
                     icon: Icons.golf_course_rounded,
                     onTap: () {
                       GolfClubSelectionBottomSheet.show(
@@ -211,7 +212,7 @@ class BookingSubmissionSlotView extends StatelessWidget {
                             ? 'Please select a golf club'
                             : 'No Golf Clubs Available',
                         message: hasAvailableGolfClubs
-                            ? 'Select a golf club to continue with the calendar and available time slots.'
+                            ? 'Only Kinrara Golf Club is available for booking right now.'
                             : 'There are no golf clubs available right now.',
                         icon: Icons.golf_course_rounded,
                       ),

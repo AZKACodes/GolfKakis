@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_view.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
@@ -11,12 +10,21 @@ class BookingSubmissionSuccessPage extends StatefulWidget {
   const BookingSubmissionSuccessPage({
     required this.bookingId,
     required this.bookingRef,
+    required this.bookingStatus,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    required this.paymentMethod,
+    required this.greenFeeTotal,
+    required this.buggyEstimatedTotal,
+    required this.caddieTotal,
+    required this.insuranceTotal,
+    required this.sstTotal,
+    required this.discountAmount,
+    required this.finalAmount,
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
@@ -27,12 +35,21 @@ class BookingSubmissionSuccessPage extends StatefulWidget {
 
   final String bookingId;
   final String bookingRef;
+  final String bookingStatus;
   final String bookingDate;
   final String golfClubName;
   final String golfClubSlug;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final String paymentMethod;
+  final double greenFeeTotal;
+  final double buggyEstimatedTotal;
+  final double caddieTotal;
+  final double insuranceTotal;
+  final double sstTotal;
+  final double discountAmount;
+  final double finalAmount;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;
@@ -53,20 +70,27 @@ class _BookingSubmissionSuccessPageState
   void initState() {
     super.initState();
     UserUtil.clearBookingUUID();
-    _viewModel = BookingSubmissionSuccessViewModel(
-      BookingSubmissionSlotUseCaseImpl.create(),
-    );
+    _viewModel = BookingSubmissionSuccessViewModel();
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _viewModel.performAction(
       OnInit(
         bookingId: widget.bookingId,
         bookingRef: widget.bookingRef,
+        bookingStatus: widget.bookingStatus,
         bookingDate: widget.bookingDate,
         golfClubName: widget.golfClubName,
         golfClubSlug: widget.golfClubSlug,
         teeTimeSlot: widget.teeTimeSlot,
         pricePerPerson: widget.pricePerPerson,
         currency: widget.currency,
+        paymentMethod: widget.paymentMethod,
+        greenFeeTotal: widget.greenFeeTotal,
+        buggyEstimatedTotal: widget.buggyEstimatedTotal,
+        caddieTotal: widget.caddieTotal,
+        insuranceTotal: widget.insuranceTotal,
+        sstTotal: widget.sstTotal,
+        discountAmount: widget.discountAmount,
+        finalAmount: widget.finalAmount,
         hostName: widget.hostName,
         hostPhoneNumber: widget.hostPhoneNumber,
         playerCount: widget.playerCount,

@@ -248,6 +248,49 @@ class _PaymentSummaryTab extends StatelessWidget {
           icon: Icons.point_of_sale_outlined,
         ),
         const SizedBox(height: 12),
+        if ((booking.greenFeeTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Green Fee',
+            value: _formatPrice(
+              booking.greenFeeTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.buggyEstimatedTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Buggy',
+            value: _formatPrice(
+              booking.buggyEstimatedTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.caddieTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Caddie',
+            value: _formatPrice(
+              booking.caddieTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.insuranceTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Insurance',
+            value: _formatPrice(
+              booking.insuranceTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.sstTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'SST',
+            value: _formatPrice(booking.sstTotal!, booking.currency ?? 'MYR'),
+          ),
+        if ((booking.discountAmount ?? 0) > 0)
+          _PriceRow(
+            label: 'Discount',
+            value:
+                '- ${_formatPrice(booking.discountAmount!, booking.currency ?? 'MYR')}',
+          ),
         _PriceRow(label: 'Grand Total', value: booking.feeLabel),
       ],
     );
@@ -280,6 +323,10 @@ String _formatPaymentMethod(String? value) {
     default:
       return _formatEnumLabel(value);
   }
+}
+
+String _formatPrice(double amount, String currency) {
+  return '$currency ${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
 }
 
 String _formatTimelineDateTime(String? value) {

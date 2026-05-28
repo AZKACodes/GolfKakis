@@ -73,7 +73,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           avatarImagePath: loadedState.avatarImagePath,
         );
       case ProfileDetailDeactivated():
-        SessionScope.of(context).logout();
+        unawaited(SessionScope.of(context).logout());
         Navigator.of(context).maybePop();
     }
   }

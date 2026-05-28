@@ -105,12 +105,16 @@ class BookingOverviewRepositoryImpl implements BookingOverviewRepository {
     );
     final total = _readNum(data, <String>[
       'grandTotal',
+      'finalAmount',
       'total',
       'amount',
       'fee',
       'pricePerPerson',
       'price',
     ]);
+    final pricing = data['pricing'] is Map<String, dynamic>
+        ? data['pricing'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     final currency = _readString(data, <String>[
       'currency',
       'currencyCode',
@@ -226,6 +230,30 @@ class BookingOverviewRepositoryImpl implements BookingOverviewRepository {
         'payment_method',
       ]),
       currency: currency,
+      greenFeeTotal: _readNum(pricing, <String>[
+        'greenFeeTotal',
+        'green_fee_total',
+      ])?.toDouble(),
+      buggyEstimatedTotal: _readNum(pricing, <String>[
+        'buggyEstimatedTotal',
+        'buggy_estimated_total',
+      ])?.toDouble(),
+      caddieTotal: _readNum(pricing, <String>[
+        'caddieTotal',
+        'caddie_total',
+      ])?.toDouble(),
+      insuranceTotal: _readNum(pricing, <String>[
+        'insuranceTotal',
+        'insurance_total',
+      ])?.toDouble(),
+      sstTotal: _readNum(pricing, <String>[
+        'sstTotal',
+        'sst_total',
+      ])?.toDouble(),
+      discountAmount: _readNum(pricing, <String>[
+        'discountAmount',
+        'discount_amount',
+      ])?.toDouble(),
       grandTotal: total?.toDouble(),
       playerDetails: playerDetails.isEmpty
           ? <BookingSubmissionPlayerModel>[

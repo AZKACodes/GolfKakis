@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
 import 'package:golf_kakis/features/foundation/model/booking_slot_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/widgets/icon_info_pill.dart';
@@ -40,12 +39,16 @@ class BookingSlotContainer extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: spacing),
             itemBuilder: (context, index) {
               final slot = slots[index];
-              final teeTimeSlot = TeeTimeSlot.fromLabel(slot.time);
 
               final bool isUnavailable = unavailableIndices.contains(index);
               final bool isSelected = selectedIndex == index;
-              final bool isExtendedPlayerSlot =
-                  teeTimeSlot?.isExtendedPlayerSlot ?? false;
+              final bool isExtendedPlayerSlot = slot.maxPlayers > 4;
+              final playerRange = slot.minPlayers == slot.maxPlayers
+                  ? '${slot.maxPlayers}'
+                  : '${slot.minPlayers}-${slot.maxPlayers}';
+              final priceLabel = slot.pricingLabel.trim().isNotEmpty
+                  ? slot.pricingLabel
+                  : CurrencyUtil.formatPrice(slot.price, slot.currency);
 
               final Color fillColor = isUnavailable
                   ? Colors.grey.shade300
@@ -157,10 +160,7 @@ class BookingSlotContainer extends StatelessWidget {
                                 const SizedBox(height: 4),
 
                                 Text(
-                                  CurrencyUtil.formatPrice(
-                                    slot.price,
-                                    slot.currency,
-                                  ),
+                                  priceLabel,
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
                                         color: textColor,
@@ -178,7 +178,7 @@ class BookingSlotContainer extends StatelessWidget {
                             child: IconInfoPill(
                               icon: Icons.group_outlined,
                               label: 'Players',
-                              value: teeTimeSlot?.playerRange ?? '1-4',
+                              value: playerRange,
                               backgroundColor: isSelected
                                   ? Colors.white.withValues(alpha: 0.12)
                                   : const Color(0xFFF7F7F4),

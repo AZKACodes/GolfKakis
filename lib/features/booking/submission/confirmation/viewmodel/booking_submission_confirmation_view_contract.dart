@@ -38,9 +38,26 @@ class BookingSubmissionConfirmationDataLoaded
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
+    this.accessToken = emptyString,
+    this.voucherCode = emptyString,
+    this.voucherName = emptyString,
+    this.voucherDiscountType = emptyString,
+    this.voucherDiscountValue = 0,
+    this.voucherAutoApplied = false,
+    this.greenFeeTotal = 0,
+    this.buggyEstimatedTotal = 0,
+    this.caddieTotal = 0,
+    this.insuranceTotal = 0,
+    this.sstTotal = 0,
+    this.subtotalAmount = 0,
+    this.discountAmount = 0,
+    this.finalAmount = 0,
+    this.hasPreviewPricing = false,
+    this.isPreviewLoading = false,
     this.remainingHoldSeconds = 0,
     this.isHoldExpired = false,
     this.isSubmitting = false,
+    this.isExtendingHold = false,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : holdExpiresAt = holdExpiresAt ?? DateTime.now(),
        selectedDate = DateUtil.dateOnly(selectedDate ?? DateTime.now()),
@@ -67,9 +84,26 @@ class BookingSubmissionConfirmationDataLoaded
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final String accessToken;
+  final String voucherCode;
+  final String voucherName;
+  final String voucherDiscountType;
+  final double voucherDiscountValue;
+  final bool voucherAutoApplied;
+  final double greenFeeTotal;
+  final double buggyEstimatedTotal;
+  final double caddieTotal;
+  final double insuranceTotal;
+  final double sstTotal;
+  final double subtotalAmount;
+  final double discountAmount;
+  final double finalAmount;
+  final bool hasPreviewPricing;
+  final bool isPreviewLoading;
   final int remainingHoldSeconds;
   final bool isHoldExpired;
   final bool isSubmitting;
+  final bool isExtendingHold;
   final SnackbarMessageModel errorSnackbarMessageModel;
 
   String get errorMessage => errorSnackbarMessageModel.message;
@@ -77,10 +111,19 @@ class BookingSubmissionConfirmationDataLoaded
   String get pricePerPersonLabel =>
       CurrencyUtil.formatPrice(pricePerPerson, currency);
 
-  String get totalCostLabel =>
-      CurrencyUtil.formatPrice(pricePerPerson * playerCount, currency);
+  String get totalCostLabel => CurrencyUtil.formatPrice(totalCost, currency);
+
+  String get discountAmountLabel =>
+      CurrencyUtil.formatPrice(discountAmount, currency);
 
   String get paymentMethodLabel => 'Pay At Counter';
+
+  bool get hasVoucher => voucherCode.trim().isNotEmpty;
+
+  bool get isPreviewPending => isPreviewLoading || !hasPreviewPricing;
+
+  double get totalCost =>
+      hasPreviewPricing ? finalAmount : pricePerPerson * playerCount;
 
   String get holdCountdownLabel {
     final safeSeconds = remainingHoldSeconds < 0 ? 0 : remainingHoldSeconds;
@@ -107,9 +150,27 @@ class BookingSubmissionConfirmationDataLoaded
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
+    String? accessToken,
+    String? voucherCode,
+    bool clearVoucher = false,
+    String? voucherName,
+    String? voucherDiscountType,
+    double? voucherDiscountValue,
+    bool? voucherAutoApplied,
+    double? greenFeeTotal,
+    double? buggyEstimatedTotal,
+    double? caddieTotal,
+    double? insuranceTotal,
+    double? sstTotal,
+    double? subtotalAmount,
+    double? discountAmount,
+    double? finalAmount,
+    bool? hasPreviewPricing,
+    bool? isPreviewLoading,
     int? remainingHoldSeconds,
     bool? isHoldExpired,
     bool? isSubmitting,
+    bool? isExtendingHold,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearErrorMessage = false,
   }) {
@@ -131,9 +192,38 @@ class BookingSubmissionConfirmationDataLoaded
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
+      accessToken: accessToken ?? this.accessToken,
+      voucherCode: clearVoucher
+          ? emptyString
+          : (voucherCode ?? this.voucherCode),
+      voucherName: clearVoucher
+          ? emptyString
+          : (voucherName ?? this.voucherName),
+      voucherDiscountType: clearVoucher
+          ? emptyString
+          : (voucherDiscountType ?? this.voucherDiscountType),
+      voucherDiscountValue: clearVoucher
+          ? 0
+          : (voucherDiscountValue ?? this.voucherDiscountValue),
+      voucherAutoApplied: clearVoucher
+          ? false
+          : (voucherAutoApplied ?? this.voucherAutoApplied),
+      greenFeeTotal: greenFeeTotal ?? this.greenFeeTotal,
+      buggyEstimatedTotal: buggyEstimatedTotal ?? this.buggyEstimatedTotal,
+      caddieTotal: caddieTotal ?? this.caddieTotal,
+      insuranceTotal: insuranceTotal ?? this.insuranceTotal,
+      sstTotal: sstTotal ?? this.sstTotal,
+      subtotalAmount: subtotalAmount ?? this.subtotalAmount,
+      discountAmount: clearVoucher
+          ? 0
+          : (discountAmount ?? this.discountAmount),
+      finalAmount: finalAmount ?? this.finalAmount,
+      hasPreviewPricing: hasPreviewPricing ?? this.hasPreviewPricing,
+      isPreviewLoading: isPreviewLoading ?? this.isPreviewLoading,
       remainingHoldSeconds: remainingHoldSeconds ?? this.remainingHoldSeconds,
       isHoldExpired: isHoldExpired ?? this.isHoldExpired,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isExtendingHold: isExtendingHold ?? this.isExtendingHold,
       errorSnackbarMessageModel: clearErrorMessage
           ? SnackbarMessageModel.emptyValue
           : (errorSnackbarMessageModel ?? this.errorSnackbarMessageModel),
@@ -164,6 +254,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
     required this.caddieCount,
     required this.golfCartCount,
     required this.playerDetails,
+    this.accessToken = emptyString,
   });
 
   final String bookingRef;
@@ -183,6 +274,7 @@ class OnInit extends BookingSubmissionConfirmationUserIntent {
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final String accessToken;
 }
 
 class OnBackClick extends BookingSubmissionConfirmationUserIntent {
@@ -191,6 +283,28 @@ class OnBackClick extends BookingSubmissionConfirmationUserIntent {
 
 class OnConfirmClick extends BookingSubmissionConfirmationUserIntent {
   const OnConfirmClick();
+}
+
+class OnExtendBookingHoldClick extends BookingSubmissionConfirmationUserIntent {
+  const OnExtendBookingHoldClick({required this.accessToken});
+
+  final String accessToken;
+}
+
+class OnAccessTokenAvailable extends BookingSubmissionConfirmationUserIntent {
+  const OnAccessTokenAvailable(this.value);
+
+  final String value;
+}
+
+class OnVoucherCodeApplied extends BookingSubmissionConfirmationUserIntent {
+  const OnVoucherCodeApplied(this.value);
+
+  final String value;
+}
+
+class OnVoucherRemoved extends BookingSubmissionConfirmationUserIntent {
+  const OnVoucherRemoved();
 }
 
 sealed class BookingSubmissionConfirmationNavEffect extends NavEffect {
@@ -210,17 +324,37 @@ class ShowBookingSessionExpired extends BookingSubmissionConfirmationNavEffect {
   const ShowBookingSessionExpired();
 }
 
+class DismissBookingSessionExpired
+    extends BookingSubmissionConfirmationNavEffect {
+  const DismissBookingSessionExpired();
+}
+
+class ShowErrorMessage extends BookingSubmissionConfirmationNavEffect {
+  const ShowErrorMessage(this.message);
+
+  final String message;
+}
+
 class NavigateToBookingSubmissionSuccess
     extends BookingSubmissionConfirmationNavEffect {
   const NavigateToBookingSubmissionSuccess({
     required this.bookingId,
     required this.bookingRef,
+    required this.bookingStatus,
     required this.bookingDate,
     required this.golfClubName,
     required this.golfClubSlug,
     required this.teeTimeSlot,
     required this.pricePerPerson,
     required this.currency,
+    required this.paymentMethod,
+    required this.greenFeeTotal,
+    required this.buggyEstimatedTotal,
+    required this.caddieTotal,
+    required this.insuranceTotal,
+    required this.sstTotal,
+    required this.discountAmount,
+    required this.finalAmount,
     required this.hostName,
     required this.hostPhoneNumber,
     required this.playerCount,
@@ -231,11 +365,20 @@ class NavigateToBookingSubmissionSuccess
   final String golfClubName;
   final String bookingId;
   final String bookingRef;
+  final String bookingStatus;
   final String bookingDate;
   final String golfClubSlug;
   final String teeTimeSlot;
   final double pricePerPerson;
   final String currency;
+  final String paymentMethod;
+  final double greenFeeTotal;
+  final double buggyEstimatedTotal;
+  final double caddieTotal;
+  final double insuranceTotal;
+  final double sstTotal;
+  final double discountAmount;
+  final double finalAmount;
   final String hostName;
   final String hostPhoneNumber;
   final int playerCount;

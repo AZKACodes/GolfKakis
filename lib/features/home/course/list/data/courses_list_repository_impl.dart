@@ -54,9 +54,7 @@ class CoursesListRepositoryImpl implements CoursesListRepository {
       return value;
     }
     if (value is Map) {
-      return value.map(
-        (key, item) => MapEntry(key.toString(), item),
-      );
+      return value.map((key, item) => MapEntry(key.toString(), item));
     }
     return null;
   }
@@ -69,8 +67,8 @@ const List<GolfClubModel> _fallbackCourses = <GolfClubModel>[
     name: 'Kinrara Golf Club',
     address: 'Puchong, Selangor',
     noOfHoles: 18,
-    latitude: 3.0446,
-    longitude: 101.6426,
+    latitude: 3.04703,
+    longitude: 101.64744,
     isEnabled: true,
   ),
 ];

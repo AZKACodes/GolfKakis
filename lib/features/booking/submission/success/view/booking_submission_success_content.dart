@@ -70,9 +70,9 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
                           color: const Color(0xFFE8F5EC),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          'Confirmed',
-                          style: TextStyle(
+                        child: Text(
+                          _bookingStatusLabel(state.bookingStatus),
+                          style: const TextStyle(
                             color: Color(0xFF0D7A3A),
                             fontWeight: FontWeight.w700,
                           ),
@@ -127,12 +127,51 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
                         value: state.paymentMethodLabel,
                         icon: Icons.receipt_long_outlined,
                       ),
-                      const SizedBox(height: 12),
-                      _HighlightedInfoCard(
-                        label: 'Price Per Pax',
-                        value: state.pricePerPersonLabel,
-                        icon: Icons.person_outline,
-                      ),
+                      if (state.greenFeeTotal > 0) ...[
+                        const SizedBox(height: 12),
+                        _PriceRow(
+                          label: 'Green Fee',
+                          value: _formatPrice(
+                            state.greenFeeTotal,
+                            state.currency,
+                          ),
+                        ),
+                      ],
+                      if (state.buggyEstimatedTotal > 0)
+                        _PriceRow(
+                          label: 'Buggy',
+                          value: _formatPrice(
+                            state.buggyEstimatedTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.caddieTotal > 0)
+                        _PriceRow(
+                          label: 'Caddie',
+                          value: _formatPrice(
+                            state.caddieTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.insuranceTotal > 0)
+                        _PriceRow(
+                          label: 'Insurance',
+                          value: _formatPrice(
+                            state.insuranceTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.sstTotal > 0)
+                        _PriceRow(
+                          label: 'SST',
+                          value: _formatPrice(state.sstTotal, state.currency),
+                        ),
+                      if (state.discountAmount > 0)
+                        _PriceRow(
+                          label: 'Discount',
+                          value: '- ${state.discountAmountLabel}',
+                          valueColor: const Color(0xFF0D7A3A),
+                        ),
                       const SizedBox(height: 12),
                       _HighlightedInfoCard(
                         label: 'Total',
@@ -149,6 +188,10 @@ class BookingSubmissionSuccessContent extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatPrice(double amount, String currency) {
+  return '$currency ${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
 }
 
 String _formatBookingDate(String rawDate) {
@@ -177,6 +220,14 @@ String _formatBookingDate(String rawDate) {
 
 String _holeCountFromPlayType(String playType) {
   return playType == '18_holes' ? '18' : '9';
+}
+
+String _bookingStatusLabel(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) {
+    return 'Confirmed';
+  }
+  return normalized[0].toUpperCase() + normalized.substring(1).toLowerCase();
 }
 
 class _DetailCard extends StatelessWidget {
@@ -339,6 +390,43 @@ class _RoundDetailsSummary extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(child: _SummaryText(item: items[3])),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({required this.label, required this.value, this.valueColor});
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: valueColor ?? Colors.black87,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),

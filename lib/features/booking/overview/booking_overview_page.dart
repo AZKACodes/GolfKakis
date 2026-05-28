@@ -93,34 +93,23 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
 
   @override
   Widget build(BuildContext context) {
-    final hasBookings =
-        _viewModel.viewState.upcomingBookings.isNotEmpty ||
-        _viewModel.viewState.pastBookings.isNotEmpty;
-
     return Scaffold(
-      appBar: widget.showAppBar || hasBookings
-          ? AppBar(
-              title: const Text('My Bookings'),
-              actions: hasBookings
-                  ? [
-                      IconButton(
-                        onPressed: _openNewBooking,
-                        icon: const Icon(Icons.add),
-                        tooltip: 'Start A New Booking',
-                      ),
-                    ]
-                  : null,
-            )
+      appBar: widget.showAppBar
+          ? AppBar(title: const Text('My Bookings'))
           : null,
       body: SafeArea(
-        top: !(widget.showAppBar || hasBookings),
+        top: !widget.showAppBar,
         child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) => BookingOverviewView(
             controller: _tabController,
             state: _viewModel.viewState,
             onRefresh: _viewModel.onRefresh,
+            onRefreshCalendar: _viewModel.onRefreshCalendar,
             onStartBookingPressed: _openNewBooking,
+            onViewModeChanged: (viewMode) => _viewModel.onUserIntent(
+              OnBookingOverviewViewModeChanged(viewMode),
+            ),
             onViewBookingDetailClick: (booking) =>
                 _viewModel.onUserIntent(OnViewBookingDetailClick(booking)),
           ),

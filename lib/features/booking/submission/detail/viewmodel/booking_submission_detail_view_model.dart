@@ -1,6 +1,10 @@
 import 'dart:async';
 
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
+import 'package:golf_kakis/features/foundation/util/date_util.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
@@ -14,8 +18,12 @@ class BookingSubmissionDetailViewModel
           BookingSubmissionDetailNavEffect
         >
     implements BookingSubmissionDetailViewContract {
-  BookingSubmissionDetailViewModel();
+  BookingSubmissionDetailViewModel(this._useCase);
 
+  final BookingSubmissionSlotUseCase _useCase;
+  StreamSubscription<DataStatusModel<BookingSlotDetailsModel>>?
+  _slotDetailsSubscription;
+  StreamSubscription<DataStatusModel<dynamic>>? _extendHoldSubscription;
   Timer? _holdCountdownTimer;
   bool _hasShownExpiryDialog = false;
 
@@ -78,6 +86,7 @@ class BookingSubmissionDetailViewModel
         });
         _hasShownExpiryDialog = false;
         _startHoldCountdown();
+        await _fetchSlotDetails();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnHostNameChanged():
@@ -115,6 +124,7 @@ class BookingSubmissionDetailViewModel
             ),
           );
         });
+        await _fetchSlotDetails();
       case OnPlayerNameChanged():
         emitViewState((state) {
           return _deriveState(
@@ -196,6 +206,8 @@ class BookingSubmissionDetailViewModel
             playerDetails: current.playerDetails,
           ),
         );
+      case OnExtendBookingHoldClick():
+        await _extendBookingHold(intent.accessToken);
     }
   }
 
@@ -257,18 +269,182 @@ class BookingSubmissionDetailViewModel
       );
     });
 
+    if (remainingHoldSeconds <= 60 && !_hasShownExpiryDialog) {
+      _hasShownExpiryDialog = true;
+      sendNavEffect(() => const ShowBookingSessionExpired());
+    }
+
     if (isHoldExpired) {
       _holdCountdownTimer?.cancel();
-      if (!_hasShownExpiryDialog) {
-        _hasShownExpiryDialog = true;
-        sendNavEffect(() => const ShowBookingSessionExpired());
-      }
     }
+  }
+
+  Future<void> _extendBookingHold(String accessToken) async {
+    final current = getCurrentAsLoaded();
+    if (current.bookingRef.trim().isEmpty || accessToken.trim().isEmpty) {
+      sendNavEffect(
+        () => const ShowErrorMessage(
+          'Unable to extend this booking hold. Please try again.',
+        ),
+      );
+      return;
+    }
+
+    emitViewState((state) {
+      return current.copyWith(isExtendingHold: true);
+    });
+
+    await _extendHoldSubscription?.cancel();
+    _extendHoldSubscription = _useCase
+        .onExtendBookingHold(
+          bookingRef: current.bookingRef,
+          accessToken: accessToken,
+        )
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final latest = getCurrentAsLoaded();
+              final payload = _readMap(result.data);
+              final holdDurationSeconds =
+                  _readInt(
+                    payload['holdDurationSeconds'] ??
+                        payload['hold_duration_seconds'],
+                  ) ??
+                  latest.holdDurationSeconds;
+              final holdExpiresAt =
+                  DateTime.tryParse(
+                    payload['holdExpiresAt']?.toString() ??
+                        payload['hold_expires_at']?.toString() ??
+                        '',
+                  ) ??
+                  DateTime.now().add(Duration(seconds: holdDurationSeconds));
+              final remainingHoldSeconds = _remainingSecondsUntil(
+                holdExpiresAt,
+              );
+
+              emitViewState((state) {
+                return latest.copyWith(
+                  bookingRef:
+                      payload['bookingRef']?.toString() ??
+                      payload['booking_ref']?.toString() ??
+                      latest.bookingRef,
+                  holdDurationSeconds: holdDurationSeconds,
+                  holdExpiresAt: holdExpiresAt,
+                  remainingHoldSeconds: remainingHoldSeconds,
+                  isHoldExpired: false,
+                  isExtendingHold: false,
+                );
+              });
+              _hasShownExpiryDialog = false;
+              _startHoldCountdown();
+              sendNavEffect(() => const DismissBookingSessionExpired());
+            case DataStatus.error:
+              emitViewState((state) {
+                return getCurrentAsLoaded().copyWith(isExtendingHold: false);
+              });
+              sendNavEffect(
+                () => ShowErrorMessage(
+                  result.apiMessage.isEmpty
+                      ? 'Failed to extend booking hold. Please try again.'
+                      : result.apiMessage,
+                ),
+              );
+            default:
+              break;
+          }
+        });
+  }
+
+  Future<void> _fetchSlotDetails() async {
+    final current = getCurrentAsLoaded();
+    if (current.slotId.trim().isEmpty ||
+        current.golfClubSlug.trim().isEmpty ||
+        current.playType.trim().isEmpty) {
+      return;
+    }
+
+    emitViewState((state) {
+      return getCurrentAsLoaded().copyWith(isLoadingSlotDetails: true);
+    });
+
+    await _slotDetailsSubscription?.cancel();
+    _slotDetailsSubscription = _useCase
+        .onFetchSlotDetails(
+          slotId: current.slotId,
+          clubSlug: current.golfClubSlug,
+          date: DateUtil.formatApiDate(current.selectedDate),
+          playType: current.playType,
+          playerCount: current.playerCount,
+          selectedNine: current.selectedNine,
+        )
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final details = result.data;
+              emitViewState((state) {
+                return _deriveState(
+                  getCurrentAsLoaded().copyWith(
+                    golfClubName: details.golfClubName.isEmpty
+                        ? null
+                        : details.golfClubName,
+                    golfClubSlug: details.golfClubSlug.isEmpty
+                        ? null
+                        : details.golfClubSlug,
+                    teeTimeSlot: details.teeTimeSlot.isEmpty
+                        ? null
+                        : details.teeTimeSlot,
+                    pricePerPerson: details.pricePerPerson > 0
+                        ? details.pricePerPerson
+                        : null,
+                    currency: details.currency,
+                    maxPlayerCount: details.maxPlayers,
+                    categoryPricing: details.categoryPricing,
+                    caddyFee: details.addOns.caddyFee,
+                    buggyFeePerPlayer: details.addOns.buggyFeePerPlayer,
+                    singleRiderSurcharge: details.addOns.singleRiderSurcharge,
+                    isLoadingSlotDetails: false,
+                  ),
+                );
+              });
+            case DataStatus.error:
+              emitViewState((state) {
+                return getCurrentAsLoaded().copyWith(
+                  isLoadingSlotDetails: false,
+                );
+              });
+              sendNavEffect(
+                () => ShowErrorMessage(
+                  result.apiMessage.isEmpty
+                      ? 'Failed to fetch slot details.'
+                      : result.apiMessage,
+                ),
+              );
+            default:
+              break;
+          }
+        });
   }
 
   int _remainingSecondsUntil(DateTime expiresAt) {
     final difference = expiresAt.difference(DateTime.now()).inSeconds;
     return difference < 0 ? 0 : difference;
+  }
+
+  Map<String, dynamic> _readMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return <String, dynamic>{};
+  }
+
+  int? _readInt(dynamic value) {
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
   }
 
   BookingSubmissionDetailDataLoaded _updatePlayerDetails({
@@ -431,6 +607,8 @@ class BookingSubmissionDetailViewModel
   @override
   void dispose() {
     _holdCountdownTimer?.cancel();
+    _slotDetailsSubscription?.cancel();
+    _extendHoldSubscription?.cancel();
     super.dispose();
   }
 }

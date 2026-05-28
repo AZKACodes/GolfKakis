@@ -30,12 +30,19 @@ class _ProfileOverviewPageState extends State<ProfileOverviewPage> {
     _viewModel = ProfileOverviewViewModel(
       useCase: const ProfileOverviewUseCaseImpl(),
     );
-    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
+    _navEffectSubscription = _viewModel.navEffects.listen((effect) async {
       if (effect is LogoutRequested) {
         if (!mounted) {
           return;
         }
-        SessionScope.of(context).logout();
+        final didLogout = await SessionScope.of(context).logout();
+        if (!didLogout && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to logout right now. Please try again.'),
+            ),
+          );
+        }
       }
 
       if (effect is LoginRequested) {

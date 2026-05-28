@@ -17,74 +17,121 @@ class HomeHeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final resolvedAvatarUrl = avatarUrl?.trim();
     final hasAvatarImage =
         resolvedAvatarUrl != null && resolvedAvatarUrl.isNotEmpty;
+    final headerName = _resolveHeaderName(greeting);
+    final subtitle = showAvatar
+        ? 'Ready for your next round?'
+        : 'Find your next tee time';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: <Color>[
-            Color(0xFF0E2A47),
-            Color(0xFF154C79),
-            Color(0xFF2D7CA8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x26000000),
-            blurRadius: 22,
-            offset: Offset(0, 12),
+    return Row(
+      children: [
+        if (showAvatar) ...[
+          CircleAvatar(
+            radius: 23,
+            backgroundColor:
+                _avatarBackgroundColors[avatarIndex %
+                    _avatarBackgroundColors.length],
+            backgroundImage: hasAvatarImage
+                ? NetworkImage(resolvedAvatarUrl)
+                : null,
+            onBackgroundImageError: hasAvatarImage ? (_, _) {} : null,
+            child: hasAvatarImage
+                ? null
+                : Text(
+                    _resolveInitials(greeting),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF0E2A47),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
           ),
+          const SizedBox(width: 12),
         ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showAvatar)
-            Row(
-              children: [
-                const Spacer(),
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: _avatarBackgroundColors[
-                      avatarIndex % _avatarBackgroundColors.length
-                  ],
-                  backgroundImage: hasAvatarImage
-                      ? NetworkImage(resolvedAvatarUrl)
-                      : null,
-                  onBackgroundImageError: hasAvatarImage
-                      ? (_, _) {}
-                      : null,
-                  child: hasAvatarImage
-                      ? null
-                      : Text(
-                          _resolveInitials(greeting),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF0E2A47),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                headerName,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w900,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        Visibility(
+          visible: false,
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFE1E7E4)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
-          if (showAvatar) const SizedBox(height: 16),
-          Text(
-            greeting,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.notifications_none_rounded,
+                  color: colorScheme.onSurface,
+                ),
+                Positioned(
+                  top: 12,
+                  right: 13,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFD92D20),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+String _resolveHeaderName(String greeting) {
+  final cleaned = greeting
+      .replaceFirst('Welcome back,', 'Hello')
+      .replaceFirst('Welcome,', 'Hello')
+      .trim();
+
+  if (cleaned.isEmpty) {
+    return 'Hello Golfer';
+  }
+
+  return cleaned;
 }
 
 String _resolveInitials(String greeting) {

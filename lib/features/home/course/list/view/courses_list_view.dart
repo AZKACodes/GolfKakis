@@ -25,95 +25,110 @@ class CoursesListView extends StatelessWidget {
     final hasActiveSearch = loadedState.searchQuery.trim().isNotEmpty;
 
     if (loadedState.isLoading && loadedState.courses.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (loadedState.errorMessage != null && loadedState.courses.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          _bottomNavScrollClearance,
-        ),
-        children: [
-          CourseListSearchbarSection(
-            initialValue: loadedState.searchQuery,
-            isLocationSortActive: loadedState.isLocationSortActive,
-            onSearchChanged: (value) =>
-                onUserIntent(OnSearchCoursesQueryChanged(value)),
-            onLocationTap: () =>
-                onUserIntent(const OnSortCoursesByLocationClick()),
-          ),
-          const SizedBox(height: 16),
-          const CourseListEmptyState(
-            title: 'Unable to load courses',
-            message: 'Pull to refresh and try again.',
-          ),
-        ],
+      return const ColoredBox(
+        color: Colors.white,
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (loadedState.courses.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          _bottomNavScrollClearance,
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(46)),
+      child: ColoredBox(
+        color: Colors.white,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            22,
+            MediaQuery.paddingOf(context).top + 36,
+            22,
+            _bottomNavScrollClearance,
+          ),
+          itemCount: loadedState.courses.isEmpty
+              ? 3
+              : loadedState.courses.length + 2,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _CoursesListHeader(
+                onBackTap: () => Navigator.of(context).maybePop(),
+              );
+            }
+            if (index == 1) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 22),
+                child: CourseListSearchbarSection(
+                  initialValue: loadedState.searchQuery,
+                  isLocationSortActive: loadedState.isLocationSortActive,
+                  onSearchChanged: (value) =>
+                      onUserIntent(OnSearchCoursesQueryChanged(value)),
+                  onLocationTap: () =>
+                      onUserIntent(const OnSortCoursesByLocationClick()),
+                ),
+              );
+            }
+
+            if (loadedState.courses.isEmpty) {
+              return CourseListEmptyState(
+                title: loadedState.errorMessage != null
+                    ? 'Unable to load courses'
+                    : hasActiveSearch
+                    ? 'No matching courses'
+                    : 'No courses found',
+                message: loadedState.errorMessage != null
+                    ? 'Pull to refresh and try again.'
+                    : hasActiveSearch
+                    ? 'Try a different keyword or filter.'
+                    : 'Try again in a moment.',
+              );
+            }
+
+            final club = loadedState.courses[index - 2];
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index == loadedState.courses.length + 1 ? 0 : 32,
+              ),
+              child: CourseListItem(
+                club: club,
+                onTap: () => onUserIntent(OnCourseDetailsClick(club.slug)),
+              ),
+            );
+          },
         ),
-        children: [
-          CourseListSearchbarSection(
-            initialValue: loadedState.searchQuery,
-            isLocationSortActive: loadedState.isLocationSortActive,
-            onSearchChanged: (value) =>
-                onUserIntent(OnSearchCoursesQueryChanged(value)),
-            onLocationTap: () =>
-                onUserIntent(const OnSortCoursesByLocationClick()),
-          ),
-          const SizedBox(height: 16),
-          CourseListEmptyState(
-            title: hasActiveSearch ? 'No matching courses' : 'No courses found',
-            message: hasActiveSearch
-                ? 'Try a different keyword or filter.'
-                : 'Try again in a moment.',
-          ),
-        ],
-      );
-    }
+      ),
+    );
+  }
+}
 
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, _bottomNavScrollClearance),
-      itemCount: loadedState.courses.length + 2,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return CourseListSearchbarSection(
-            initialValue: loadedState.searchQuery,
-            isLocationSortActive: loadedState.isLocationSortActive,
-            onSearchChanged: (value) =>
-                onUserIntent(OnSearchCoursesQueryChanged(value)),
-            onLocationTap: () =>
-                onUserIntent(const OnSortCoursesByLocationClick()),
-          );
-        }
-        if (index == 1) {
-          return const SizedBox(height: 16);
-        }
+class _CoursesListHeader extends StatelessWidget {
+  const _CoursesListHeader({required this.onBackTap});
 
-        final club = loadedState.courses[index - 2];
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: index == loadedState.courses.length + 1 ? 0 : 12,
-          ),
-          child: CourseListItem(
-            club: club,
-            onTap: () => onUserIntent(OnCourseDetailsClick(club.slug)),
-          ),
-        );
-      },
+  final VoidCallback onBackTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: onBackTap,
+                icon: const Icon(Icons.chevron_left_rounded, size: 34),
+              ),
+            ),
+            Text(
+              'Courses',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

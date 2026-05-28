@@ -19,8 +19,9 @@ class SetupUserPinResponse {
   final String nextAction;
 
   factory SetupUserPinResponse.fromJson(Map<String, dynamic> json) {
-    final session = json['session'];
-    final user = json['user'];
+    final payload = _payload(json);
+    final session = payload['session'];
+    final user = payload['user'];
     if (session is! Map<String, dynamic> || user is! Map<String, dynamic>) {
       throw ApiException(
         statusCode: 500,
@@ -29,11 +30,19 @@ class SetupUserPinResponse {
     }
 
     return SetupUserPinResponse(
-      accessToken: (json['accessToken'] as String?).getValueOrEmpty(),
-      refreshToken: (json['refreshToken'] as String?).getValueOrEmpty(),
+      accessToken: (payload['accessToken'] as String?).getValueOrEmpty(),
+      refreshToken: (payload['refreshToken'] as String?).getValueOrEmpty(),
       session: AuthSession.fromJson(session),
       user: PinSetupUser.fromJson(user),
-      nextAction: (json['nextAction'] as String?).getValueOrEmpty(),
+      nextAction: (payload['nextAction'] as String?).getValueOrEmpty(),
     );
+  }
+
+  static Map<String, dynamic> _payload(Map<String, dynamic> json) {
+    final data = json['data'];
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    return json;
   }
 }

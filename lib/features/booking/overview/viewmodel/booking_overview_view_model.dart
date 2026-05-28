@@ -43,6 +43,11 @@ class BookingOverviewViewModel
         if (_shouldLoad(intent.tab)) {
           unawaited(_loadTab(intent.tab));
         }
+      case OnBookingOverviewViewModeChanged():
+        emitViewState((state) => state.copyWith(viewMode: intent.viewMode));
+        if (intent.viewMode == BookingOverviewViewMode.calendar) {
+          unawaited(_loadAllBookings());
+        }
       case OnViewBookingDetailClick():
         sendNavEffect(() => NavigateToBookingDetail(intent.booking));
     }
@@ -51,6 +56,11 @@ class BookingOverviewViewModel
   @override
   Future<void> onRefresh(BookingOverviewTab tab) {
     return _loadTab(tab, forceRefresh: true);
+  }
+
+  @override
+  Future<void> onRefreshCalendar() {
+    return _loadAllBookings(forceRefresh: true);
   }
 
   bool _shouldLoad(BookingOverviewTab tab) {
@@ -125,5 +135,20 @@ class BookingOverviewViewModel
         };
       });
     }
+  }
+
+  Future<void> _loadAllBookings({bool forceRefresh = false}) async {
+    final futures = <Future<void>>[];
+    if (forceRefresh || _shouldLoad(BookingOverviewTab.upcoming)) {
+      futures.add(
+        _loadTab(BookingOverviewTab.upcoming, forceRefresh: forceRefresh),
+      );
+    }
+    if (forceRefresh || _shouldLoad(BookingOverviewTab.past)) {
+      futures.add(
+        _loadTab(BookingOverviewTab.past, forceRefresh: forceRefresh),
+      );
+    }
+    await Future.wait(futures);
   }
 }

@@ -6,11 +6,13 @@ class BookingDetailsItem extends StatelessWidget {
   const BookingDetailsItem({
     required this.item,
     required this.onViewBookingDetailClick,
+    this.showStatus = true,
     super.key,
   });
 
   final BookingModel item;
   final ValueChanged<BookingModel> onViewBookingDetailClick;
+  final bool showStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,8 @@ class BookingDetailsItem extends StatelessWidget {
                   ),
                 ),
               ),
-              StatusPill(label: item.statusLabel, color: item.statusColor),
+              if (showStatus)
+                StatusPill(label: item.statusLabel, color: item.statusColor),
             ],
           ),
           const SizedBox(height: 12),

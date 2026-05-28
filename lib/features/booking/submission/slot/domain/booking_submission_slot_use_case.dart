@@ -29,6 +29,16 @@ abstract class BookingSubmissionSlotUseCase {
     required BookingHoldRequestModel request,
   });
 
+  Stream<DataStatusModel<dynamic>> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  });
+
+  Stream<DataStatusModel<dynamic>> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  });
+
   Stream<DataStatusModel<dynamic>> onCreateBookingSubmission({
     required BookingSubmissionRequestModel request,
   });

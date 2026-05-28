@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
 
 class BookingSubmissionConfirmationContent extends StatelessWidget {
-  const BookingSubmissionConfirmationContent({required this.state, super.key});
+  const BookingSubmissionConfirmationContent({
+    required this.state,
+    required this.viewModel,
+    super.key,
+  });
 
   final BookingSubmissionConfirmationDataLoaded state;
+  final BookingSubmissionConfirmationViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -90,44 +96,198 @@ class BookingSubmissionConfirmationContent extends StatelessWidget {
             const SizedBox(height: 16),
             _SectionCard(
               title: 'Round Configuration',
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _MetricTile(
-                      icon: Icons.group_outlined,
-                      label: 'Players',
-                      value: '${state.playerCount}',
-                    ),
-                    const SizedBox(width: 10),
-                    _MetricTile(
-                      icon: Icons.golf_course_outlined,
-                      label: 'Holes',
-                      value: _resolveHoleCount(state.teeTimeSlot),
-                    ),
-                    const SizedBox(width: 10),
-                    _MetricTile(
-                      icon: Icons.person_outline,
-                      label: 'Caddies',
-                      value: '${state.caddieCount}',
-                    ),
-                    const SizedBox(width: 10),
-                    _MetricTile(
-                      icon: Icons.directions_car_outlined,
-                      label: 'Buggy',
-                      value: '${state.golfCartCount}',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _InfoRow(label: 'Host', value: state.hostName),
-                _InfoRow(label: 'Phone', value: state.hostPhoneNumber),
-                const SizedBox(height: 12),
-                _RoundConfigurationTabs(state: state),
-              ],
+              children: state.isPreviewPending
+                  ? const [_RoundConfigurationLoading()]
+                  : [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _MetricTile(
+                            icon: Icons.group_outlined,
+                            label: 'Players',
+                            value: '${state.playerCount}',
+                          ),
+                          const SizedBox(width: 10),
+                          _MetricTile(
+                            icon: Icons.golf_course_outlined,
+                            label: 'Holes',
+                            value: '18',
+                          ),
+                          const SizedBox(width: 10),
+                          _MetricTile(
+                            icon: Icons.person_outline,
+                            label: 'Caddies',
+                            value: '${state.caddieCount}',
+                          ),
+                          const SizedBox(width: 10),
+                          _MetricTile(
+                            icon: Icons.directions_car_outlined,
+                            label: 'Buggy',
+                            value: '${state.golfCartCount}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _RoundConfigurationTabs(state: state),
+                    ],
+            ),
+            const SizedBox(height: 16),
+            _VoucherSection(
+              state: state,
+              onApplyVoucher: () => _showVoucherBottomSheet(context),
+              onRemoveVoucher: () =>
+                  viewModel.performAction(const OnVoucherRemoved()),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showVoucherBottomSheet(BuildContext context) async {
+    final voucherCode = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _VoucherCodeBottomSheet(initialValue: state.voucherCode),
+    );
+
+    if (voucherCode == null || voucherCode.trim().isEmpty) {
+      return;
+    }
+    viewModel.performAction(OnVoucherCodeApplied(voucherCode));
+  }
+}
+
+class _VoucherCodeBottomSheet extends StatefulWidget {
+  const _VoucherCodeBottomSheet({required this.initialValue});
+
+  final String initialValue;
+
+  @override
+  State<_VoucherCodeBottomSheet> createState() =>
+      _VoucherCodeBottomSheetState();
+}
+
+class _VoucherCodeBottomSheetState extends State<_VoucherCodeBottomSheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        10,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 44,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Center(
+                    child: Text(
+                      'Apply Voucher',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Voucher Code',
+                hintText: 'Enter voucher code',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  final value = _controller.text.trim();
+                  if (value.isEmpty) {
+                    return;
+                  }
+                  Navigator.of(context).pop(value);
+                },
+                child: const Text('Apply'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundConfigurationLoading extends StatelessWidget {
+  const _RoundConfigurationLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Preparing booking details...',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -211,6 +371,90 @@ class _RoundConfigurationTabs extends StatelessWidget {
   }
 }
 
+class _VoucherSection extends StatelessWidget {
+  const _VoucherSection({
+    required this.state,
+    required this.onApplyVoucher,
+    required this.onRemoveVoucher,
+  });
+
+  final BookingSubmissionConfirmationDataLoaded state;
+  final VoidCallback onApplyVoucher;
+  final VoidCallback onRemoveVoucher;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (!state.hasVoucher) {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onApplyVoucher,
+          icon: const Icon(Icons.confirmation_number_outlined),
+          label: const Text('Apply Voucher'),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD98A)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.confirmation_number_outlined,
+              color: Color(0xFF9A6500),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  state.voucherCode,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF7A5200),
+                  ),
+                ),
+                if (state.voucherName.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    state.voucherName,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove voucher',
+            onPressed: onRemoveVoucher,
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PlayerDetailsTab extends StatelessWidget {
   const _PlayerDetailsTab({required this.state});
 
@@ -246,17 +490,48 @@ class _PaymentSummaryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        if (state.isPreviewLoading) ...[
+          const LinearProgressIndicator(minHeight: 2),
+          const SizedBox(height: 12),
+        ],
         _HighlightedInfoCard(
           label: 'Payment',
           value: state.paymentMethodLabel,
           icon: Icons.point_of_sale_outlined,
         ),
-        const SizedBox(height: 12),
-        _HighlightedInfoCard(
-          label: 'Price Per Pax',
-          value: state.pricePerPersonLabel,
-          icon: Icons.person_outline,
-        ),
+        if (state.hasPreviewPricing) ...[
+          const SizedBox(height: 12),
+          _PriceRow(
+            label: 'Green Fee',
+            value: _formatPrice(state.greenFeeTotal, state.currency),
+          ),
+          if (state.buggyEstimatedTotal > 0)
+            _PriceRow(
+              label: 'Buggy',
+              value: _formatPrice(state.buggyEstimatedTotal, state.currency),
+            ),
+          if (state.caddieTotal > 0)
+            _PriceRow(
+              label: 'Caddie',
+              value: _formatPrice(state.caddieTotal, state.currency),
+            ),
+          if (state.insuranceTotal > 0)
+            _PriceRow(
+              label: 'Insurance',
+              value: _formatPrice(state.insuranceTotal, state.currency),
+            ),
+          if (state.sstTotal > 0)
+            _PriceRow(
+              label: 'SST',
+              value: _formatPrice(state.sstTotal, state.currency),
+            ),
+          if (state.hasVoucher && state.discountAmount > 0)
+            _PriceRow(
+              label: 'Voucher Applied - ${state.voucherCode}',
+              value: '- ${state.discountAmountLabel}',
+              valueColor: const Color(0xFF0D7A3A),
+            ),
+        ],
         const SizedBox(height: 12),
         _PriceRow(label: 'Grand Total', value: state.totalCostLabel),
       ],
@@ -264,30 +539,8 @@ class _PaymentSummaryTab extends StatelessWidget {
   }
 }
 
-String _resolveHoleCount(String teeTimeSlot) {
-  const eighteenHoleSlots = <String>{
-    '07:30 AM',
-    '07:45 AM',
-    '08:00 AM',
-    '08:15 AM',
-    '08:30 AM',
-    '08:45 AM',
-    '09:00 AM',
-    '09:15 AM',
-    '09:30 AM',
-    '12:00 PM',
-    '12:15 PM',
-    '12:30 PM',
-    '12:45 PM',
-    '01:00 PM',
-    '01:15 PM',
-    '01:30 PM',
-    '01:45 PM',
-    '02:00 PM',
-    '02:15 PM',
-    '02:30 PM',
-  };
-  return eighteenHoleSlots.contains(teeTimeSlot) ? '18' : '9';
+String _formatPrice(double amount, String currency) {
+  return '$currency ${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
 }
 
 String _playerCategoryLabel(String value) {
@@ -645,10 +898,11 @@ class _HighlightedInfoCard extends StatelessWidget {
 }
 
 class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.label, required this.value});
+  const _PriceRow({required this.label, required this.value, this.valueColor});
 
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -675,7 +929,7 @@ class _PriceRow extends StatelessWidget {
             value,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF17397C),
+              color: valueColor ?? const Color(0xFF17397C),
             ),
           ),
         ],

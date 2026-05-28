@@ -5,9 +5,8 @@ import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'course_details_use_case.dart';
 
 class CourseDetailsUseCaseImpl implements CourseDetailsUseCase {
-  const CourseDetailsUseCaseImpl({
-    CourseDetailsRepository? repository,
-  }) : _repository = repository;
+  const CourseDetailsUseCaseImpl({CourseDetailsRepository? repository})
+    : _repository = repository;
 
   final CourseDetailsRepository? _repository;
 
@@ -24,16 +23,10 @@ class CourseDetailsUseCaseImpl implements CourseDetailsUseCase {
       initialClub: initialClub,
     );
 
-    final results = await Future.wait<Object>([
-      _resolvedRepository.onFetchCourseExtraDetails(
-        slug: slug,
-        club: headerDetails.club,
-      ),
-      _resolvedRepository.onFetchCourseWeather(club: headerDetails.club),
-    ]);
-
-    final extraDetails = results[0] as CourseExtraDetailsData;
-    final weatherDetails = results[1] as CourseWeatherDetailsData;
+    final extraDetails = await _resolvedRepository.onFetchCourseExtraDetails(
+      slug: slug,
+      club: headerDetails.club,
+    );
 
     return CourseDetailsResult(
       detail: CourseDetailsData(
@@ -46,12 +39,19 @@ class CourseDetailsUseCaseImpl implements CourseDetailsUseCase {
         bestForLabel: headerDetails.bestForLabel,
         facilityLabels: extraDetails.facilityLabels,
         photoUrls: extraDetails.photoUrls,
-        weather: weatherDetails.weather,
-        weeklyForecast: weatherDetails.weeklyForecast,
+        weather: null,
+        weeklyForecast: const <CourseWeatherForecastItem>[],
         nextSlotLabel: headerDetails.nextSlotLabel,
         bookingDateLabel: headerDetails.bookingDateLabel,
       ),
       isFallback: false,
     );
+  }
+
+  @override
+  Future<CourseWeatherDetailsData> onFetchGolfCourseWeather({
+    required GolfClubModel club,
+  }) {
+    return _resolvedRepository.onFetchCourseWeather(club: club);
   }
 }

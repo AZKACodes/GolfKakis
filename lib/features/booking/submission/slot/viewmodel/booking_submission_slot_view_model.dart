@@ -65,18 +65,44 @@ class BookingSubmissionSlotViewModel
           date: intent.date,
         );
       case OnSelectGolfClub():
+        GolfClubModel? selectedClub;
+        for (final club in getCurrentAsLoaded().golfClubList) {
+          if (club.slug == intent.clubSlug) {
+            selectedClub = club;
+            break;
+          }
+        }
+        if (selectedClub == null ||
+            !isGolfClubEnabledForCurrentRelease(selectedClub)) {
+          const message =
+              'Only Kinrara Golf Club is available for booking right now.';
+          emitViewState((state) {
+            return getCurrentAsLoaded().copyWith(
+              errorSnackbarMessageModel: const SnackbarMessageModel(
+                message: message,
+              ),
+            );
+          });
+          sendNavEffect(() => const ShowErrorMessage(message));
+          return;
+        }
+        final nextState = _derivePresentationState(
+          getCurrentAsLoaded().copyWith(
+            selectedClubSlug: intent.clubSlug,
+            clearSelectedSupportedNine: true,
+            clearSelectedSlot: true,
+            clearSelectedSlotDetails: true,
+            clearVisibleSelectedIndex: true,
+            clearErrorMessage: true,
+          ),
+        );
         emitViewState((state) {
-          return _derivePresentationState(
-            getCurrentAsLoaded().copyWith(
-              selectedClubSlug: intent.clubSlug,
-              clearSelectedSupportedNine: true,
-              clearSelectedSlot: true,
-              clearSelectedSlotDetails: true,
-              clearVisibleSelectedIndex: true,
-              clearErrorMessage: true,
-            ),
-          );
+          return nextState;
         });
+        await onFetchAvailableSlots(
+          clubSlug: nextState.selectedClubSlug,
+          date: nextState.selectedDate,
+        );
       case OnSelectSupportedNine():
         final nextState = _derivePresentationState(
           getCurrentAsLoaded().copyWith(
@@ -129,6 +155,7 @@ class BookingSubmissionSlotViewModel
           return;
         }
 
+        sendNavEffect(() => const ShowSlotDetailsBottomSheet());
         await _fetchSlotDetails(intent.slot);
       case OnConfirmSlotClick():
         final details = intent.details;
@@ -148,11 +175,35 @@ class BookingSubmissionSlotViewModel
           return nextState;
         });
         if (!nextState.canContinue || nextState.isSubmittingHold) {
+          if (!nextState.canContinue) {
+            const message = 'Selected player count exceeds this slot capacity.';
+            emitViewState((state) {
+              return getCurrentAsLoaded().copyWith(
+                errorSnackbarMessageModel: const SnackbarMessageModel(
+                  message: message,
+                ),
+              );
+            });
+            sendNavEffect(() => const ShowErrorMessage(message));
+          }
           return;
         }
         sendNavEffect(
           () => RequestBookingHoldPrefill(selectedSlotDetails: details),
         );
+      case OnSlotDetailsDismissed():
+        await _slotDetailsSubscription?.cancel();
+        emitViewState((state) {
+          return _derivePresentationState(
+            getCurrentAsLoaded().copyWith(
+              clearSelectedSlot: true,
+              clearSelectedSlotDetails: true,
+              clearVisibleSelectedIndex: true,
+              isLoadingSlotDetails: false,
+              clearErrorMessage: true,
+            ),
+          );
+        });
       case OnCreateBookingHoldRequested():
         await _createBookingHold(intent);
       case OnSelectPeriod():
@@ -237,7 +288,6 @@ class BookingSubmissionSlotViewModel
                   ),
                 );
               });
-              sendNavEffect(() => ShowSlotDetailsBottomSheet(details: details));
               if (!completer.isCompleted) {
                 completer.complete();
               }
@@ -358,23 +408,10 @@ class BookingSubmissionSlotViewModel
     return BookingHoldRequestModel(
       slotId: selectedSlotDetails.slotId,
       accessToken: intent.accessToken,
-      quoteId: selectedSlotDetails.quoteId,
       idempotencyKey: intent.idempotencyKey,
       hostName: intent.hostName,
       hostPhoneNumber: _normalizePhoneNumber(intent.hostPhoneNumber),
       source: intent.source,
-      playType: selectedSlotDetails.playType,
-      selectedNine: selectedSlotDetails.selectedNine,
-      golfClubName: selectedSlotDetails.golfClubName,
-      golfClubSlug: selectedSlotDetails.golfClubSlug,
-      bookingDate: DateUtil.formatApiDate(selectedSlotDetails.bookingDate),
-      teeTimeSlot: selectedSlotDetails.teeTimeSlot,
-      playerCount: selectedSlotDetails.playerCount,
-      normalPlayerCount: selectedSlotDetails.playerCount,
-      seniorPlayerCount: 0,
-      caddieCount: 0,
-      golfCartCount: _defaultGolfCartCount(selectedSlotDetails.playerCount),
-      paymentMethod: 'pay_counter',
     );
   }
 
@@ -389,57 +426,188 @@ class BookingSubmissionSlotViewModel
       return null;
     }
 
-    final bookingSummary = _readMap(holdResponse['bookingSummary']);
-    final hostUser = _readMap(holdResponse['hostUser']);
-    final pricing = _readMap(bookingSummary['pricing']);
+    final bookingSummary = _readMap(
+      holdResponse['bookingSummary'] ??
+          holdResponse['booking_summary'] ??
+          holdResponse['summary'] ??
+          holdResponse['booking'],
+    );
+    final hostUser = _readMap(
+      holdResponse['hostUser'] ??
+          holdResponse['host_user'] ??
+          holdResponse['host'] ??
+          holdResponse['user'],
+    );
+    final pricing = _readMap(
+      bookingSummary['pricing'] ?? holdResponse['pricing'],
+    );
     final playerCount =
-        _readInt(bookingSummary['playerCount']) ??
+        _readInt(
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'playerCount',
+            'player_count',
+          ]),
+        ) ??
         selectedSlotDetails.playerCount;
     final bookingDate =
-        DateTime.tryParse(bookingSummary['bookingDate']?.toString() ?? '') ??
+        DateTime.tryParse(
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+                'bookingDate',
+                'booking_date',
+              ])?.toString() ??
+              '',
+        ) ??
         selectedSlotDetails.bookingDate;
     final holdDurationSeconds =
-        _readInt(holdResponse['holdDurationSeconds']) ?? 300;
+        _readInt(
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'holdDurationSeconds',
+            'hold_duration_seconds',
+          ]),
+        ) ??
+        300;
     final holdExpiresAt =
-        DateTime.tryParse(holdResponse['holdExpiresAt']?.toString() ?? '') ??
+        DateTime.tryParse(
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+                'holdExpiresAt',
+                'hold_expires_at',
+                'expiresAt',
+                'expires_at',
+              ])?.toString() ??
+              '',
+        ) ??
         DateTime.now().add(Duration(seconds: holdDurationSeconds));
-    final resolvedHostName = _readNonEmptyString(hostUser['name']) ?? hostName;
+    final resolvedHostName =
+        _readNonEmptyString(
+          hostUser['name'] ??
+              _readPayloadValue(bookingSummary, holdResponse, const <String>[
+                'hostName',
+                'host_name',
+              ]),
+        ) ??
+        hostName;
     final resolvedHostPhoneNumber =
-        _readNonEmptyString(hostUser['phoneNumber']) ?? hostPhoneNumber;
+        _readNonEmptyString(
+          hostUser['phoneNumber'] ??
+              hostUser['phone_number'] ??
+              _readPayloadValue(bookingSummary, holdResponse, const <String>[
+                'hostPhoneNumber',
+                'host_phone_number',
+              ]),
+        ) ??
+        hostPhoneNumber;
 
     return NavigateToBookingSubmissionDetail(
       slotId: selectedSlotDetails.slotId,
-      bookingId: holdResponse['bookingId']?.toString() ?? emptyString,
-      bookingRef: holdResponse['bookingRef']?.toString() ?? emptyString,
+      bookingId:
+          _readNonEmptyString(
+            _readPayloadValue(bookingSummary, holdResponse, const <String>[
+              'bookingId',
+              'booking_id',
+              'holdId',
+              'hold_id',
+              'id',
+            ]),
+          ) ??
+          emptyString,
+      bookingRef:
+          _readNonEmptyString(
+            _readPayloadValue(bookingSummary, holdResponse, const <String>[
+              'bookingRef',
+              'bookingReference',
+              'booking_ref',
+              'booking_reference',
+              'reference',
+              'referenceNo',
+              'reference_no',
+            ]),
+          ) ??
+          emptyString,
       holdDurationSeconds: holdDurationSeconds,
       holdExpiresAt: holdExpiresAt,
       playType:
-          bookingSummary['playType']?.toString() ??
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'playType',
+            'play_type',
+          ])?.toString() ??
           selectedSlotDetails.playType,
       golfClubName:
-          bookingSummary['golfClubName']?.toString() ??
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'golfClubName',
+            'golf_club_name',
+          ])?.toString() ??
           selectedSlotDetails.golfClubName,
       golfClubSlug:
-          bookingSummary['golfClubSlug']?.toString() ??
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'golfClubSlug',
+            'golf_club_slug',
+          ])?.toString() ??
           selectedSlotDetails.golfClubSlug,
       selectedDate: bookingDate,
       teeTimeSlot:
-          bookingSummary['teeTimeSlot']?.toString() ??
+          _readPayloadValue(bookingSummary, holdResponse, const <String>[
+            'teeTimeSlot',
+            'tee_time_slot',
+          ])?.toString() ??
           selectedSlotDetails.teeTimeSlot,
       pricePerPerson: selectedSlotDetails.pricePerPerson,
-      currency: pricing['currency']?.toString() ?? selectedSlotDetails.currency,
+      currency:
+          pricing['currency']?.toString() ??
+          holdResponse['currency']?.toString() ??
+          selectedSlotDetails.currency,
       playerCount: playerCount,
-      initialCaddieCount: _readInt(bookingSummary['caddieCount']) ?? 0,
+      initialCaddieCount:
+          _readInt(
+            _readPayloadValue(bookingSummary, holdResponse, const <String>[
+              'caddieCount',
+              'caddie_count',
+              'caddyCount',
+              'caddy_count',
+            ]),
+          ) ??
+          0,
       initialGolfCartCount:
-          _readInt(bookingSummary['golfCartCount']) ??
+          _readInt(
+            _readPayloadValue(bookingSummary, holdResponse, const <String>[
+              'golfCartCount',
+              'golf_cart_count',
+              'buggyCount',
+              'buggy_count',
+            ]),
+          ) ??
           _defaultGolfCartCount(playerCount),
       selectedNine:
-          _readNonEmptyString(bookingSummary['selectedNine']) ??
+          _readNonEmptyString(
+            _readPayloadValue(bookingSummary, holdResponse, const <String>[
+              'selectedNine',
+              'selected_nine',
+            ]),
+          ) ??
           selectedSlotDetails.selectedNine,
       initialPlayerName: resolvedHostName,
       initialPlayerPhoneNumber: _normalizePhoneNumber(resolvedHostPhoneNumber),
       guestId: guestId,
     );
+  }
+
+  dynamic _readPayloadValue(
+    Map<String, dynamic> primary,
+    Map<String, dynamic> fallback,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final primaryValue = primary[key];
+      if (primaryValue != null) {
+        return primaryValue;
+      }
+
+      final fallbackValue = fallback[key];
+      if (fallbackValue != null) {
+        return fallbackValue;
+      }
+    }
+
+    return null;
   }
 
   void _emitHoldFailure(String message) {
@@ -464,10 +632,13 @@ class BookingSubmissionSlotViewModel
       switch (result.status) {
         case DataStatus.success:
           final current = getCurrentAsLoaded();
-          final selectedClubSlug = _resolveSelectedClub(result.data);
+          final golfClubList = _applyCurrentReleaseGolfClubAvailability(
+            result.data,
+          );
+          final selectedClubSlug = _resolveSelectedClub(golfClubList);
           final updatedState = _derivePresentationState(
             current.copyWith(
-              golfClubList: result.data,
+              golfClubList: golfClubList,
               selectedClubSlug: selectedClubSlug,
               isLoading: false,
               clearErrorMessage: true,
@@ -628,11 +799,34 @@ class BookingSubmissionSlotViewModel
 
     final currentSelectedClubSlug = getCurrentAsLoaded().selectedClubSlug;
     if (currentSelectedClubSlug.isNotEmpty &&
-        clubs.any((club) => club.slug == currentSelectedClubSlug)) {
+        clubs.any(
+          (club) =>
+              club.slug == currentSelectedClubSlug &&
+              isGolfClubEnabledForCurrentRelease(club),
+        )) {
       return currentSelectedClubSlug;
     }
 
+    for (final club in clubs) {
+      if (isGolfClubEnabledForCurrentRelease(club)) {
+        return club.slug;
+      }
+    }
+
     return emptyString;
+  }
+
+  List<GolfClubModel> _applyCurrentReleaseGolfClubAvailability(
+    List<GolfClubModel> clubs,
+  ) {
+    return clubs.map((club) {
+      final isEnabled = isGolfClubEnabledForCurrentRelease(club);
+      return club.copyWith(
+        isEnabled: isEnabled,
+        isBookable: isEnabled,
+        availabilityLabel: isEnabled ? 'Booking available' : 'Coming soon',
+      );
+    }).toList();
   }
 
   BookingSubmissionSlotDataLoaded _derivePresentationState(
@@ -641,7 +835,14 @@ class BookingSubmissionSlotViewModel
     final today = DateUtil.dateOnly(DateTime.now());
     final normalizedPlayerCount = state.playerCount.clamp(2, 6);
     final visibleSlots = state.bookingSlots
-        .where((slot) => _isSlotInSelectedPeriod(slot, state.selectedPeriod))
+        .where(
+          (slot) =>
+              _isSlotInSelectedPeriod(slot, state.selectedPeriod) &&
+              _selectedPlayerCountFitsSlot(
+                playerCount: normalizedPlayerCount,
+                slot: slot,
+              ),
+        )
         .toList();
     final visibleSelectedIndex = state.selectedSlot == null
         ? null
@@ -653,19 +854,15 @@ class BookingSubmissionSlotViewModel
         availableSupportedNines.contains(state.selectedSupportedNine)
         ? state.selectedSupportedNine
         : emptyString;
-    final overCapacityIndices = visibleSlots.indexed
-        .where(
-          (entry) => entry.$2.remainingPlayerCapacity < normalizedPlayerCount,
-        )
-        .map((entry) => entry.$1)
-        .toSet();
-    final selectedSlotFitsCapacity =
-        (state.selectedSlot?.remainingPlayerCapacity ?? 0) >=
-        normalizedPlayerCount;
+    final selectedSlotFitsCapacity = _selectedPlayerCountFitsSlot(
+      playerCount: normalizedPlayerCount,
+      slot: state.selectedSlot,
+    );
     final selectedDetailsMatchesSlot =
         state.selectedSlotDetails != null &&
         state.selectedSlotDetails!.slotId == state.selectedSlot?.slotId &&
-        state.selectedSlotDetails!.playerCount == normalizedPlayerCount;
+        state.selectedSlotDetails!.isAvailable &&
+        normalizedPlayerCount <= state.selectedSlotDetails!.maxPlayers;
 
     return state.copyWith(
       playerCount: normalizedPlayerCount,
@@ -679,7 +876,6 @@ class BookingSubmissionSlotViewModel
         ...visibleSlots.indexed
             .where((entry) => !entry.$2.isAvailable)
             .map((entry) => entry.$1),
-        ...overCapacityIndices,
       },
       visibleSelectedIndex:
           visibleSelectedIndex == -1 || !selectedSlotFitsCapacity
@@ -691,6 +887,16 @@ class BookingSubmissionSlotViewModel
           selectedSlotFitsCapacity &&
           selectedDetailsMatchesSlot,
     );
+  }
+
+  bool _selectedPlayerCountFitsSlot({
+    required int playerCount,
+    required BookingSlotModel? slot,
+  }) {
+    if (slot == null) {
+      return false;
+    }
+    return playerCount <= slot.maxPlayers;
   }
 
   bool _isSlotInSelectedPeriod(BookingSlotModel slot, TimePeriod period) {
@@ -728,6 +934,9 @@ class BookingSubmissionSlotViewModel
   Map<String, dynamic> _readMap(dynamic value) {
     if (value is Map<String, dynamic>) {
       return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
     }
 
     return <String, dynamic>{};

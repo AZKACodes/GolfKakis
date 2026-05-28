@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
@@ -83,12 +84,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
   Future<CourseWeatherDetailsData> onFetchCourseWeather({
     required GolfClubModel club,
   }) async {
-    final weather = await _fetchWeather(club);
-    final weeklyForecast = await _fetchWeeklyForecast(club);
-    return CourseWeatherDetailsData(
-      weather: weather,
-      weeklyForecast: weeklyForecast,
-    );
+    return _fetchSevenDayWeather(club);
   }
 
   GolfClubModel? _parseDetailedClub(dynamic response) {
@@ -141,101 +137,187 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
         _asMap(_asMap(map['data'])?['recommendation']);
   }
 
-  Future<CourseWeatherSummary?> _fetchWeather(GolfClubModel club) async {
+  Future<CourseWeatherDetailsData> _fetchSevenDayWeather(
+    GolfClubModel club,
+  ) async {
     if (club.latitude == null || club.longitude == null) {
-      return null;
+      debugPrint(
+        '[CourseWeather] missing coordinates for ${club.slug} ${club.name}',
+      );
+      return const CourseWeatherDetailsData(
+        weather: null,
+        weeklyForecast: <CourseWeatherForecastItem>[],
+      );
     }
 
     try {
+      debugPrint(
+        '[CourseWeather] fetching ${club.slug} lat=${club.latitude} lon=${club.longitude}',
+      );
       final response = await _weatherApiService.getWeather(
         latitude: club.latitude!,
         longitude: club.longitude!,
       );
       final current = _asMap(response['current']);
       final daily = _asMap(response['daily']);
+      final hourly = _asMap(response['hourly']);
       if (current == null || daily == null) {
-        return null;
+        debugPrint(
+          '[CourseWeather] missing current/daily payload keys=${response.keys.toList()}',
+        );
+        return const CourseWeatherDetailsData(
+          weather: null,
+          weeklyForecast: <CourseWeatherForecastItem>[],
+        );
       }
 
-      final currentTemperature = _roundToInt(current['temperature_2m']);
-      final windSpeed = _roundToInt(current['wind_speed_10m']);
-      final weatherCode = _roundToInt(current['weather_code']);
-      final highTemperature = _extractFirstRoundedValue(
-        daily['temperature_2m_max'],
+      final weather = _parseCurrentWeather(current: current, daily: daily);
+      final hourlyForecast = hourly == null
+          ? const <CourseWeatherHourlyForecastItem>[]
+          : _parseHourlyForecast(hourly);
+      final weeklyForecast = _parseWeeklyForecast(
+        daily: daily,
+        hourlyForecast: hourlyForecast,
       );
-      final lowTemperature = _extractFirstRoundedValue(
-        daily['temperature_2m_min'],
+      debugPrint(
+        '[CourseWeather] parsed current=${weather != null} forecastDays=${weeklyForecast.length} hourly=${hourlyForecast.length}',
       );
-
-      if (currentTemperature == null ||
-          windSpeed == null ||
-          weatherCode == null ||
-          highTemperature == null ||
-          lowTemperature == null) {
-        return null;
-      }
-
-      final descriptor = _weatherDescriptor(weatherCode);
-      return CourseWeatherSummary(
-        temperatureCelsius: currentTemperature,
-        highCelsius: highTemperature,
-        lowCelsius: lowTemperature,
-        windSpeedKph: windSpeed,
-        weatherLabel: descriptor.label,
-        weatherIcon: descriptor.icon,
+      return CourseWeatherDetailsData(
+        weather: weather,
+        weeklyForecast: weeklyForecast,
       );
-    } catch (_) {
-      return null;
+    } catch (error) {
+      debugPrint('[CourseWeather] failed: $error');
+      return const CourseWeatherDetailsData(
+        weather: null,
+        weeklyForecast: <CourseWeatherForecastItem>[],
+      );
     }
   }
 
-  Future<List<CourseWeatherForecastItem>> _fetchWeeklyForecast(
-    GolfClubModel club,
-  ) async {
-    if (club.latitude == null || club.longitude == null) {
+  CourseWeatherSummary? _parseCurrentWeather({
+    required Map<String, dynamic> current,
+    required Map<String, dynamic> daily,
+  }) {
+    final currentTemperature = _roundToInt(current['temperature_2m']);
+    final windSpeed = _roundToInt(current['wind_speed_10m']);
+    final weatherCode = _roundToInt(current['weather_code']);
+    final highTemperature = _extractFirstRoundedValue(
+      daily['temperature_2m_max'],
+    );
+    final lowTemperature = _extractFirstRoundedValue(
+      daily['temperature_2m_min'],
+    );
+
+    if (currentTemperature == null ||
+        windSpeed == null ||
+        weatherCode == null ||
+        highTemperature == null ||
+        lowTemperature == null) {
+      return null;
+    }
+
+    final descriptor = _weatherDescriptor(weatherCode);
+    return CourseWeatherSummary(
+      temperatureCelsius: currentTemperature,
+      highCelsius: highTemperature,
+      lowCelsius: lowTemperature,
+      windSpeedKph: windSpeed,
+      weatherLabel: descriptor.label,
+      weatherIcon: descriptor.icon,
+    );
+  }
+
+  List<CourseWeatherForecastItem> _parseWeeklyForecast({
+    required Map<String, dynamic> daily,
+    required List<CourseWeatherHourlyForecastItem> hourlyForecast,
+  }) {
+    final times = daily['time'];
+    final weatherCodes = daily['weather_code'];
+    final highs = daily['temperature_2m_max'];
+    final lows = daily['temperature_2m_min'];
+
+    if (times is! List ||
+        weatherCodes is! List ||
+        highs is! List ||
+        lows is! List) {
       return const <CourseWeatherForecastItem>[];
     }
 
-    try {
-      final response = await _weatherApiService.getWeather(
-        latitude: club.latitude!,
-        longitude: club.longitude!,
+    final count = <int>[
+      times.length,
+      weatherCodes.length,
+      highs.length,
+      lows.length,
+      7,
+    ].reduce((value, element) => value < element ? value : element);
+
+    return List<CourseWeatherForecastItem>.generate(count, (index) {
+      final weatherCode = _roundToInt(weatherCodes[index]) ?? 0;
+      final descriptor = _weatherDescriptor(weatherCode);
+      return CourseWeatherForecastItem(
+        dayLabel: _dayLabel(times[index]?.toString() ?? ''),
+        highCelsius: _roundToInt(highs[index]) ?? 0,
+        lowCelsius: _roundToInt(lows[index]) ?? 0,
+        weatherLabel: descriptor.label,
+        weatherIcon: descriptor.icon,
+        hourlyForecast: _hourlyForecastForDate(
+          date: times[index]?.toString() ?? '',
+          hourlyForecast: hourlyForecast,
+        ),
       );
-      final daily = _asMap(response['daily']);
-      if (daily == null) {
-        return const <CourseWeatherForecastItem>[];
-      }
+    });
+  }
 
-      final times = daily['time'];
-      final weatherCodes = daily['weather_code'];
-      final highs = daily['temperature_2m_max'];
-      final lows = daily['temperature_2m_min'];
+  List<CourseWeatherHourlyForecastItem> _parseHourlyForecast(
+    Map<String, dynamic> hourly,
+  ) {
+    final times = hourly['time'];
+    final temperatures = hourly['temperature_2m'];
+    final weatherCodes = hourly['weather_code'];
+    final precipitationProbabilities = hourly['precipitation_probability'];
 
-      if (times is! List || weatherCodes is! List || highs is! List || lows is! List) {
-        return const <CourseWeatherForecastItem>[];
-      }
-
-      final count = <int>[
-        times.length,
-        weatherCodes.length,
-        highs.length,
-        lows.length,
-      ].reduce((value, element) => value < element ? value : element);
-
-      return List<CourseWeatherForecastItem>.generate(count, (index) {
-        final weatherCode = _roundToInt(weatherCodes[index]) ?? 0;
-        final descriptor = _weatherDescriptor(weatherCode);
-        return CourseWeatherForecastItem(
-          dayLabel: _dayLabel(times[index]?.toString() ?? ''),
-          highCelsius: _roundToInt(highs[index]) ?? 0,
-          lowCelsius: _roundToInt(lows[index]) ?? 0,
-          weatherLabel: descriptor.label,
-          weatherIcon: descriptor.icon,
-        );
-      });
-    } catch (_) {
-      return const <CourseWeatherForecastItem>[];
+    if (times is! List || temperatures is! List || weatherCodes is! List) {
+      return const <CourseWeatherHourlyForecastItem>[];
     }
+
+    final count = <int>[
+      times.length,
+      temperatures.length,
+      weatherCodes.length,
+      if (precipitationProbabilities is List) precipitationProbabilities.length,
+    ].reduce((value, element) => value < element ? value : element);
+
+    return List<CourseWeatherHourlyForecastItem>.generate(count, (index) {
+      final weatherCode = _roundToInt(weatherCodes[index]) ?? 0;
+      final descriptor = _weatherDescriptor(weatherCode);
+      return CourseWeatherHourlyForecastItem(
+        time:
+            DateTime.tryParse(times[index]?.toString() ?? '') ?? DateTime.now(),
+        temperatureCelsius: _roundToInt(temperatures[index]) ?? 0,
+        weatherLabel: descriptor.label,
+        weatherIcon: descriptor.icon,
+        precipitationProbability: precipitationProbabilities is List
+            ? (_roundToInt(precipitationProbabilities[index]) ?? 0)
+            : 0,
+      );
+    });
+  }
+
+  List<CourseWeatherHourlyForecastItem> _hourlyForecastForDate({
+    required String date,
+    required List<CourseWeatherHourlyForecastItem> hourlyForecast,
+  }) {
+    final parsed = DateTime.tryParse(date);
+    if (parsed == null) {
+      return const <CourseWeatherHourlyForecastItem>[];
+    }
+
+    return hourlyForecast.where((item) {
+      return item.time.year == parsed.year &&
+          item.time.month == parsed.month &&
+          item.time.day == parsed.day;
+    }).toList();
   }
 
   String _distanceLabel(Map<String, dynamic>? recommendation) {
@@ -416,15 +498,18 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
 
     for (final candidate in candidates) {
       if (candidate is List) {
-        final urls = candidate.map((item) {
-          if (item is Map<String, dynamic>) {
-            return item['url']?.toString() ??
-                item['imageUrl']?.toString() ??
-                item['src']?.toString() ??
-                '';
-          }
-          return item?.toString() ?? '';
-        }).where((item) => item.trim().isNotEmpty).toList();
+        final urls = candidate
+            .map((item) {
+              if (item is Map<String, dynamic>) {
+                return item['url']?.toString() ??
+                    item['imageUrl']?.toString() ??
+                    item['src']?.toString() ??
+                    '';
+              }
+              return item?.toString() ?? '';
+            })
+            .where((item) => item.trim().isNotEmpty)
+            .toList();
 
         if (urls.isNotEmpty) {
           return urls;

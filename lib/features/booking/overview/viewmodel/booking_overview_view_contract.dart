@@ -6,6 +6,7 @@ abstract class BookingOverviewViewContract {
   Stream<BookingOverviewNavEffect> get navEffects;
   void onUserIntent(BookingOverviewUserIntent intent);
   Future<void> onRefresh(BookingOverviewTab tab);
+  Future<void> onRefreshCalendar();
 }
 
 class BookingOverviewViewState extends ViewState {
@@ -16,6 +17,7 @@ class BookingOverviewViewState extends ViewState {
     required this.isPastLoading,
     required this.hasLoadedUpcoming,
     required this.hasLoadedPast,
+    required this.viewMode,
   }) : super();
 
   static const initial = BookingOverviewViewState(
@@ -25,6 +27,7 @@ class BookingOverviewViewState extends ViewState {
     isPastLoading: false,
     hasLoadedUpcoming: false,
     hasLoadedPast: false,
+    viewMode: BookingOverviewViewMode.list,
   );
 
   final List<BookingModel> upcomingBookings;
@@ -33,6 +36,9 @@ class BookingOverviewViewState extends ViewState {
   final bool isPastLoading;
   final bool hasLoadedUpcoming;
   final bool hasLoadedPast;
+  final BookingOverviewViewMode viewMode;
+
+  bool get isCalendarLoading => isUpcomingLoading || isPastLoading;
 
   BookingOverviewViewState copyWith({
     List<BookingModel>? upcomingBookings,
@@ -41,6 +47,7 @@ class BookingOverviewViewState extends ViewState {
     bool? isPastLoading,
     bool? hasLoadedUpcoming,
     bool? hasLoadedPast,
+    BookingOverviewViewMode? viewMode,
   }) {
     return BookingOverviewViewState(
       upcomingBookings: upcomingBookings ?? this.upcomingBookings,
@@ -49,11 +56,14 @@ class BookingOverviewViewState extends ViewState {
       isPastLoading: isPastLoading ?? this.isPastLoading,
       hasLoadedUpcoming: hasLoadedUpcoming ?? this.hasLoadedUpcoming,
       hasLoadedPast: hasLoadedPast ?? this.hasLoadedPast,
+      viewMode: viewMode ?? this.viewMode,
     );
   }
 }
 
 enum BookingOverviewTab { upcoming, past }
+
+enum BookingOverviewViewMode { list, calendar }
 
 sealed class BookingOverviewUserIntent implements UserIntent {
   const BookingOverviewUserIntent();
@@ -73,6 +83,12 @@ class OnTabChanged extends BookingOverviewUserIntent {
   const OnTabChanged(this.tab);
 
   final BookingOverviewTab tab;
+}
+
+class OnBookingOverviewViewModeChanged extends BookingOverviewUserIntent {
+  const OnBookingOverviewViewModeChanged(this.viewMode);
+
+  final BookingOverviewViewMode viewMode;
 }
 
 class OnViewBookingDetailClick extends BookingOverviewUserIntent {

@@ -11,6 +11,7 @@ import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
 
 const double _compactDetailPhoneInputHeight = 54;
+const bool _showGolfKakiPlayerActions = false;
 
 class BookingSubmissionDetailContent extends StatefulWidget {
   const BookingSubmissionDetailContent({
@@ -172,6 +173,10 @@ class _BookingSubmissionDetailContentState
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (state.isLoadingSlotDetails) ...[
+                    const SizedBox(height: 10),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
                   const SizedBox(height: 12),
                   ..._buildCategoryCostRows(state),
                   const Padding(
@@ -255,19 +260,32 @@ class _BookingSubmissionDetailContentState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Manage Players',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  SizedBox(
+                    height: 44,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Manage Players',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'Close',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Pick a saved Golf Kaki or add a new golfer here. New golfers can be saved back into your friend list.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
                   const SizedBox(height: 16),
                   Expanded(
                     child: ListenableBuilder(
@@ -434,14 +452,38 @@ class _BookingSubmissionDetailContentState
       label: 'Junior',
       unitPrice: state.juniorPricePerPerson,
     );
-    if (state.buggySurcharge > 0) {
+    if (state.buggyFeeTotal > 0) {
       if (rows.isNotEmpty) {
         rows.add(const SizedBox(height: 8));
       }
       rows.add(
         _CostRow(
           label:
-              'Buggy surcharge - ${state.buggySurchargeUnitCount}x ${CurrencyUtil.formatPrice(40, state.currency)}',
+              'Buggy add-on - ${state.buggyAddOnRiderCount}x ${CurrencyUtil.formatPrice(state.buggyFeePerPlayer, state.currency)}',
+          value: state.buggyFeeTotalLabel,
+        ),
+      );
+    }
+    if (state.caddyFeeTotal > 0) {
+      if (rows.isNotEmpty) {
+        rows.add(const SizedBox(height: 8));
+      }
+      rows.add(
+        _CostRow(
+          label:
+              'Caddy - ${state.caddieCount}x ${CurrencyUtil.formatPrice(state.caddyFee, state.currency)}',
+          value: state.caddyFeeTotalLabel,
+        ),
+      );
+    }
+    if (state.singleRiderSurchargeTotal > 0) {
+      if (rows.isNotEmpty) {
+        rows.add(const SizedBox(height: 8));
+      }
+      rows.add(
+        _CostRow(
+          label:
+              'Single rider surcharge - ${state.singleRiderSurchargeUnitCount}x ${CurrencyUtil.formatPrice(state.singleRiderSurcharge, state.currency)}',
           value: state.buggySurchargeLabel,
         ),
       );
@@ -647,29 +689,30 @@ class _PlayerManagementSummaryCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Players',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Players',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    _PlayerSummaryPill(
+                      label: 'Players',
+                      value: '$completedPlayers / $playerCount ready',
+                      icon: Icons.groups_2_outlined,
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 10),
               FilledButton.tonalIcon(
                 onPressed: onManagePlayers,
                 icon: const Icon(Icons.group_add_outlined),
                 label: const Text('Manage'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _PlayerSummaryPill(
-                label: 'Players',
-                value: '$completedPlayers / $playerCount ready',
-                icon: Icons.groups_2_outlined,
               ),
             ],
           ),
@@ -767,13 +810,15 @@ class _PlayerDetailsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _PlayerQuickActionsRow(
-              isLoadingFriends: isLoadingFriends,
-              hasSavedFriends: savedFriends.isNotEmpty,
-              onPickFriend: () => onPickFriend(context, index),
-              onSaveFriend: () => onSaveFriend(index),
-            ),
-            const SizedBox(height: 12),
+            if (_showGolfKakiPlayerActions) ...[
+              _PlayerQuickActionsRow(
+                isLoadingFriends: isLoadingFriends,
+                hasSavedFriends: savedFriends.isNotEmpty,
+                onPickFriend: () => onPickFriend(context, index),
+                onSaveFriend: () => onSaveFriend(index),
+              ),
+              const SizedBox(height: 12),
+            ],
             _PlayerCategorySelector(
               value: index < playerDetails.length
                   ? playerDetails[index].category
@@ -844,42 +889,49 @@ class _PlayerCategorySelector extends StatelessWidget {
         border: Border.all(color: const Color(0x14000000)),
       ),
       child: Row(
-        children: _playerCategoryOptions.map((option) {
+        children: _playerCategoryOptions.indexed.expand((entry) {
+          final index = entry.$1;
+          final option = entry.$2;
           final isSelected =
               _normalizePlayerCategoryValue(value) == option.value;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => onChanged(option.value),
-                child: Ink(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFE8F5EC)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+
+          return <Widget>[
+            if (index > 0)
+              Container(width: 1, height: 24, color: const Color(0x1F000000)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => onChanged(option.value),
+                  child: Ink(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF0D7A3A)
+                          ? const Color(0xFFE8F5EC)
                           : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF0D7A3A)
+                            : Colors.transparent,
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    option.label,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: isSelected
-                          ? const Color(0xFF0D7A3A)
-                          : const Color(0xFF17397C),
-                      fontWeight: FontWeight.w700,
+                    child: Text(
+                      option.label,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: isSelected
+                            ? const Color(0xFF0D7A3A)
+                            : const Color(0xFF17397C),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          );
+          ];
         }).toList(),
       ),
     );
@@ -1181,13 +1233,6 @@ class _BookingFriendPickerSheetState extends State<_BookingFriendPickerSheet> {
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Pick someone from your saved Golf Kakis list.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
               ),
               const SizedBox(height: 16),
               TextField(

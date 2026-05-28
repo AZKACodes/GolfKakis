@@ -8,6 +8,7 @@ import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/bo
 import 'package:golf_kakis/features/booking/submission/confirmation/viewmodel/booking_submission_confirmation_view_model.dart';
 import 'package:golf_kakis/features/booking/submission/success/booking_submission_success_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
+import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 
 class BookingSubmissionConfirmationPage extends StatefulWidget {
   const BookingSubmissionConfirmationPage({
@@ -61,6 +62,8 @@ class _BookingSubmissionConfirmationPageState
   late final BookingSubmissionConfirmationViewModel _viewModel;
   StreamSubscription<BookingSubmissionConfirmationNavEffect>?
   _navEffectSubscription;
+  bool _isExpiredDialogOpen = false;
+  String? _syncedAccessToken;
 
   @override
   void initState() {
@@ -93,6 +96,19 @@ class _BookingSubmissionConfirmationPageState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final accessToken = SessionScope.of(context).state.accessToken;
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        accessToken == _syncedAccessToken) {
+      return;
+    }
+    _syncedAccessToken = accessToken;
+    _viewModel.performAction(OnAccessTokenAvailable(accessToken));
+  }
+
+  @override
   void dispose() {
     _navEffectSubscription?.cancel();
     _viewModel.dispose();
@@ -104,17 +120,29 @@ class _BookingSubmissionConfirmationPageState
       case NavigateBack():
         Navigator.of(context).maybePop();
       case NavigateToBookingSubmissionSuccess():
-        Navigator.of(context).pushAndRemoveUntil(
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionSuccessPage(
               bookingId: effect.bookingId,
               bookingRef: effect.bookingRef,
+              bookingStatus: effect.bookingStatus,
               bookingDate: effect.bookingDate,
               golfClubName: effect.golfClubName,
               golfClubSlug: effect.golfClubSlug,
               teeTimeSlot: effect.teeTimeSlot,
               pricePerPerson: effect.pricePerPerson,
               currency: effect.currency,
+              paymentMethod: effect.paymentMethod,
+              greenFeeTotal: effect.greenFeeTotal,
+              buggyEstimatedTotal: effect.buggyEstimatedTotal,
+              caddieTotal: effect.caddieTotal,
+              insuranceTotal: effect.insuranceTotal,
+              sstTotal: effect.sstTotal,
+              discountAmount: effect.discountAmount,
+              finalAmount: effect.finalAmount,
               hostName: effect.hostName,
               hostPhoneNumber: effect.hostPhoneNumber,
               playerCount: effect.playerCount,
@@ -125,30 +153,21 @@ class _BookingSubmissionConfirmationPageState
           (route) => route.isFirst,
         );
       case ShowBookingSessionExpired():
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('Booking Session Expired'),
-              content: const Text('Your booking session has expired.'),
-              actions: [
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const BookingSubmissionSlotPage(),
-                      ),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  child: const Text('Back to Slots'),
-                ),
-              ],
-            );
-          },
-        );
+        _showBookingSessionExpiredDialog();
+      case DismissBookingSessionExpired():
+        if (_isExpiredDialogOpen) {
+          _isExpiredDialogOpen = false;
+          Navigator.of(context, rootNavigator: true).maybePop();
+        }
+      case ShowErrorMessage():
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(effect.message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
       case NavigateToBookingSubmissionStart():
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute<void>(
@@ -157,6 +176,89 @@ class _BookingSubmissionConfirmationPageState
           (route) => route.isFirst,
         );
     }
+  }
+
+  void _showBookingSessionExpiredDialog() {
+    if (_isExpiredDialogOpen) {
+      return;
+    }
+    _isExpiredDialogOpen = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            final state = _viewModel.viewState;
+            final isExtending =
+                state is BookingSubmissionConfirmationDataLoaded &&
+                state.isExtendingHold;
+
+            return AlertDialog(
+              title: const Text('Do you need more time?'),
+              content: const Text(
+                'Your booking session is almost expired. Extend the hold to continue this booking.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isExtending
+                      ? null
+                      : () {
+                          _isExpiredDialogOpen = false;
+                          Navigator.of(dialogContext).pop();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const BookingSubmissionSlotPage(),
+                            ),
+                            (route) => route.isFirst,
+                          );
+                        },
+                  child: const Text('No'),
+                ),
+                FilledButton(
+                  onPressed: isExtending
+                      ? null
+                      : () {
+                          final accessToken = SessionScope.of(
+                            context,
+                          ).state.accessToken;
+                          if (accessToken == null || accessToken.isEmpty) {
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please sign in again to extend this hold.',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            return;
+                          }
+                          _viewModel.onUserIntent(
+                            OnExtendBookingHoldClick(accessToken: accessToken),
+                          );
+                        },
+                  child: isExtending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Yes'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      _isExpiredDialogOpen = false;
+    });
   }
 
   @override

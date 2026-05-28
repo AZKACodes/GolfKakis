@@ -20,7 +20,7 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
   @override
   void initState() {
     super.initState();
-    _controller = PageController(viewportFraction: 0.92);
+    _controller = PageController(viewportFraction: 0.9);
   }
 
   @override
@@ -31,25 +31,16 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Announcement',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
         SizedBox(
-          height: 220,
+          height: 208,
           child: widget.items.isEmpty
-              ? const _EmptyAnnouncementCard()
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _EmptyAnnouncementCard(),
+                )
               : PageView.builder(
                   padEnds: false,
                   controller: _controller,
@@ -68,7 +59,11 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
                         left: isFirst ? 16 : 0,
                         right: isLast ? 16 : 10,
                       ),
-                      child: HomeAnnouncementItemCard(item: item, index: index),
+                      child: HomeAnnouncementItemCard(
+                        item: item,
+                        index: index,
+                        onTap: () => _showAnnouncementDetails(context, item),
+                      ),
                     );
                   },
                 ),
@@ -86,7 +81,7 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: isActive
-                      ? const Color(0xFF173B7A)
+                      ? const Color(0xFF0A1F1A)
                       : const Color(0xFFD7DEE7),
                   borderRadius: BorderRadius.circular(999),
                 ),
@@ -95,6 +90,123 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
           ),
         ],
       ],
+    );
+  }
+}
+
+void _showAnnouncementDetails(
+  BuildContext context,
+  HomeAnnouncementViewData item,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (context) {
+      return _AnnouncementDetailsSheet(item: item);
+    },
+  );
+}
+
+class _AnnouncementDetailsSheet extends StatelessWidget {
+  const _AnnouncementDetailsSheet({required this.item});
+
+  final HomeAnnouncementViewData item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final imageUrl = item.imageUrl?.trim();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        0,
+        20,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: hasImage
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const _AnnouncementSheetPlaceholder();
+                      },
+                    )
+                  : const _AnnouncementSheetPlaceholder(),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF6F0),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              item.announcementType,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: const Color(0xFF1E5B4A),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            item.title,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+              height: 1.08,
+            ),
+          ),
+          if (item.subtitle.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              item.subtitle,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AnnouncementSheetPlaceholder extends StatelessWidget {
+  const _AnnouncementSheetPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[Color(0xFF0A1F1A), Color(0xFF2FBF71)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(Icons.campaign_outlined, color: Colors.white, size: 42),
+      ),
     );
   }
 }
@@ -109,7 +221,7 @@ class _EmptyAnnouncementCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFF173B7A), Color(0xFF2F7BFF)],
+          colors: <Color>[Color(0xFF0A1F1A), Color(0xFF2FBF71)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
