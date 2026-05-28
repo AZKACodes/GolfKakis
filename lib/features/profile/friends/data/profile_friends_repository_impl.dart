@@ -30,20 +30,38 @@ class ProfileFriendsRepositoryImpl implements ProfileFriendsRepository {
   }
 
   @override
-  Future<List<ProfileFriendModel>> onFetchAvailableContacts({
-    required List<ProfileFriendModel> savedFriends,
-  }) {
-    return _loadAvailableContacts(savedFriends);
+  Future<bool> requestContactsPermission() async {
+    final hasPermission = await FlutterContacts.requestPermission(
+      readonly: true,
+    );
+    if (hasPermission) {
+      return true;
+    }
+
+    final status = await Permission.contacts.status;
+    return status.isGranted || status.isLimited;
   }
 
   @override
-  Future<bool> requestContactsPermission() async {
-    final status = await Permission.contacts.request();
-    if (!status.isGranted && !status.isLimited) {
-      return false;
+  Future<ProfileFriendModel?> onPickDeviceContact() async {
+    final pickedContact = await FlutterContacts.openExternalPick();
+    if (pickedContact == null) {
+      return null;
     }
 
-    return FlutterContacts.requestPermission(readonly: true);
+    final contact = pickedContact.phones.isNotEmpty
+        ? pickedContact
+        : await FlutterContacts.getContact(
+            pickedContact.id,
+            withProperties: true,
+            withThumbnail: false,
+            withPhoto: false,
+          );
+    if (contact == null) {
+      return null;
+    }
+
+    return _toFriendModel(contact);
   }
 
   @override
@@ -90,31 +108,6 @@ class ProfileFriendsRepositoryImpl implements ProfileFriendsRepository {
     return accessToken;
   }
 
-  Future<List<ProfileFriendModel>> _loadAvailableContacts(
-    List<ProfileFriendModel> friends,
-  ) async {
-    if (!await _hasContactsPermission()) {
-      return friends;
-    }
-
-    try {
-      final rawContacts = await FlutterContacts.getContacts(
-        withProperties: true,
-        withPhoto: false,
-      );
-
-      return _mergeAndSortFriends(
-        primary: rawContacts
-            .map(_toFriendModel)
-            .whereType<ProfileFriendModel>()
-            .toList(),
-        secondary: friends,
-      );
-    } catch (_) {
-      return friends;
-    }
-  }
-
   ProfileFriendModel? _toFriendModel(Contact contact) {
     final phoneNumber = contact.phones
         .map((phone) => phone.number.trim())
@@ -140,26 +133,5 @@ class ProfileFriendsRepositoryImpl implements ProfileFriendsRepository {
   Future<bool> _hasContactsPermission() async {
     final status = await Permission.contacts.status;
     return status.isGranted || status.isLimited;
-  }
-
-  List<ProfileFriendModel> _mergeAndSortFriends({
-    required List<ProfileFriendModel> primary,
-    required List<ProfileFriendModel> secondary,
-  }) {
-    final byKey = <String, ProfileFriendModel>{};
-    for (final friend in primary) {
-      byKey[friend.contactKey] = friend;
-    }
-    for (final friend in secondary) {
-      byKey.putIfAbsent(friend.contactKey, () => friend);
-    }
-
-    final merged = byKey.values.toList()
-      ..sort(
-        (left, right) => left.effectiveDisplayName.toLowerCase().compareTo(
-          right.effectiveDisplayName.toLowerCase(),
-        ),
-      );
-    return merged;
   }
 }

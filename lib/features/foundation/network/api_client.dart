@@ -209,7 +209,7 @@ class ApiClient {
 
     try {
       if (shouldRefreshSession && _shouldRefreshBeforeRequest()) {
-        debugPrint('[API] refreshing app session before $method $uri');
+        debugPrint('[API] Refreshing App Session Before $method $uri');
         final refreshed = await _sessionRefreshProvider!.call();
         if (!refreshed) {
           throw ApiException(
@@ -222,7 +222,7 @@ class ApiClient {
       return _handleJsonResponse(method: method, uri: uri, response: response);
     } on ApiException catch (error) {
       if (shouldRefreshSession && await _shouldRetryAfterRefresh(error)) {
-        debugPrint('[API] refreshing app session before retrying $method $uri');
+        debugPrint('[API] Refreshing App Session Before Retrying $method $uri');
         final refreshed = await _sessionRefreshProvider!.call();
         if (refreshed) {
           final response = await request();

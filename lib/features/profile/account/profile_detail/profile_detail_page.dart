@@ -59,23 +59,29 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
       case ProfileDetailNavigateBack():
         Navigator.of(context).maybePop();
       case ProfileDetailSaved():
-        final loadedState = switch (_viewModel.viewState) {
-          ProfileDetailDataLoaded() =>
-            _viewModel.viewState as ProfileDetailDataLoaded,
-        };
-        SessionScope.of(context).updateProfile(
-          fullName: loadedState.realName.trim(),
-          nickname: loadedState.username.trim(),
-          occupation: loadedState.gender.trim(),
-          email: loadedState.email.trim(),
-          phoneNumber: loadedState.phoneNumber.trim(),
-          avatarIndex: loadedState.avatarIndex,
-          avatarImagePath: loadedState.avatarImagePath,
-        );
+        _syncSessionProfile();
+      case ProfileDetailProfilePictureUpdated():
+        _syncSessionProfile();
       case ProfileDetailDeactivated():
         unawaited(SessionScope.of(context).logout());
         Navigator.of(context).maybePop();
     }
+  }
+
+  void _syncSessionProfile() {
+    final loadedState = switch (_viewModel.viewState) {
+      ProfileDetailDataLoaded() =>
+        _viewModel.viewState as ProfileDetailDataLoaded,
+    };
+    SessionScope.of(context).updateProfile(
+      fullName: loadedState.realName.trim(),
+      nickname: loadedState.username.trim(),
+      occupation: loadedState.gender.trim(),
+      email: loadedState.email.trim(),
+      phoneNumber: loadedState.phoneNumber.trim(),
+      avatarIndex: loadedState.avatarIndex,
+      avatarImagePath: loadedState.avatarImagePath,
+    );
   }
 
   @override

@@ -26,6 +26,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     required this.phoneNumber,
     required this.avatarIndex,
     this.avatarImagePath,
+    required this.initialRealName,
     required this.initialUsername,
     required this.initialGender,
     required this.initialDateOfBirth,
@@ -50,9 +51,11 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       phoneNumber: profile.phoneNumber,
       avatarIndex: profile.avatarIndex,
       avatarImagePath: profile.avatarImagePath,
+      initialRealName: profile.displayName,
       initialUsername: profile.nickname,
-      initialGender:
-          profile.occupation == '-' ? emptyString : profile.occupation,
+      initialGender: profile.occupation == '-'
+          ? emptyString
+          : profile.occupation,
       initialDateOfBirth: dateOfBirth,
       initialEmail: profile.email,
       initialAvatarIndex: profile.avatarIndex,
@@ -69,6 +72,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
   final String phoneNumber;
   final int avatarIndex;
   final String? avatarImagePath;
+  final String initialRealName;
   final String initialUsername;
   final String initialGender;
   final String initialDateOfBirth;
@@ -87,12 +91,14 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       : null;
 
   bool get canSave =>
+      realName.trim().isNotEmpty &&
       username.trim().isNotEmpty &&
       email.trim().isNotEmpty &&
       hasChanges &&
       !isSaving;
 
   bool get hasChanges =>
+      realName.trim() != initialRealName.trim() ||
       username.trim() != initialUsername.trim() ||
       gender.trim() != initialGender.trim() ||
       dateOfBirth.trim() != initialDateOfBirth.trim() ||
@@ -109,6 +115,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     String? phoneNumber,
     int? avatarIndex,
     String? avatarImagePath,
+    String? initialRealName,
     String? initialUsername,
     String? initialGender,
     String? initialDateOfBirth,
@@ -130,6 +137,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       avatarIndex: avatarIndex ?? this.avatarIndex,
       avatarImagePath: avatarImagePath ?? this.avatarImagePath,
+      initialRealName: initialRealName ?? this.initialRealName,
       initialUsername: initialUsername ?? this.initialUsername,
       initialGender: initialGender ?? this.initialGender,
       initialDateOfBirth: initialDateOfBirth ?? this.initialDateOfBirth,
@@ -152,6 +160,12 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
 
 sealed class ProfileDetailUserIntent extends UserIntent {
   const ProfileDetailUserIntent() : super();
+}
+
+class OnProfileDetailRealNameChanged extends ProfileDetailUserIntent {
+  const OnProfileDetailRealNameChanged(this.value);
+
+  final String value;
 }
 
 class OnProfileDetailUsernameChanged extends ProfileDetailUserIntent {
@@ -229,6 +243,10 @@ class ProfileDetailNavigateBack extends ProfileDetailNavEffect {
 
 class ProfileDetailSaved extends ProfileDetailNavEffect {
   const ProfileDetailSaved();
+}
+
+class ProfileDetailProfilePictureUpdated extends ProfileDetailNavEffect {
+  const ProfileDetailProfilePictureUpdated();
 }
 
 class ProfileDetailDeactivated extends ProfileDetailNavEffect {

@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+
+const String _defaultProfileImageAsset =
+    'assets/images/default_profile_pic.png';
 
 class HomeHeaderSection extends StatelessWidget {
   const HomeHeaderSection({
@@ -18,9 +23,6 @@ class HomeHeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final resolvedAvatarUrl = avatarUrl?.trim();
-    final hasAvatarImage =
-        resolvedAvatarUrl != null && resolvedAvatarUrl.isNotEmpty;
     final headerName = _resolveHeaderName(greeting);
     final subtitle = showAvatar
         ? 'Ready for your next round?'
@@ -31,22 +33,9 @@ class HomeHeaderSection extends StatelessWidget {
         if (showAvatar) ...[
           CircleAvatar(
             radius: 23,
-            backgroundColor:
-                _avatarBackgroundColors[avatarIndex %
-                    _avatarBackgroundColors.length],
-            backgroundImage: hasAvatarImage
-                ? NetworkImage(resolvedAvatarUrl)
-                : null,
-            onBackgroundImageError: hasAvatarImage ? (_, _) {} : null,
-            child: hasAvatarImage
-                ? null
-                : Text(
-                    _resolveInitials(greeting),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF0E2A47),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+            backgroundColor: colorScheme.surface,
+            backgroundImage: _profileImageProvider(avatarUrl),
+            onBackgroundImageError: (_, _) {},
           ),
           const SizedBox(width: 12),
         ],
@@ -134,26 +123,16 @@ String _resolveHeaderName(String greeting) {
   return cleaned;
 }
 
-String _resolveInitials(String greeting) {
-  final parts = greeting
-      .replaceFirst('Welcome back,', '')
-      .replaceFirst('Welcome,', '')
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-
-  if (parts.isEmpty) {
-    return 'GK';
+ImageProvider _profileImageProvider(String? imagePath) {
+  final resolvedPath = imagePath?.trim();
+  if (resolvedPath == null ||
+      resolvedPath.isEmpty ||
+      resolvedPath.contains('/upload/sign/')) {
+    return const AssetImage(_defaultProfileImageAsset);
   }
-
-  final letters = parts.take(2).map((part) => part[0].toUpperCase()).join();
-  return letters.isEmpty ? 'GK' : letters;
+  if (resolvedPath.startsWith('http://') ||
+      resolvedPath.startsWith('https://')) {
+    return NetworkImage(resolvedPath);
+  }
+  return FileImage(File(resolvedPath));
 }
-
-const List<Color> _avatarBackgroundColors = <Color>[
-  Color(0xFFFFE1A6),
-  Color(0xFFFFC7C7),
-  Color(0xFFBFE7D6),
-  Color(0xFFC6D7FF),
-];

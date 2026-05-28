@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
-import '../../foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
+
+import '../../foundation/network/network.dart';
 
 class BookingApiService {
   BookingApiService({ApiClient? apiClient})
@@ -114,23 +114,11 @@ class BookingApiService {
     };
     final body = request.toJson();
 
-    debugPrint('onSubmitBooking headers: ${additionalHeaders.keys.toList()}');
-    debugPrint('onSubmitBooking body: $body');
-
-    return _apiClient
-        .postJson(
-          '/booking/submit',
-          body: body,
-          headers: additionalHeaders.isEmpty ? null : additionalHeaders,
-        )
-        .then((response) {
-          debugPrint('onSubmitBooking response: $response');
-          return response;
-        })
-        .catchError((error) {
-          debugPrint('onSubmitBooking error: $error');
-          throw error;
-        });
+    return _apiClient.postJson(
+      '/booking/submit',
+      body: body,
+      headers: additionalHeaders.isEmpty ? null : additionalHeaders,
+    );
   }
 
   Future<dynamic> onCreateBookingHold({
@@ -141,22 +129,13 @@ class BookingApiService {
       if (request.idempotencyKey != null && request.idempotencyKey!.isNotEmpty)
         'idempotency-key': request.idempotencyKey!,
     };
-    final resolvedHeaders = _apiClient.resolveHeaders(additionalHeaders);
     final body = request.toJson();
 
-    debugPrint('onCreateBookingHold headers: $resolvedHeaders');
-    debugPrint('onCreateBookingHold body: $body');
-
-    return _apiClient
-        .postJson('/booking/hold', body: body, headers: additionalHeaders)
-        .then((response) {
-          debugPrint('onCreateBookingHold response: $response');
-          return response;
-        })
-        .catchError((error) {
-          debugPrint('onCreateBookingHold error: $error');
-          throw error;
-        });
+    return _apiClient.postJson(
+      '/booking/hold',
+      body: body,
+      headers: additionalHeaders,
+    );
   }
 
   Future<dynamic> onExtendBookingHold({

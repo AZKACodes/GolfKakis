@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/model/auth/auth_user.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
@@ -6,12 +8,15 @@ import 'package:golf_kakis/features/foundation/model/response/register_otp_verif
 import 'package:golf_kakis/features/foundation/model/response/send_whatsapp_otp_response.dart';
 import 'package:golf_kakis/features/foundation/model/response/setup_user_pin_response.dart';
 import 'package:golf_kakis/features/foundation/network/network.dart';
+import 'package:http/http.dart' as http;
 
 class ProfileApiService {
-  ProfileApiService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  ProfileApiService({ApiClient? apiClient, http.Client? uploadClient})
+    : _apiClient = apiClient ?? ApiClient(),
+      _uploadClient = uploadClient ?? http.Client();
 
   final ApiClient _apiClient;
+  final http.Client _uploadClient;
 
   Future<dynamic> onFetchUserProfile() {
     return _apiClient.getJson('/profile/me');
@@ -92,14 +97,13 @@ class ProfileApiService {
       );
     }
 
-    return AuthUser.fromJson(response);
+    return AuthUser.fromJson(_extractUserJson(response));
   }
 
   Future<AuthUser> onUpdateProfile({
     required String accessToken,
     required String name,
     required String username,
-    required String gender,
     required String dateOfBirth,
     required String email,
   }) async {
@@ -108,10 +112,9 @@ class ProfileApiService {
       headers: <String, String>{'Authorization': 'Bearer $accessToken'},
       body: <String, dynamic>{
         'name': name,
-        'username': username,
-        'gender': gender,
-        'dateOfBirth': dateOfBirth,
         'email': email,
+        'dateOfBirth': dateOfBirth,
+        'username': username,
       },
     );
 
@@ -122,35 +125,168 @@ class ProfileApiService {
       );
     }
 
-    final user = response['user'];
-    if (user is Map<String, dynamic>) {
-      return AuthUser.fromJson(user);
+    return AuthUser.fromJson(_extractUserJson(response));
+  }
+
+  Map<String, dynamic> _extractUserJson(Map<String, dynamic> response) {
+    final nestedUser = response['user'];
+    if (nestedUser is Map<String, dynamic>) {
+      return nestedUser;
     }
 
-    return AuthUser.fromJson(response);
+    final nestedData = response['data'];
+    if (nestedData is Map<String, dynamic>) {
+      final dataUser = nestedData['user'];
+      if (dataUser is Map<String, dynamic>) {
+        return dataUser;
+      }
+
+      final dataProfile = nestedData['profile'];
+      if (dataProfile is Map<String, dynamic>) {
+        return dataProfile;
+      }
+
+      return nestedData;
+    }
+
+    final nestedProfile = response['profile'];
+    if (nestedProfile is Map<String, dynamic>) {
+      return nestedProfile;
+    }
+
+    return response;
   }
 
   Future<String> onUpdateProfilePicture({
     required String accessToken,
     required String imagePath,
   }) async {
-    final response = await _apiClient.postMultipart(
-      '/auth/me/avatar',
+    final imageFile = File(imagePath);
+    final fileName = _fileNameFromPath(imagePath);
+    final contentType = _contentTypeFromFileName(fileName);
+
+    final response = await _apiClient.postJson(
+      '/auth/me/profile-image/upload-url',
       headers: <String, String>{'Authorization': 'Bearer $accessToken'},
-      fields: const <String, String>{},
-      files: <MultipartFilePayload>[
-        MultipartFilePayload(field: 'file', path: imagePath),
-      ],
+      body: <String, dynamic>{'fileName': fileName, 'contentType': contentType},
     );
 
-    if (response is Map<String, dynamic>) {
-      final avatarUrl =
-          response['avatar_url'] as String? ?? response['avatarUrl'] as String?;
-      if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
-        return avatarUrl;
-      }
+    if (response is! Map<String, dynamic>) {
+      throw ApiException(
+        statusCode: 500,
+        message: 'Profile image upload URL returned an invalid response.',
+      );
     }
 
+    final uploadPayload = _extractUploadUrlJson(response);
+    final uploadUrl = _readString(uploadPayload, const <String>[
+      'uploadUrl',
+      'upload_url',
+      'signedUrl',
+      'signed_url',
+      'presignedUrl',
+      'presigned_url',
+      'presignedUploadUrl',
+      'presigned_upload_url',
+      'url',
+    ]);
+
+    if (uploadUrl.isEmpty) {
+      throw ApiException(
+        statusCode: 500,
+        message: 'Profile image upload URL is missing.',
+      );
+    }
+
+    await _uploadProfileImage(
+      uploadUrl: uploadUrl,
+      imageFile: imageFile,
+      contentType: contentType,
+    );
+
+    final imageUrl = _readString(uploadPayload, const <String>[
+      'imageUrl',
+      'image_url',
+      'profileImageUrl',
+      'profile_image_url',
+      'profilePictureUrl',
+      'profile_picture_url',
+      'avatarUrl',
+      'avatar_url',
+      'publicUrl',
+      'public_url',
+      'fileUrl',
+      'file_url',
+      'objectUrl',
+      'object_url',
+    ]);
+
+    return imageUrl;
+  }
+
+  Future<void> _uploadProfileImage({
+    required String uploadUrl,
+    required File imageFile,
+    required String contentType,
+  }) async {
+    final uri = Uri.parse(uploadUrl);
+    final response = await _uploadClient.put(
+      uri,
+      headers: <String, String>{'Content-Type': contentType},
+      body: await imageFile.readAsBytes(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: 'Unable to upload profile image.',
+      );
+    }
+  }
+
+  Map<String, dynamic> _extractUploadUrlJson(Map<String, dynamic> response) {
+    final nestedData = response['data'];
+    if (nestedData is Map<String, dynamic>) {
+      return nestedData;
+    }
+
+    final nestedUpload = response['upload'];
+    if (nestedUpload is Map<String, dynamic>) {
+      return nestedUpload;
+    }
+
+    return response;
+  }
+
+  String _fileNameFromPath(String path) {
+    final segments = Uri.file(path).pathSegments;
+    if (segments.isEmpty || segments.last.trim().isEmpty) {
+      return 'avatar.jpg';
+    }
+    return segments.last;
+  }
+
+  String _contentTypeFromFileName(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return 'image/png';
+    }
+    if (lower.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    if (lower.endsWith('.heic')) {
+      return 'image/heic';
+    }
+    return 'image/jpeg';
+  }
+
+  String _readString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
     return emptyString;
   }
 

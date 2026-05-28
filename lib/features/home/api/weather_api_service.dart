@@ -25,24 +25,23 @@ class WeatherApiService {
           'timezone': 'auto',
         });
 
-    debugPrint('[WeatherApi] GET $forecastUri');
+    debugPrint('[API] GET $forecastUri');
     final response = await _client
         .get(
           forecastUri,
           headers: const <String, String>{'Accept': 'application/json'},
         )
         .timeout(const Duration(seconds: 12));
-    debugPrint(
-      '[WeatherApi] response ${response.statusCode}: ${response.body}',
-    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      debugPrint('[WeatherApi] failed status=${response.statusCode}');
+      debugPrint('[API] FAILED ${response.statusCode} GET $forecastUri');
       throw ApiException(
         statusCode: response.statusCode,
         message: 'Unable to load weather right now.',
       );
     }
+
+    debugPrint('[API] OK ${response.statusCode} GET $forecastUri');
 
     try {
       final decoded = jsonDecode(response.body);

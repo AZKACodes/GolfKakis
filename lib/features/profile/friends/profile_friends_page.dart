@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
 import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
@@ -62,27 +63,6 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
     });
   }
 
-  Future<void> _showAddFriendPicker({
-    required List<ProfileFriendModel> contacts,
-    required Set<String> selectedKeys,
-  }) async {
-    final selectedFriend = await showModalBottomSheet<ProfileFriendModel>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) =>
-          _AddFriendSheet(contacts: contacts, selectedKeys: selectedKeys),
-    );
-
-    if (!mounted || selectedFriend == null) {
-      return;
-    }
-
-    _viewModel.onUserIntent(
-      OnAddFriendToGolfKakis(session: widget.session, friend: selectedFriend),
-    );
-  }
-
   Future<void> _showNicknameEditor(ProfileFriendModel friend) async {
     final result = await showDialog<String>(
       context: context,
@@ -141,6 +121,90 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
     );
   }
 
+  Future<void> _openNativeContactPicker() async {
+    debugPrint('[Friends] Add New Kakis tapped');
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(const SnackBar(content: Text('Opening contacts...')));
+
+    try {
+      debugPrint('[Friends] Calling FlutterContacts.openExternalPick');
+      final pickedContact = await FlutterContacts.openExternalPick();
+      debugPrint(
+        '[Friends] Contact picker returned id=${pickedContact?.id ?? 'null'}',
+      );
+      if (!mounted || pickedContact == null) {
+        return;
+      }
+
+      final contact = pickedContact.phones.isNotEmpty
+          ? pickedContact
+          : await FlutterContacts.getContact(
+              pickedContact.id,
+              withProperties: true,
+              withThumbnail: false,
+              withPhoto: false,
+            );
+      if (!mounted || contact == null) {
+        return;
+      }
+
+      final friend = _friendFromContact(contact);
+      if (friend == null) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(
+            content: Text('Selected contact does not have a phone number.'),
+          ),
+        );
+        return;
+      }
+
+      _viewModel.onUserIntent(
+        OnAddFriendToGolfKakis(session: widget.session, friend: friend),
+      );
+    } catch (_) {
+      debugPrint(
+        '[Friends] Native contact picker failed; requesting permission',
+      );
+      if (!mounted) {
+        return;
+      }
+
+      final hasPermission = await FlutterContacts.requestPermission(
+        readonly: true,
+      );
+      debugPrint('[Friends] Contact permission result=$hasPermission');
+      if (!mounted) {
+        return;
+      }
+      if (!hasPermission) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(content: Text('Contacts permission is required.')),
+        );
+        return;
+      }
+
+      await _openNativeContactPicker();
+    }
+  }
+
+  ProfileFriendModel? _friendFromContact(Contact contact) {
+    final phoneNumber = contact.phones
+        .map((phone) => phone.number.trim())
+        .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+    if (phoneNumber.isEmpty) {
+      return null;
+    }
+
+    final displayName = contact.displayName.trim();
+    final contactKey = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+    return ProfileFriendModel(
+      contactKey: contactKey.isEmpty ? phoneNumber : contactKey,
+      displayName: displayName.isEmpty ? 'Golf Kaki' : displayName,
+      phoneNumber: phoneNumber,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -154,24 +218,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
             onRefresh: () async {
               _viewModel.onUserIntent(OnRefreshFriends(widget.session));
             },
-            onRetryPermission: () => _viewModel.onUserIntent(
-              OnGrantContactsPermission(widget.session),
-            ),
-            onAddFriend: () {
-              if (!viewState.hasPermission) {
-                _viewModel.onUserIntent(
-                  OnGrantContactsPermission(widget.session),
-                );
-                return;
-              }
-
-              _showAddFriendPicker(
-                contacts: viewState.availableContacts,
-                selectedKeys: viewState.friends
-                    .map((friend) => friend.contactKey)
-                    .toSet(),
-              );
-            },
+            onAddNewKaki: () => unawaited(_openNativeContactPicker()),
             onEditNickname: _showNicknameEditor,
             onDeleteFriend: _confirmDeleteFriend,
           ),
@@ -233,110 +280,6 @@ class _NicknameEditorDialogState extends State<_NicknameEditorDialog> {
           child: const Text('Save'),
         ),
       ],
-    );
-  }
-}
-
-class _AddFriendSheet extends StatefulWidget {
-  const _AddFriendSheet({required this.contacts, required this.selectedKeys});
-
-  final List<ProfileFriendModel> contacts;
-  final Set<String> selectedKeys;
-
-  @override
-  State<_AddFriendSheet> createState() => _AddFriendSheetState();
-}
-
-class _AddFriendSheetState extends State<_AddFriendSheet> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final normalizedQuery = _query.trim().toLowerCase();
-    final filteredContacts = widget.contacts.where((contact) {
-      if (normalizedQuery.isEmpty) {
-        return true;
-      }
-
-      return contact.displayName.toLowerCase().contains(normalizedQuery) ||
-          contact.phoneNumber.toLowerCase().contains(normalizedQuery) ||
-          contact.effectiveDisplayName.toLowerCase().contains(normalizedQuery);
-    }).toList();
-
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.72,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Search Contacts',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Pick a contact number to add into My Golf Kakis.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                autofocus: true,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Search by name or number',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) => setState(() => _query = value),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: filteredContacts.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No matching contacts found.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: filteredContacts.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final contact = filteredContacts[index];
-                          final isAdded = widget.selectedKeys.contains(
-                            contact.contactKey,
-                          );
-                          return ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE3EAF8)),
-                            ),
-                            tileColor: const Color(0xFFF8FAFF),
-                            title: Text(contact.displayName),
-                            subtitle: Text(contact.phoneNumber),
-                            trailing: isAdded
-                                ? const Chip(label: Text('Added'))
-                                : const Icon(Icons.add_circle_outline),
-                            onTap: isAdded
-                                ? null
-                                : () => Navigator.of(context).pop(contact),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -8,8 +8,7 @@ class ProfileFriendsView extends StatelessWidget {
   const ProfileFriendsView({
     required this.state,
     required this.onRefresh,
-    required this.onRetryPermission,
-    required this.onAddFriend,
+    required this.onAddNewKaki,
     required this.onEditNickname,
     required this.onDeleteFriend,
     super.key,
@@ -17,8 +16,7 @@ class ProfileFriendsView extends StatelessWidget {
 
   final ProfileFriendsViewState state;
   final Future<void> Function() onRefresh;
-  final VoidCallback onRetryPermission;
-  final VoidCallback onAddFriend;
+  final VoidCallback onAddNewKaki;
   final ValueChanged<ProfileFriendModel> onEditNickname;
   final ValueChanged<ProfileFriendModel> onDeleteFriend;
 
@@ -40,6 +38,8 @@ class ProfileFriendsView extends StatelessWidget {
           children: [
             const _FriendsHeroCard(),
             const SizedBox(height: 16),
+            _AddNewKakisCard(onTap: onAddNewKaki),
+            const SizedBox(height: 16),
             if (state.errorMessage != null) ...[
               ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
@@ -48,22 +48,7 @@ class ProfileFriendsView extends StatelessWidget {
               const LinearProgressIndicator(),
               const SizedBox(height: 12),
             ],
-            if (state.hasPermission) ...[
-              _AddFriendCard(onAddFriend: onAddFriend),
-              const SizedBox(height: 12),
-            ],
-            if (!state.hasPermission) ...[
-              _ContactsPermissionCard(onRetryPermission: onRetryPermission),
-              if (state.hasFriends) ...[
-                const SizedBox(height: 12),
-                _FriendsListSection(
-                  friends: state.friends,
-                  savingContactKey: state.savingContactKey,
-                  onEditNickname: onEditNickname,
-                  onDeleteFriend: onDeleteFriend,
-                ),
-              ],
-            ] else if (!state.hasFriends)
+            if (!state.hasFriends)
               const _EmptyFriendsCard()
             else
               _FriendsListSection(
@@ -72,6 +57,76 @@ class ProfileFriendsView extends StatelessWidget {
                 onEditNickname: onEditNickname,
                 onDeleteFriend: onDeleteFriend,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddNewKakisCard extends StatelessWidget {
+  const _AddNewKakisCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE1E7E4)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x10000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF6F0),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Icon(
+                Icons.contacts_outlined,
+                color: Color(0xFF1E5B4A),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Add New Kakis',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Open your phone contacts',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded),
           ],
         ),
       ),
@@ -141,35 +196,6 @@ class _FriendsHeroCard extends StatelessWidget {
   }
 }
 
-class _ContactsPermissionCard extends StatelessWidget {
-  const _ContactsPermissionCard({required this.onRetryPermission});
-
-  final VoidCallback onRetryPermission;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Contacts Permission Needed',
-      accent: const Color(0xFFFF9F1C),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Enable permission to add your fellow kakis from your contacts.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: onRetryPermission,
-            icon: const Icon(Icons.contact_phone_outlined),
-            label: const Text('Allow Contacts Access'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EmptyFriendsCard extends StatelessWidget {
   const _EmptyFriendsCard();
 
@@ -179,37 +205,8 @@ class _EmptyFriendsCard extends StatelessWidget {
       title: 'No Golf Kakis Yet',
       accent: const Color(0xFF00A76F),
       child: Text(
-        'You have not added any golfers yet. Use the button above to search your contacts and add a number to My Golf Kakis.',
+        'You have not added any golfers yet. Tap the address book icon to search your contacts and add a number to My Golf Kakis.',
         style: Theme.of(context).textTheme.bodyMedium,
-      ),
-    );
-  }
-}
-
-class _AddFriendCard extends StatelessWidget {
-  const _AddFriendCard({required this.onAddFriend});
-
-  final VoidCallback onAddFriend;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Add Golf Kaki',
-      accent: const Color(0xFF35C7A5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Search your contacts and add a golfer by number into your saved Golf Kakis list.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: onAddFriend,
-            icon: const Icon(Icons.person_add_alt_1_outlined),
-            label: const Text('Search Contacts'),
-          ),
-        ],
       ),
     );
   }

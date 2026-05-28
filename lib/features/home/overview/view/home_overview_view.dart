@@ -41,7 +41,8 @@ class HomeView extends StatelessWidget {
               greeting: greeting,
               showAvatar: session.isLoggedIn,
               avatarIndex: loadedState.headerAvatarIndex,
-              avatarUrl: loadedState.headerAvatarUrl,
+              avatarUrl:
+                  loadedState.headerAvatarUrl ?? session.profileAvatarImagePath,
             ),
           ),
 

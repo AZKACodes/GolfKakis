@@ -185,11 +185,10 @@ class SessionManager extends ChangeNotifier {
     }
 
     try {
-      final response = await _apiClient.postJson(
+      await _apiClient.postJson(
         '/auth/logout',
         headers: <String, String>{'Authorization': 'Bearer $accessToken'},
       );
-      debugPrint('onLogout response: $response');
       return true;
     } catch (error, stackTrace) {
       debugPrint('onLogout error: $error');

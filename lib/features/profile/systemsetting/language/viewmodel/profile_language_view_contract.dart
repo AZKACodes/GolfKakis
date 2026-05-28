@@ -12,9 +12,7 @@ class ProfileLanguageViewState extends ViewState {
 
   final AppLanguage selectedLanguage;
 
-  ProfileLanguageViewState copyWith({
-    AppLanguage? selectedLanguage,
-  }) {
+  ProfileLanguageViewState copyWith({AppLanguage? selectedLanguage}) {
     return ProfileLanguageViewState(
       selectedLanguage: selectedLanguage ?? this.selectedLanguage,
     );

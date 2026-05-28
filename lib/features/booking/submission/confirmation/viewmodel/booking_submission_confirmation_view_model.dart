@@ -156,9 +156,6 @@ class BookingSubmissionConfirmationViewModel
             );
             switch (result.status) {
               case DataStatus.success:
-                debugPrint(
-                  '[onSubmitBooking] success payload: ${jsonEncode(result.data)}',
-                );
                 hasHandledSubmissionResult = true;
                 _navigateToSubmissionSuccess(result.data);
                 if (!completer.isCompleted) {
@@ -331,9 +328,6 @@ class BookingSubmissionConfirmationViewModel
         .listen((result) {
           switch (result.status) {
             case DataStatus.success:
-              debugPrint(
-                '[PreviewBooking] response: ${jsonEncode(result.data)}',
-              );
               final latest = getCurrentAsLoaded();
               final payload = _readMap(result.data);
               final summary = _readMap(payload['bookingSummary']);

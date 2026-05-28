@@ -8,6 +8,8 @@ abstract class ProfileFriendsUseCase {
 
   Future<bool> requestContactsPermission();
 
+  Future<ProfileFriendModel?> onPickDeviceContact();
+
   Future<ProfileFriendModel> onAddFriend({
     required SessionState session,
     required ProfileFriendModel friend,
@@ -29,10 +31,8 @@ class ProfileFriendsResult {
   const ProfileFriendsResult({
     required this.hasPermission,
     required this.friends,
-    required this.availableContacts,
   });
 
   final bool hasPermission;
   final List<ProfileFriendModel> friends;
-  final List<ProfileFriendModel> availableContacts;
 }

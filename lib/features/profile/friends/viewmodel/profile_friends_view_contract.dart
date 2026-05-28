@@ -14,7 +14,6 @@ class ProfileFriendsViewState extends ViewState {
     required this.isLoading,
     required this.hasPermission,
     required this.friends,
-    required this.availableContacts,
     this.savingContactKey,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
   }) : super();
@@ -23,13 +22,11 @@ class ProfileFriendsViewState extends ViewState {
     isLoading: false,
     hasPermission: true,
     friends: <ProfileFriendModel>[],
-    availableContacts: <ProfileFriendModel>[],
   );
 
   final bool isLoading;
   final bool hasPermission;
   final List<ProfileFriendModel> friends;
-  final List<ProfileFriendModel> availableContacts;
   final String? savingContactKey;
   final SnackbarMessageModel errorSnackbarMessageModel;
 
@@ -43,7 +40,6 @@ class ProfileFriendsViewState extends ViewState {
     bool? isLoading,
     bool? hasPermission,
     List<ProfileFriendModel>? friends,
-    List<ProfileFriendModel>? availableContacts,
     String? savingContactKey,
     SnackbarMessageModel? errorSnackbarMessageModel,
     bool clearSavingContactKey = false,
@@ -53,7 +49,6 @@ class ProfileFriendsViewState extends ViewState {
       isLoading: isLoading ?? this.isLoading,
       hasPermission: hasPermission ?? this.hasPermission,
       friends: friends ?? this.friends,
-      availableContacts: availableContacts ?? this.availableContacts,
       savingContactKey: clearSavingContactKey
           ? null
           : (savingContactKey ?? this.savingContactKey),
@@ -80,14 +75,8 @@ class OnRefreshFriends extends ProfileFriendsUserIntent {
   final SessionState session;
 }
 
-class OnRetryContactsPermission extends ProfileFriendsUserIntent {
-  const OnRetryContactsPermission(this.session);
-
-  final SessionState session;
-}
-
-class OnGrantContactsPermission extends ProfileFriendsUserIntent {
-  const OnGrantContactsPermission(this.session);
+class OnOpenAddressBook extends ProfileFriendsUserIntent {
+  const OnOpenAddressBook(this.session);
 
   final SessionState session;
 }

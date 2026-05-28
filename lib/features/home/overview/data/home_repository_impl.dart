@@ -32,7 +32,7 @@ class HomeRepositoryImpl implements HomeRepository {
         return HomeUserDetailsItem(
           displayName: authUser.name,
           avatarIndex: 0,
-          avatarUrl: authUser.avatarUrl,
+          avatarUrl: _displayableImageUrl(authUser.avatarUrl),
         );
       }
     } catch (_) {
@@ -134,6 +134,17 @@ class HomeRepositoryImpl implements HomeRepository {
     } catch (_) {
       return null;
     }
+  }
+
+  String? _displayableImageUrl(String? value) {
+    final url = value?.trim();
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    if (url.contains('/upload/sign/')) {
+      return null;
+    }
+    return url;
   }
 
   List<HomeAnnouncementItem> _parseAnnouncementItems(dynamic response) {

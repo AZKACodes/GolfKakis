@@ -38,6 +38,14 @@ class ProfileDetailViewModel
     switch (intent) {
       case OnInitProfileDetails():
         await _initProfileDetails(intent.session);
+      case OnProfileDetailRealNameChanged():
+        emitViewState(
+          (_) => _currentDataState.copyWith(
+            realName: intent.value,
+            clearMessage: true,
+            clearErrorMessage: true,
+          ),
+        );
       case OnProfileDetailUsernameChanged():
         emitViewState(
           (_) => _currentDataState.copyWith(
@@ -87,13 +95,7 @@ class ProfileDetailViewModel
           ),
         );
       case OnProfileDetailAvatarImageChanged():
-        emitViewState(
-          (_) => _currentDataState.copyWith(
-            avatarImagePath: intent.value,
-            clearMessage: true,
-            clearErrorMessage: true,
-          ),
-        );
+        await _updateProfilePicture(intent.value);
       case OnProfileDetailSaveClick():
         await _save();
       case OnProfileDetailDeactivateAccountConfirmed():
@@ -144,7 +146,7 @@ class ProfileDetailViewModel
       emitViewState(
         (_) => _currentDataState.copyWith(
           errorSnackbarMessageModel: const SnackbarMessageModel(
-            message: 'Enter a username and email to save.',
+            message: 'Enter a name, username and email to save.',
           ),
           clearMessage: true,
         ),
@@ -177,15 +179,16 @@ class ProfileDetailViewModel
       );
       _profile = updatedProfile;
       emitViewState(
-        (_) => ProfileDetailDataLoaded.fromProfile(
-          updatedProfile,
-          dateOfBirth: _dateOfBirthFromProfile(updatedProfile),
-        ).copyWith(
-          isSaving: false,
-          snackbarMessageModel: const SnackbarMessageModel(
-            message: 'Profile updated for this demo session.',
-          ),
-        ),
+        (_) =>
+            ProfileDetailDataLoaded.fromProfile(
+              updatedProfile,
+              dateOfBirth: _dateOfBirthFromProfile(updatedProfile),
+            ).copyWith(
+              isSaving: false,
+              snackbarMessageModel: const SnackbarMessageModel(
+                message: 'Profile updated successfully.',
+              ),
+            ),
       );
       sendNavEffect(() => const ProfileDetailSaved());
     } catch (error) {
@@ -201,10 +204,59 @@ class ProfileDetailViewModel
     }
   }
 
+  Future<void> _updateProfilePicture(String imagePath) async {
+    final session = _session ?? SessionState.initial;
+    final current = _currentDataState;
+    final localPreviewState = current.copyWith(
+      avatarImagePath: imagePath,
+      isSaving: true,
+      clearMessage: true,
+      clearErrorMessage: true,
+    );
+    emitViewState((_) => localPreviewState);
+
+    try {
+      final pendingProfile = _buildProfileFromState(localPreviewState);
+      final updatedProfile = await _useCase.onUpdateProfilePicture(
+        session: session,
+        profile: pendingProfile,
+      );
+      _profile = _profile.copyWith(
+        avatarImagePath: updatedProfile.avatarImagePath,
+      );
+      emitViewState(
+        (_) => _currentDataState.copyWith(
+          avatarImagePath: updatedProfile.avatarImagePath,
+          initialAvatarImagePath: updatedProfile.avatarImagePath,
+          isSaving: false,
+          snackbarMessageModel: const SnackbarMessageModel(
+            message: 'Profile picture updated successfully.',
+          ),
+          clearErrorMessage: true,
+        ),
+      );
+      sendNavEffect(() => const ProfileDetailProfilePictureUpdated());
+    } catch (error) {
+      emitViewState(
+        (_) => _currentDataState.copyWith(
+          isSaving: false,
+          errorSnackbarMessageModel: SnackbarMessageModel(
+            message: 'Unable to update profile picture: $error',
+          ),
+          clearMessage: true,
+        ),
+      );
+    }
+  }
+
   Future<void> _deactivateAccount(String confirmationPhoneNumber) async {
     final normalizedInput = _normalizePhone(confirmationPhoneNumber);
-    final normalizedAccountPhone = _normalizePhone(_currentDataState.phoneNumber);
-    final accountPhoneParts = _normalizedPhoneParts(_currentDataState.phoneNumber);
+    final normalizedAccountPhone = _normalizePhone(
+      _currentDataState.phoneNumber,
+    );
+    final accountPhoneParts = _normalizedPhoneParts(
+      _currentDataState.phoneNumber,
+    );
 
     if (normalizedInput.isEmpty ||
         (normalizedInput != normalizedAccountPhone &&
