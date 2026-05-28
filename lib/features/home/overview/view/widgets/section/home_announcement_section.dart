@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/home_announcement_view_data.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_shimmer_container.dart';
 
 import '../item/home_announcement_item.dart';
 
 class HomeAnnouncementSection extends StatefulWidget {
-  const HomeAnnouncementSection({required this.items, super.key});
+  const HomeAnnouncementSection({
+    required this.items,
+    required this.isLoading,
+    super.key,
+  });
 
   final List<HomeAnnouncementViewData> items;
+  final bool isLoading;
 
   @override
   State<HomeAnnouncementSection> createState() =>
@@ -31,12 +37,19 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
 
   @override
   Widget build(BuildContext context) {
+    final shouldShowLoading = widget.isLoading && widget.items.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           height: 208,
-          child: widget.items.isEmpty
+          child: shouldShowLoading
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _AnnouncementLoadingCard(),
+                )
+              : widget.items.isEmpty
               ? const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: _EmptyAnnouncementCard(),
@@ -89,6 +102,46 @@ class _HomeAnnouncementSectionState extends State<HomeAnnouncementSection> {
             }),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _AnnouncementLoadingCard extends StatelessWidget {
+  const _AnnouncementLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Stack(
+      children: [
+        GolfKakisShimmerContainer(height: 208, borderRadius: 16),
+        Positioned(
+          left: 18,
+          right: 18,
+          bottom: 24,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GolfKakisShimmerContainer(
+                width: 190,
+                height: 24,
+                borderRadius: 8,
+              ),
+              SizedBox(height: 10),
+              GolfKakisShimmerContainer(
+                width: 140,
+                height: 14,
+                borderRadius: 7,
+              ),
+              SizedBox(height: 16),
+              GolfKakisShimmerContainer(
+                width: 112,
+                height: 36,
+                borderRadius: 18,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

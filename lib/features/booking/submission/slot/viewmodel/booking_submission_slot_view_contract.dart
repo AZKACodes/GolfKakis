@@ -41,7 +41,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     DateTime? selectedDate,
     this.selectedSlot,
     this.selectedSlotDetails,
-    this.selectedPeriod = TimePeriod.am,
+    TimePeriod? selectedPeriod,
     DateTime? pickerInitialDate,
     List<BookingSlotModel>? visibleSlots,
     Set<int>? visibleUnavailableIndices,
@@ -55,16 +55,23 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
        pickerInitialDate = DateUtil.dateOnly(
          pickerInitialDate ?? selectedDate ?? DateTime.now(),
        ),
+       selectedPeriod = selectedPeriod ?? currentTimePeriod(),
        visibleSlots = visibleSlots ?? const <BookingSlotModel>[],
        visibleUnavailableIndices = visibleUnavailableIndices ?? const <int>{},
        super();
 
   factory BookingSubmissionSlotDataLoaded.initial({
     String selectedClubSlug = emptyString,
+    GolfClubModel? selectedClub,
+    int playerCount = 2,
   }) {
     return BookingSubmissionSlotDataLoaded(
+      golfClubList: selectedClub == null
+          ? const <GolfClubModel>[]
+          : <GolfClubModel>[selectedClub],
       selectedDate: DateTime.now(),
-      selectedClubSlug: selectedClubSlug,
+      selectedClubSlug: selectedClub?.slug ?? selectedClubSlug,
+      playerCount: playerCount,
     );
   }
 
@@ -358,4 +365,8 @@ class ShowErrorMessage extends BookingSubmissionSlotNavEffect {
   const ShowErrorMessage(this.message);
 
   final String message;
+}
+
+TimePeriod currentTimePeriod() {
+  return DateTime.now().hour < 12 ? TimePeriod.am : TimePeriod.pm;
 }

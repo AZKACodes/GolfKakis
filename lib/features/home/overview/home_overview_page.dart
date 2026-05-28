@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
+import 'package:golf_kakis/features/booking/submission/start/booking_submission_start_page.dart';
 import 'package:golf_kakis/features/foundation/root/root_screen.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/home/course/list/courses_list_page.dart';
@@ -61,7 +61,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       case NavigateToBookingSlotSubmission():
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) => const BookingSubmissionSlotPage(),
+            builder: (_) => const BookingSubmissionStartPage(),
           ),
         );
       case NavigateToGolfClubList():

@@ -46,7 +46,10 @@ class HomeView extends StatelessWidget {
           ),
 
           const SizedBox(height: 24),
-          HomeAnnouncementSection(items: loadedState.announcements),
+          HomeAnnouncementSection(
+            items: loadedState.announcements,
+            isLoading: loadedState.isLoading,
+          ),
 
           const SizedBox(height: 24),
           Padding(
@@ -57,7 +60,10 @@ class HomeView extends StatelessWidget {
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: HomeDealsSection(items: loadedState.deals),
+            child: HomeDealsSection(
+              items: loadedState.deals,
+              isLoading: loadedState.isLoading,
+            ),
           ),
         ],
       ),

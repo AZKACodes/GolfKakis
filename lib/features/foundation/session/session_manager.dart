@@ -226,6 +226,9 @@ class SessionManager extends ChangeNotifier {
   Future<bool> _refreshSession() async {
     final refreshToken = _state.refreshToken?.trim();
     if (refreshToken == null || refreshToken.isEmpty) {
+      if (_state.isLoggedIn) {
+        await _expireLocalAuthSession();
+      }
       return false;
     }
 
@@ -310,11 +313,37 @@ class SessionManager extends ChangeNotifier {
       await _persistState();
       notifyListeners();
       return true;
+    } on ApiException catch (error, stackTrace) {
+      debugPrint('Failed to refresh app session: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (error.statusCode == 401) {
+        await _expireLocalAuthSession();
+      }
+      return false;
     } catch (error, stackTrace) {
       debugPrint('Failed to refresh app session: $error');
       debugPrintStack(stackTrace: stackTrace);
       return false;
     }
+  }
+
+  Future<void> _expireLocalAuthSession() async {
+    if (!_state.isLoggedIn &&
+        (_state.accessToken?.isEmpty ?? true) &&
+        (_state.refreshToken?.isEmpty ?? true)) {
+      return;
+    }
+
+    _state = _state.copyWith(
+      status: SessionStatus.loggedOut,
+      clearAuthSession: true,
+      clearAuthenticatedUsername: true,
+      clearAuthenticatedUserRole: true,
+      clearProfileDetails: true,
+    );
+    await _persistState();
+    notifyListeners();
+    unawaited(_refreshVisitorAfterLogout());
   }
 
   Future<void> _refreshVisitorAfterLogout() async {

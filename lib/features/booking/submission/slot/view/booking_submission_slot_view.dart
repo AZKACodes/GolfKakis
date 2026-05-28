@@ -3,15 +3,14 @@ import 'package:golf_kakis/features/booking/submission/slot/view/widgets/booking
 import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottomsheet/golf_club_selection_bottom_sheet.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_date_picker_button.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 import 'package:golf_kakis/features/foundation/widgets/calendar/golf_kakis_calender_selection.dart';
 import 'package:golf_kakis/features/foundation/widgets/calendar/golf_kakis_period_header.dart';
 import 'package:golf_kakis/features/foundation/widgets/card/golf_kakis_count_selection_card.dart';
 import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_required_message_container.dart';
-import 'package:golf_kakis/features/foundation/widgets/card/golf_kakis_selection_card.dart';
 import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
-import 'package:golf_kakis/features/foundation/widgets/icon_info_pill.dart';
 
 class BookingSubmissionSlotView extends StatelessWidget {
   const BookingSubmissionSlotView({required this.viewModel, super.key});
@@ -29,6 +28,7 @@ class BookingSubmissionSlotView extends StatelessWidget {
           BookingSubmissionSlotDataLoaded() => Scaffold(
             appBar: AppNavBar(
               title: 'Booking Slot',
+              centerTitle: true,
               onBackPressed: () => viewModel.performAction(const OnBackClick()),
             ),
             body: _buildContent(context, state),
@@ -46,8 +46,6 @@ class BookingSubmissionSlotView extends StatelessWidget {
     final localizations = MaterialLocalizations.of(context);
     final selectedClub = state.selectedGolfClub;
     final hasSelectedClub = selectedClub != null;
-    final hasAvailableGolfClubs = state.golfClubList.isNotEmpty;
-    final hasSelectableGolfClubs = state.hasSelectableGolfClubs;
     final canActivateCalendar = state.canActivateCalendar;
 
     return RefreshIndicator(
@@ -70,81 +68,26 @@ class BookingSubmissionSlotView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Booking Slot',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    'Pick a date, choose your club, then lock in a tee time.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.black54,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'Players',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  GolfKakisCountSelectionCard(
-                    title: 'Number of Players',
-                    subtitle:
-                        'Player category will be selected on the next screen for each player.',
-                    value: state.playerCount,
-                    minValue: 2,
-                    maxValue: 6,
-                    onChanged: (value) {
-                      viewModel.onUserIntent(OnPlayerCountChanged(value));
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'Golf Club',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  GolfKakisSelectionCard(
-                    placeholder: 'Select Golf Club',
-                    unavailablePlaceholder: 'No Golf Clubs Available',
-                    loadingPlaceholder: 'Loading golf clubs...',
-                    hasOptions: hasAvailableGolfClubs,
-                    isLoading: state.isLoading && state.golfClubList.isEmpty,
-                    enabled: hasAvailableGolfClubs && hasSelectableGolfClubs,
-                    icon: Icons.golf_course_rounded,
-                    onTap: () {
+                  _SlotBookingSearchCard(
+                    state: state,
+                    onGolfClubTap: () async {
+                      await viewModel.onFetchGolfClubList();
+                      if (!context.mounted) {
+                        return;
+                      }
+                      final latestState = viewModel.getCurrentAsLoaded();
                       GolfClubSelectionBottomSheet.show(
                         context: context,
-                        clubs: state.golfClubList,
-                        selectedClub: selectedClub,
+                        clubs: latestState.golfClubList,
+                        selectedClub: latestState.selectedGolfClub,
                         onClubSelected: (club) {
                           viewModel.onUserIntent(OnSelectGolfClub(club.slug));
                         },
                       );
                     },
-                    selectedBuilder: selectedClub == null
-                        ? null
-                        : (context) => _GolfClubSelectionContent(
-                            name: selectedClub.name,
-                            address: selectedClub.address,
-                            holes: selectedClub.noOfHoles,
-                          ),
+                    onPlayerCountChanged: (value) {
+                      viewModel.onUserIntent(OnPlayerCountChanged(value));
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -208,10 +151,10 @@ class BookingSubmissionSlotView extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: GolfKakisRequiredMessageContainer(
-                        title: hasAvailableGolfClubs
+                        title: state.golfClubList.isNotEmpty
                             ? 'Please select a golf club'
                             : 'No Golf Clubs Available',
-                        message: hasAvailableGolfClubs
+                        message: state.golfClubList.isNotEmpty
                             ? 'Only Kinrara Golf Club is available for booking right now.'
                             : 'There are no golf clubs available right now.',
                         icon: Icons.golf_course_rounded,
@@ -309,50 +252,118 @@ class BookingSubmissionSlotView extends StatelessWidget {
   }
 }
 
-class _GolfClubSelectionContent extends StatelessWidget {
-  const _GolfClubSelectionContent({
-    required this.name,
-    required this.address,
-    required this.holes,
+class _SlotBookingSearchCard extends StatelessWidget {
+  const _SlotBookingSearchCard({
+    required this.state,
+    required this.onGolfClubTap,
+    required this.onPlayerCountChanged,
   });
 
-  final String name;
-  final String address;
-  final int holes;
+  final BookingSubmissionSlotDataLoaded state;
+  final VoidCallback onGolfClubTap;
+  final ValueChanged<int> onPlayerCountChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFE1E7E4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _SlotGolfClubField(
+            selectedClub: state.selectedGolfClub,
+            isLoading: state.isLoading && state.golfClubList.isEmpty,
+            onTap: onGolfClubTap,
+          ),
+          const SizedBox(height: 14),
+          GolfKakisCountSelectionCard(
+            title: 'No Of Players',
+            value: state.playerCount,
+            minValue: 2,
+            maxValue: 6,
+            onChanged: onPlayerCountChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotGolfClubField extends StatelessWidget {
+  const _SlotGolfClubField({
+    required this.selectedClub,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final GolfClubModel? selectedClub;
+  final bool isLoading;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final club = selectedClub;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          name,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0A1F1A),
+    return Material(
+      color: const Color(0xFFF8F8F6),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE1E7E4)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.golf_course_rounded, color: Color(0xFF0D7A3A)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Golf Club',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0A1F1A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isLoading
+                          ? 'Loading golf clubs...'
+                          : club?.name ?? 'Select Golf Club',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: club == null ? Colors.black45 : Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_down_rounded),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          address,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            IconInfoPill(icon: Icons.flag_outlined, label: '$holes holes'),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }

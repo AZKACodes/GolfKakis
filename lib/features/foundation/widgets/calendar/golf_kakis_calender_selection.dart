@@ -39,7 +39,7 @@ class GolfKakisCalenderSelection extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 66,
+              width: 72,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
@@ -67,7 +67,7 @@ class GolfKakisCalenderSelection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    localizations.narrowWeekdays[date.weekday % 7],
+                    _weekdayLabel(date),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isSelected ? Colors.white70 : Colors.black54,
                       fontWeight: FontWeight.w600,
@@ -100,5 +100,11 @@ class GolfKakisCalenderSelection extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _weekdayLabel(DateTime date) {
+    const weekdays = <String>['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return weekdays[date.weekday - 1];
   }
 }

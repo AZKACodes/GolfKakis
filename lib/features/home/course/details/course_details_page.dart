@@ -53,8 +53,10 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         }
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
-            builder: (_) =>
-                BookingSubmissionSlotPage(initialClubSlug: widget.clubSlug),
+            builder: (_) => BookingSubmissionSlotPage(
+              initialClubSlug: widget.clubSlug,
+              initialClub: _viewModel.viewState.detail.club,
+            ),
           ),
         );
       }

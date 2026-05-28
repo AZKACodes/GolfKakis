@@ -9,14 +9,22 @@ import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottoms
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
 import 'package:golf_kakis/features/foundation/enums/session/session_status.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/util/user_util.dart';
 import 'package:golf_kakis/features/profile/authentication/register/profile_register_page.dart';
 
 class BookingSubmissionSlotPage extends StatefulWidget {
-  const BookingSubmissionSlotPage({this.initialClubSlug, super.key});
+  const BookingSubmissionSlotPage({
+    this.initialClubSlug,
+    this.initialClub,
+    this.initialPlayerCount,
+    super.key,
+  });
 
   final String? initialClubSlug;
+  final GolfClubModel? initialClub;
+  final int? initialPlayerCount;
 
   @override
   State<BookingSubmissionSlotPage> createState() =>
@@ -35,6 +43,8 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     _viewModel = BookingSubmissionSlotViewModel(
       BookingSubmissionSlotUseCaseImpl.create(),
       initialClubSlug: widget.initialClubSlug,
+      initialClub: widget.initialClub,
+      initialPlayerCount: widget.initialPlayerCount,
     );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);

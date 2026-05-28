@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/overview/view/widgets/booking_details_item.dart';
 import 'package:golf_kakis/features/booking/overview/viewmodel/booking_overview_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottomsheet/golf_club_selection_bottom_sheet.dart';
+import 'package:golf_kakis/features/booking/submission/start/viewmodel/booking_submission_start_view_contract.dart';
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/widgets/card/golf_kakis_count_selection_card.dart';
 
 const double _bottomNavScrollClearance = 136;
 
@@ -9,9 +13,11 @@ class BookingOverviewView extends StatelessWidget {
   const BookingOverviewView({
     required this.controller,
     required this.state,
+    required this.startBookingState,
+    required this.onLoadStartGolfClubs,
     required this.onRefresh,
     required this.onRefreshCalendar,
-    required this.onStartBookingPressed,
+    required this.onStartBookingIntent,
     required this.onViewModeChanged,
     required this.onViewBookingDetailClick,
     super.key,
@@ -19,9 +25,12 @@ class BookingOverviewView extends StatelessWidget {
 
   final TabController controller;
   final BookingOverviewViewState state;
+  final BookingSubmissionStartViewState startBookingState;
+  final Future<BookingSubmissionStartDataLoaded> Function()
+  onLoadStartGolfClubs;
   final Future<void> Function(BookingOverviewTab tab) onRefresh;
   final Future<void> Function() onRefreshCalendar;
-  final VoidCallback onStartBookingPressed;
+  final ValueChanged<BookingSubmissionStartUserIntent> onStartBookingIntent;
   final ValueChanged<BookingOverviewViewMode> onViewModeChanged;
   final ValueChanged<BookingModel> onViewBookingDetailClick;
 
@@ -32,16 +41,13 @@ class BookingOverviewView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onStartBookingPressed,
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Start A New Booking'),
-            ),
-          ),
+        _BookingOverviewStartBookingSection(
+          state: switch (startBookingState) {
+            BookingSubmissionStartDataLoaded() =>
+              startBookingState as BookingSubmissionStartDataLoaded,
+          },
+          onUserIntent: onStartBookingIntent,
+          onLoadGolfClubs: onLoadStartGolfClubs,
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -160,6 +166,157 @@ class _BookingOverviewViewModeToggle extends StatelessWidget {
             onTap: () => onChanged(BookingOverviewViewMode.calendar),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BookingOverviewStartBookingSection extends StatelessWidget {
+  const _BookingOverviewStartBookingSection({
+    required this.state,
+    required this.onUserIntent,
+    required this.onLoadGolfClubs,
+  });
+
+  final BookingSubmissionStartDataLoaded state;
+  final ValueChanged<BookingSubmissionStartUserIntent> onUserIntent;
+  final Future<BookingSubmissionStartDataLoaded> Function() onLoadGolfClubs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE1E7E4)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x10000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _OverviewStartGolfClubField(
+              selectedClub: state.selectedGolfClub,
+              isLoading: state.isLoadingGolfClubs,
+              onTap: () => _openGolfClubPicker(context),
+            ),
+            const SizedBox(height: 12),
+            GolfKakisCountSelectionCard(
+              title: 'No Of Players',
+              subtitle: 'Select how many players will join this booking.',
+              value: state.playerCount,
+              minValue: 2,
+              maxValue: 6,
+              onChanged: (value) {
+                onUserIntent(OnStartPlayerCountChanged(value));
+              },
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: state.canSearch
+                    ? () => onUserIntent(const OnSearchBookingSlotsClick())
+                    : null,
+                icon: const Icon(Icons.search_rounded),
+                label: const Text('Search'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openGolfClubPicker(BuildContext context) async {
+    final latestState = await onLoadGolfClubs();
+    if (!context.mounted) {
+      return;
+    }
+    GolfClubSelectionBottomSheet.show(
+      context: context,
+      clubs: latestState.golfClubList,
+      selectedClub: latestState.selectedGolfClub,
+      isNearbySortActive: latestState.isNearbySortActive,
+      onNearbyTap: () =>
+          onUserIntent(const OnSortStartGolfClubsByNearbyClick()),
+      onClubSelected: (club) {
+        onUserIntent(OnSelectStartGolfClub(club));
+      },
+    );
+  }
+}
+
+class _OverviewStartGolfClubField extends StatelessWidget {
+  const _OverviewStartGolfClubField({
+    required this.selectedClub,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final GolfClubModel? selectedClub;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final club = selectedClub;
+
+    return Material(
+      color: const Color(0xFFF8F8F6),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE1E7E4)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.golf_course_rounded, color: Color(0xFF0D7A3A)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Golf Club',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0A1F1A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isLoading
+                          ? 'Loading golf clubs...'
+                          : club?.name ?? 'Select Golf Club',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: club == null ? Colors.black45 : Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_down_rounded),
+            ],
+          ),
+        ),
       ),
     );
   }

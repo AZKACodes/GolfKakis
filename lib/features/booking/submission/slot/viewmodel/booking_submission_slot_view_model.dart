@@ -23,11 +23,19 @@ class BookingSubmissionSlotViewModel
           BookingSubmissionSlotNavEffect
         >
     implements BookingSubmissionSlotViewContract {
-  BookingSubmissionSlotViewModel(this._useCase, {String? initialClubSlug})
-    : _initialClubSlug = initialClubSlug ?? emptyString;
+  BookingSubmissionSlotViewModel(
+    this._useCase, {
+    String? initialClubSlug,
+    GolfClubModel? initialClub,
+    int? initialPlayerCount,
+  }) : _initialClubSlug = initialClubSlug ?? emptyString,
+       _initialClub = initialClub,
+       _initialPlayerCount = initialPlayerCount ?? 2;
 
   final BookingSubmissionSlotUseCase _useCase;
   final String _initialClubSlug;
+  final GolfClubModel? _initialClub;
+  final int _initialPlayerCount;
 
   StreamSubscription<DataStatusModel<List<GolfClubModel>>>?
   _golfClubSubscription;
@@ -41,6 +49,8 @@ class BookingSubmissionSlotViewModel
   BookingSubmissionSlotViewState createInitialState() {
     return BookingSubmissionSlotDataLoaded.initial(
       selectedClubSlug: _initialClubSlug,
+      selectedClub: _initialClub,
+      playerCount: _initialPlayerCount,
     );
   }
 
@@ -48,15 +58,20 @@ class BookingSubmissionSlotViewModel
   Future<void> handleIntent(BookingSubmissionSlotUserIntent intent) async {
     switch (intent) {
       case OnInit():
-        emitViewState((state) {
-          return _derivePresentationState(
-            getCurrentAsLoaded().copyWith(
-              selectedDate: DateTime.now(),
-              clearErrorMessage: true,
-            ),
+        final nextState = _derivePresentationState(
+          getCurrentAsLoaded().copyWith(
+            selectedDate: DateTime.now(),
+            clearErrorMessage: true,
+          ),
+        );
+        emitViewState((state) => nextState);
+        if (nextState.canActivateCalendar &&
+            nextState.selectedClubSlug.isNotEmpty) {
+          await onFetchAvailableSlots(
+            clubSlug: nextState.selectedClubSlug,
+            date: nextState.selectedDate,
           );
-        });
-        await onFetchGolfClubList();
+        }
       case OnFetchGolfClubList():
         await onFetchGolfClubList();
       case OnFetchAvailableSlots():
@@ -123,21 +138,29 @@ class BookingSubmissionSlotViewModel
           );
         }
       case OnPlayerCountChanged():
+        final current = getCurrentAsLoaded();
+        final nextState = _derivePresentationState(
+          current.copyWith(
+            playerCount: intent.value.clamp(2, 6),
+            clearSelectedSlot: true,
+            clearSelectedSlotDetails: true,
+            clearVisibleSelectedIndex: true,
+            clearErrorMessage: true,
+          ),
+        );
         emitViewState((state) {
-          return _derivePresentationState(
-            getCurrentAsLoaded().copyWith(
-              playerCount: intent.value.clamp(2, 6),
-              clearSelectedSlot: true,
-              clearSelectedSlotDetails: true,
-              clearVisibleSelectedIndex: true,
-              clearErrorMessage: true,
-            ),
-          );
+          return nextState;
         });
+        if (nextState.selectedClubSlug.isNotEmpty) {
+          await onFetchAvailableSlots(
+            clubSlug: nextState.selectedClubSlug,
+            date: nextState.selectedDate,
+          );
+        }
       case OnSelectDate():
         await onSelectDate(intent.date);
       case OnSelectSlot():
-        if (!intent.slot.isAvailable) {
+        if (!_isSlotBookable(intent.slot, getCurrentAsLoaded())) {
           return;
         }
 
@@ -151,7 +174,7 @@ class BookingSubmissionSlotViewModel
           );
         });
       case OnSlotDetailsClick():
-        if (!intent.slot.isAvailable) {
+        if (!_isSlotBookable(intent.slot, getCurrentAsLoaded())) {
           return;
         }
 
@@ -160,7 +183,7 @@ class BookingSubmissionSlotViewModel
       case OnConfirmSlotClick():
         final details = intent.details;
         final slot = _slotForDetails(details);
-        if (slot == null || !slot.isAvailable) {
+        if (slot == null || !_isSlotBookable(slot, getCurrentAsLoaded())) {
           return;
         }
 
@@ -243,6 +266,8 @@ class BookingSubmissionSlotViewModel
 
     return BookingSubmissionSlotDataLoaded.initial(
       selectedClubSlug: _initialClubSlug,
+      selectedClub: _initialClub,
+      playerCount: _initialPlayerCount,
     );
   }
 
@@ -628,6 +653,7 @@ class BookingSubmissionSlotViewModel
     });
 
     await _golfClubSubscription?.cancel();
+    final completer = Completer<void>();
     _golfClubSubscription = _useCase.onFetchGolfClubList().listen((result) {
       switch (result.status) {
         case DataStatus.success:
@@ -653,6 +679,9 @@ class BookingSubmissionSlotViewModel
               date: updatedState.selectedDate,
             );
           }
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
         case DataStatus.error:
           final message = result.apiMessage.isEmpty
               ? 'Failed to fetch golf club list'
@@ -670,10 +699,14 @@ class BookingSubmissionSlotViewModel
             );
           });
           sendNavEffect(() => ShowErrorMessage(message));
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
         default:
           break;
       }
     });
+    return completer.future;
   }
 
   Future<void> onSelectDate(DateTime date) async {
@@ -682,10 +715,17 @@ class BookingSubmissionSlotViewModel
       return;
     }
 
+    final today = DateUtil.dateOnly(DateTime.now());
+    final selectedDate = DateUtil.dateOnly(date);
+    final selectedPeriod = selectedDate == today
+        ? currentTimePeriod()
+        : TimePeriod.am;
+
     emitViewState((state) {
       return _derivePresentationState(
         current.copyWith(
-          selectedDate: date,
+          selectedDate: selectedDate,
+          selectedPeriod: selectedPeriod,
           clearSelectedSlot: true,
           clearSelectedSlotDetails: true,
           clearVisibleSelectedIndex: true,
@@ -833,11 +873,15 @@ class BookingSubmissionSlotViewModel
     BookingSubmissionSlotDataLoaded state,
   ) {
     final today = DateUtil.dateOnly(DateTime.now());
+    final selectedDate = DateUtil.dateOnly(state.selectedDate);
+    final selectedPeriod = selectedDate == today
+        ? currentTimePeriod()
+        : state.selectedPeriod;
     final normalizedPlayerCount = state.playerCount.clamp(2, 6);
     final visibleSlots = state.bookingSlots
         .where(
           (slot) =>
-              _isSlotInSelectedPeriod(slot, state.selectedPeriod) &&
+              _isSlotInSelectedPeriod(slot, selectedPeriod) &&
               _selectedPlayerCountFitsSlot(
                 playerCount: normalizedPlayerCount,
                 slot: slot,
@@ -866,15 +910,14 @@ class BookingSubmissionSlotViewModel
 
     return state.copyWith(
       playerCount: normalizedPlayerCount,
+      selectedPeriod: selectedPeriod,
       selectedSupportedNine: selectedSupportedNine,
-      selectedDate: DateUtil.dateOnly(state.selectedDate),
-      pickerInitialDate: state.selectedDate.isBefore(today)
-          ? today
-          : DateUtil.dateOnly(state.selectedDate),
+      selectedDate: selectedDate,
+      pickerInitialDate: selectedDate.isBefore(today) ? today : selectedDate,
       visibleSlots: visibleSlots,
       visibleUnavailableIndices: <int>{
         ...visibleSlots.indexed
-            .where((entry) => !entry.$2.isAvailable)
+            .where((entry) => !_isSlotBookable(entry.$2, state))
             .map((entry) => entry.$1),
       },
       visibleSelectedIndex:
@@ -883,7 +926,8 @@ class BookingSubmissionSlotViewModel
           : visibleSelectedIndex,
       canContinue:
           state.selectedClubSlug.isNotEmpty &&
-          state.selectedSlot?.isAvailable == true &&
+          state.selectedSlot != null &&
+          _isSlotBookable(state.selectedSlot!, state) &&
           selectedSlotFitsCapacity &&
           selectedDetailsMatchesSlot,
     );
@@ -902,6 +946,71 @@ class BookingSubmissionSlotViewModel
   bool _isSlotInSelectedPeriod(BookingSlotModel slot, TimePeriod period) {
     final slotPeriod = _periodForSlot(slot);
     return slotPeriod == null || slotPeriod == period;
+  }
+
+  bool _isSlotBookable(
+    BookingSlotModel slot,
+    BookingSubmissionSlotDataLoaded state,
+  ) {
+    return slot.isAvailable && !_isSlotPast(slot, state.selectedDate);
+  }
+
+  bool _isSlotPast(BookingSlotModel slot, DateTime selectedDate) {
+    final slotDateTime = _slotDateTime(slot, selectedDate);
+    if (slotDateTime == null) {
+      return false;
+    }
+    return slotDateTime.isBefore(DateTime.now());
+  }
+
+  DateTime? _slotDateTime(BookingSlotModel slot, DateTime selectedDate) {
+    final startAt = slot.startAt;
+    if (startAt != null) {
+      return startAt.toLocal();
+    }
+
+    final parsedTime = _parseSlotTime(slot.time);
+    if (parsedTime == null) {
+      return null;
+    }
+
+    final date = DateUtil.dateOnly(selectedDate);
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      parsedTime.$1,
+      parsedTime.$2,
+    );
+  }
+
+  (int, int)? _parseSlotTime(String rawTime) {
+    final match = RegExp(
+      r'(\d{1,2})[:.](\d{2})\s*(am|pm)?',
+      caseSensitive: false,
+    ).firstMatch(rawTime.trim());
+    if (match == null) {
+      return null;
+    }
+
+    var hour = int.tryParse(match.group(1) ?? '');
+    final minute = int.tryParse(match.group(2) ?? '');
+    if (hour == null || minute == null || minute > 59) {
+      return null;
+    }
+
+    final meridiem = match.group(3)?.toLowerCase();
+    if (meridiem == 'pm' && hour < 12) {
+      hour += 12;
+    } else if (meridiem == 'am' && hour == 12) {
+      hour = 0;
+    }
+
+    if (hour > 23) {
+      return null;
+    }
+
+    return (hour, minute);
   }
 
   TimePeriod? _periodForSlot(BookingSlotModel slot) {

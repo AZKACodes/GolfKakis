@@ -210,7 +210,13 @@ class ApiClient {
     try {
       if (shouldRefreshSession && _shouldRefreshBeforeRequest()) {
         debugPrint('[API] refreshing app session before $method $uri');
-        await _sessionRefreshProvider!.call();
+        final refreshed = await _sessionRefreshProvider!.call();
+        if (!refreshed) {
+          throw ApiException(
+            statusCode: 401,
+            message: 'Session expired. Please sign in again.',
+          );
+        }
       }
       final response = await request();
       return _handleJsonResponse(method: method, uri: uri, response: response);

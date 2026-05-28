@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 
 import '../../../viewmodel/booking_submission_slot_view_contract.dart';
@@ -11,6 +13,8 @@ class GolfClubSelectionBottomSheet {
     required List<GolfClubModel> clubs,
     required GolfClubModel? selectedClub,
     required ValueChanged<GolfClubModel> onClubSelected,
+    bool isNearbySortActive = false,
+    VoidCallback? onNearbyTap,
   }) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -21,6 +25,8 @@ class GolfClubSelectionBottomSheet {
         clubs: clubs,
         selectedClub: selectedClub,
         onClubSelected: onClubSelected,
+        isNearbySortActive: isNearbySortActive,
+        onNearbyTap: onNearbyTap,
       ),
     );
   }
@@ -31,11 +37,15 @@ class _GolfClubSelectionSheet extends StatefulWidget {
     required this.clubs,
     required this.selectedClub,
     required this.onClubSelected,
+    required this.isNearbySortActive,
+    this.onNearbyTap,
   });
 
   final List<GolfClubModel> clubs;
   final GolfClubModel? selectedClub;
   final ValueChanged<GolfClubModel> onClubSelected;
+  final bool isNearbySortActive;
+  final VoidCallback? onNearbyTap;
 
   @override
   State<_GolfClubSelectionSheet> createState() =>
@@ -45,6 +55,14 @@ class _GolfClubSelectionSheet extends StatefulWidget {
 class _GolfClubSelectionSheetState extends State<_GolfClubSelectionSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  late bool _isNearbySortActive;
+  Position? _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _isNearbySortActive = widget.isNearbySortActive;
+  }
 
   @override
   void dispose() {
@@ -141,6 +159,17 @@ class _GolfClubSelectionSheetState extends State<_GolfClubSelectionSheet> {
 
             const SizedBox(height: 14),
 
+            if (widget.onNearbyTap != null) ...[
+              Align(
+                alignment: Alignment.centerRight,
+                child: _NearbyButton(
+                  isActive: _isNearbySortActive,
+                  onTap: _toggleNearbySort,
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+
             Expanded(
               child: clubs.isEmpty
                   ? Center(
@@ -184,6 +213,19 @@ class _GolfClubSelectionSheetState extends State<_GolfClubSelectionSheet> {
         if (aEnabled != bEnabled) {
           return aEnabled ? -1 : 1;
         }
+        if (_isNearbySortActive && _currentPosition != null) {
+          final aDistance = _distanceFromCurrentPosition(a);
+          final bDistance = _distanceFromCurrentPosition(b);
+          if (aDistance != null || bDistance != null) {
+            if (aDistance == null) {
+              return 1;
+            }
+            if (bDistance == null) {
+              return -1;
+            }
+            return aDistance.compareTo(bDistance);
+          }
+        }
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
@@ -196,6 +238,122 @@ class _GolfClubSelectionSheetState extends State<_GolfClubSelectionSheet> {
           .toLowerCase();
       return searchable.contains(normalizedQuery);
     }).toList();
+  }
+
+  Future<void> _toggleNearbySort() async {
+    if (_isNearbySortActive) {
+      setState(() {
+        _isNearbySortActive = false;
+      });
+      widget.onNearbyTap?.call();
+      return;
+    }
+
+    final position = await _resolveCurrentPosition();
+    if (!mounted) {
+      return;
+    }
+    if (position == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Unable to get your current location.')),
+        );
+      return;
+    }
+
+    setState(() {
+      _currentPosition = position;
+      _isNearbySortActive = true;
+    });
+    widget.onNearbyTap?.call();
+  }
+
+  Future<Position?> _resolveCurrentPosition() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return null;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      return Geolocator.getCurrentPosition();
+    } on MissingPluginException {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  double? _distanceFromCurrentPosition(GolfClubModel club) {
+    final position = _currentPosition;
+    if (position == null || club.latitude == null || club.longitude == null) {
+      return null;
+    }
+
+    return Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      club.latitude!,
+      club.longitude!,
+    );
+  }
+}
+
+class _NearbyButton extends StatelessWidget {
+  const _NearbyButton({required this.isActive, required this.onTap});
+
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isActive ? const Color(0xFF173B7A) : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive
+                  ? const Color(0xFF173B7A)
+                  : const Color(0xFFE1E7E4),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.my_location,
+                size: 18,
+                color: isActive ? Colors.white : const Color(0xFF173B7A),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Nearby',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isActive ? Colors.white : const Color(0xFF173B7A),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
