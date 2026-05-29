@@ -400,22 +400,9 @@ class _GolfClubSelectionItem extends StatelessWidget {
             children: [
               Opacity(
                 opacity: isEnabled ? 1 : 0.45,
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: isEnabled
-                        ? const Color(0xFFE2F3E8)
-                        : const Color(0xFFE9E9E6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isEnabled
-                        ? Icons.golf_course_rounded
-                        : Icons.lock_outline_rounded,
-                    size: 20,
-                    color: isEnabled ? const Color(0xFF0D7A3A) : Colors.black38,
-                  ),
+                child: _GolfClubSelectionThumbnail(
+                  imageUrl: club.coverPhotoUrl,
+                  isEnabled: isEnabled,
                 ),
               ),
 
@@ -481,6 +468,56 @@ class _GolfClubSelectionItem extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GolfClubSelectionThumbnail extends StatelessWidget {
+  const _GolfClubSelectionThumbnail({
+    required this.imageUrl,
+    required this.isEnabled,
+  });
+
+  final String? imageUrl;
+  final bool isEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl?.trim() ?? '';
+
+    return ClipOval(
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: url.isEmpty
+            ? _GolfClubSelectionThumbnailPlaceholder(isEnabled: isEnabled)
+            : Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _GolfClubSelectionThumbnailPlaceholder(
+                      isEnabled: isEnabled,
+                    ),
+              ),
+      ),
+    );
+  }
+}
+
+class _GolfClubSelectionThumbnailPlaceholder extends StatelessWidget {
+  const _GolfClubSelectionThumbnailPlaceholder({required this.isEnabled});
+
+  final bool isEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: isEnabled ? const Color(0xFFE2F3E8) : const Color(0xFFE9E9E6),
+      child: Icon(
+        isEnabled ? Icons.golf_course_rounded : Icons.lock_outline_rounded,
+        size: 20,
+        color: isEnabled ? const Color(0xFF0D7A3A) : Colors.black38,
       ),
     );
   }

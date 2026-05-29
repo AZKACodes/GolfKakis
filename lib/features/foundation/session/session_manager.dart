@@ -312,16 +312,16 @@ class SessionManager extends ChangeNotifier {
       await _persistState();
       notifyListeners();
       return true;
-    } on ApiException catch (error, stackTrace) {
-      debugPrint('Failed to refresh app session: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } on ApiException catch (error) {
       if (error.statusCode == 401) {
+        debugPrint('[API] App Session Expired');
         await _expireLocalAuthSession();
+      } else {
+        debugPrint('[API] Failed To Refresh App Session - ${error.message}');
       }
       return false;
-    } catch (error, stackTrace) {
-      debugPrint('Failed to refresh app session: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } catch (error) {
+      debugPrint('[API] Failed To Refresh App Session - $error');
       return false;
     }
   }

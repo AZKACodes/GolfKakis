@@ -33,6 +33,29 @@ class GolfKakisCalenderSelection extends StatelessWidget {
         itemBuilder: (context, index) {
           final date = baseDate.add(Duration(days: index));
           final isSelected = DateUtils.isSameDay(date, selectedDate);
+          final isWeekend =
+              date.weekday == DateTime.saturday ||
+              date.weekday == DateTime.sunday;
+          final backgroundColor = isSelected
+              ? theme.colorScheme.primary
+              : isWeekend
+              ? const Color(0xFFFFF7E8)
+              : theme.colorScheme.surface;
+          final borderColor = isSelected
+              ? theme.colorScheme.primary
+              : isWeekend
+              ? const Color(0xFFFFD79A)
+              : theme.colorScheme.outlineVariant;
+          final labelColor = isSelected
+              ? Colors.white70
+              : isWeekend
+              ? const Color(0xFF9A5A00)
+              : Colors.black54;
+          final dateColor = isSelected
+              ? Colors.white
+              : isWeekend
+              ? const Color(0xFF6E3F00)
+              : Colors.black87;
 
           return InkWell(
             onTap: () => onDateSelected(date),
@@ -42,14 +65,10 @@ class GolfKakisCalenderSelection extends StatelessWidget {
               width: 72,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.surface,
+                color: backgroundColor,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outlineVariant,
+                  color: borderColor,
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected
@@ -69,7 +88,7 @@ class GolfKakisCalenderSelection extends StatelessWidget {
                   Text(
                     _weekdayLabel(date),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isSelected ? Colors.white70 : Colors.black54,
+                      color: labelColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -79,7 +98,7 @@ class GolfKakisCalenderSelection extends StatelessWidget {
                   Text(
                     '${date.day}',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: dateColor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -89,7 +108,7 @@ class GolfKakisCalenderSelection extends StatelessWidget {
                   Text(
                     localizations.formatMonthYear(date).split(' ').first,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isSelected ? Colors.white70 : Colors.black54,
+                      color: labelColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

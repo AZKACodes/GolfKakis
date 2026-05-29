@@ -42,22 +42,24 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     UserProfileModel profile, {
     String dateOfBirth = emptyString,
   }) {
+    final email = _profileTextValue(profile.email);
+
     return ProfileDetailDataLoaded(
-      realName: profile.displayName,
-      username: profile.nickname,
+      realName: _profileTextValue(profile.displayName),
+      username: _profileTextValue(profile.nickname),
       gender: profile.occupation == '-' ? emptyString : profile.occupation,
       dateOfBirth: dateOfBirth,
-      email: profile.email,
-      phoneNumber: profile.phoneNumber,
+      email: email,
+      phoneNumber: _profileTextValue(profile.phoneNumber),
       avatarIndex: profile.avatarIndex,
       avatarImagePath: profile.avatarImagePath,
-      initialRealName: profile.displayName,
-      initialUsername: profile.nickname,
+      initialRealName: _profileTextValue(profile.displayName),
+      initialUsername: _profileTextValue(profile.nickname),
       initialGender: profile.occupation == '-'
           ? emptyString
           : profile.occupation,
       initialDateOfBirth: dateOfBirth,
-      initialEmail: profile.email,
+      initialEmail: email,
       initialAvatarIndex: profile.avatarIndex,
       initialAvatarImagePath: profile.avatarImagePath,
       isSaving: false,
@@ -154,6 +156,10 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
           : errorSnackbarMessageModel ?? this.errorSnackbarMessageModel,
     );
   }
+}
+
+String _profileTextValue(String value) {
+  return value == '-' ? emptyString : value;
 }
 
 // ------ UserIntent ------

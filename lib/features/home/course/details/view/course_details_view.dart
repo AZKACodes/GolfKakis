@@ -38,7 +38,7 @@ class CourseDetailsView extends StatelessWidget {
           _CourseCoverHero(
             coverPhotoUrl: detail.photoUrls.isNotEmpty
                 ? detail.photoUrls.first
-                : null,
+                : club.coverPhotoUrl,
             onBackTap: onBackTap,
           ),
           Transform.translate(
@@ -118,17 +118,9 @@ class _CoverPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFBFD9D5), Color(0xFFE8F2EC), Color(0xFF6EA083)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 48, color: Colors.white70),
-      ),
+    return Image.asset(
+      'assets/images/course_placeholder.png',
+      fit: BoxFit.cover,
     );
   }
 }

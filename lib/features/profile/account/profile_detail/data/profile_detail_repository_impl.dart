@@ -35,9 +35,7 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
       occupation: user.gender.isNotEmpty
           ? user.gender
           : (session.profileOccupation ?? fallbackProfile.occupation),
-      email: user.email.isNotEmpty
-          ? user.email
-          : (session.profileEmail ?? fallbackProfile.email),
+      email: user.email,
       phoneNumber: user.phoneNumber,
       avatarIndex: session.profileAvatarIndex ?? fallbackProfile.avatarIndex,
       avatarImagePath:
@@ -80,7 +78,7 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
       occupation: updatedUser.gender.isNotEmpty
           ? updatedUser.gender
           : profile.occupation,
-      email: updatedUser.email.isNotEmpty ? updatedUser.email : profile.email,
+      email: updatedUser.email,
       phoneNumber: updatedUser.phoneNumber,
       avatarImagePath: updatedUser.avatarUrl ?? profile.avatarImagePath,
     );

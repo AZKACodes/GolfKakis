@@ -50,11 +50,12 @@ class ProfileOverviewAccountPreferencesSection extends StatelessWidget {
                   title: 'Profile Details',
                   onTap: onPrimaryTouchpointClick,
                 ),
-                const _InsetDivider(),
-                _AccountMenuItem(
-                  title: 'Friendlist (My Kakis)',
-                  onTap: onMyGolfKakisClick,
-                ),
+                // Temporarily hidden until Friendlist is ready for release.
+                // const _InsetDivider(),
+                // _AccountMenuItem(
+                //   title: 'Friendlist (My Kakis)',
+                //   onTap: onMyGolfKakisClick,
+                // ),
               ],
             ),
           ),

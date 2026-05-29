@@ -49,9 +49,9 @@ class CourseListItem extends StatelessWidget {
                           club.coverPhotoUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              _CourseCoverPlaceholder(clubName: club.name),
+                              const _CourseCoverPlaceholder(),
                         )
-                      : _CourseCoverPlaceholder(clubName: club.name),
+                      : const _CourseCoverPlaceholder(),
                 ),
               ),
               Padding(
@@ -108,27 +108,13 @@ class CourseListItem extends StatelessWidget {
 }
 
 class _CourseCoverPlaceholder extends StatelessWidget {
-  const _CourseCoverPlaceholder({required this.clubName});
-
-  final String clubName;
+  const _CourseCoverPlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF24272C)
-            : const Color(0xFFE9EEF2),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 44,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade600
-              : Colors.grey.shade500,
-        ),
-      ),
+    return Image.asset(
+      'assets/images/course_placeholder.png',
+      fit: BoxFit.cover,
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:golf_kakis/features/foundation/network/api_config.dart';
+
 class GolfClubModel {
   const GolfClubModel({
     required this.id,
@@ -15,6 +17,7 @@ class GolfClubModel {
     this.buggyPolicy = '',
     this.paymentMethods = const <String>[],
     this.facilities = const <GolfClubFacilityModel>[],
+    this.imageUrls = const <String>[],
     this.coverPhotoUrl,
     this.updatedAt = '',
   });
@@ -34,10 +37,13 @@ class GolfClubModel {
   final String buggyPolicy;
   final List<String> paymentMethods;
   final List<GolfClubFacilityModel> facilities;
+  final List<String> imageUrls;
   final String? coverPhotoUrl;
   final String updatedAt;
 
   factory GolfClubModel.fromJson(Map<String, dynamic> json) {
+    final imageUrls = _parseImageUrls(json);
+
     return GolfClubModel(
       id: json['id']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
@@ -54,7 +60,8 @@ class GolfClubModel {
       buggyPolicy: json['buggyPolicy']?.toString() ?? '',
       paymentMethods: _parsePaymentMethods(json),
       facilities: _parseFacilities(json),
-      coverPhotoUrl: _parseCoverPhotoUrl(json),
+      imageUrls: imageUrls,
+      coverPhotoUrl: _parseCoverPhotoUrl(json, imageUrls),
       updatedAt: json['updatedAt']?.toString() ?? '',
     );
   }
@@ -76,6 +83,7 @@ class GolfClubModel {
       'buggyPolicy': buggyPolicy,
       'paymentMethods': paymentMethods,
       'facilities': facilities.map((item) => item.toJson()).toList(),
+      'imageUrls': imageUrls,
       'coverPhotoUrl': coverPhotoUrl,
       'updatedAt': updatedAt,
     };
@@ -97,6 +105,7 @@ class GolfClubModel {
     String? buggyPolicy,
     List<String>? paymentMethods,
     List<GolfClubFacilityModel>? facilities,
+    List<String>? imageUrls,
     String? coverPhotoUrl,
     String? updatedAt,
   }) {
@@ -116,21 +125,119 @@ class GolfClubModel {
       buggyPolicy: buggyPolicy ?? this.buggyPolicy,
       paymentMethods: paymentMethods ?? this.paymentMethods,
       facilities: facilities ?? this.facilities,
+      imageUrls: imageUrls ?? this.imageUrls,
       coverPhotoUrl: coverPhotoUrl ?? this.coverPhotoUrl,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  static String? _parseCoverPhotoUrl(Map<String, dynamic> json) {
+  static String? _parseCoverPhotoUrl(
+    Map<String, dynamic> json,
+    List<String> imageUrls,
+  ) {
     final value =
         json['coverPhotoUrl'] ??
         json['cover_photo_url'] ??
+        json['coverPhoto'] ??
+        json['cover_photo'] ??
         json['coverImageUrl'] ??
         json['cover_image_url'] ??
+        json['coverImage'] ??
+        json['cover_image'] ??
         json['imageUrl'] ??
-        json['image_url'];
-    final text = value?.toString().trim() ?? '';
-    return text.isEmpty ? null : text;
+        json['image_url'] ??
+        json['image'];
+    final explicitUrls = <String>[];
+    _appendImageUrls(explicitUrls, value);
+    final text = explicitUrls.isEmpty ? '' : explicitUrls.first;
+    if (text.isNotEmpty) {
+      return _normalizeImageUrl(text);
+    }
+    return imageUrls.isEmpty ? null : imageUrls.first;
+  }
+
+  static List<String> _parseImageUrls(Map<String, dynamic> json) {
+    final candidates = <dynamic>[
+      json['imageUrls'],
+      json['image_urls'],
+      json['images'],
+      json['photos'],
+      json['gallery'],
+      json['media'],
+      json['coverPhotoUrl'],
+      json['cover_photo_url'],
+      json['coverPhoto'],
+      json['cover_photo'],
+      json['coverImageUrl'],
+      json['cover_image_url'],
+      json['coverImage'],
+      json['cover_image'],
+      json['imageUrl'],
+      json['image_url'],
+      json['image'],
+      json['photo'],
+    ];
+
+    final urls = <String>[];
+    for (final candidate in candidates) {
+      _appendImageUrls(urls, candidate);
+    }
+
+    return urls.toSet().toList();
+  }
+
+  static void _appendImageUrls(List<String> urls, dynamic value) {
+    if (value == null) {
+      return;
+    }
+
+    if (value is List) {
+      for (final item in value) {
+        _appendImageUrls(urls, item);
+      }
+      return;
+    }
+
+    if (value is Map<String, dynamic>) {
+      final nestedValue =
+          value['url'] ??
+          value['imageUrl'] ??
+          value['image_url'] ??
+          value['src'] ??
+          value['path'] ??
+          value['location'];
+      _appendImageUrls(urls, nestedValue);
+      return;
+    }
+
+    if (value is Map) {
+      _appendImageUrls(
+        urls,
+        value.map((key, item) => MapEntry(key.toString(), item)),
+      );
+      return;
+    }
+
+    final text = value.toString().trim();
+    if (text.isNotEmpty) {
+      urls.add(_normalizeImageUrl(text));
+    }
+  }
+
+  static String _normalizeImageUrl(String url) {
+    final text = url.trim();
+    if (text.startsWith('//')) {
+      return 'https:$text';
+    }
+    final uri = Uri.tryParse(text);
+    if (uri != null && uri.hasScheme) {
+      return text;
+    }
+
+    final baseUrl = ApiConfig.baseUrl.endsWith('/')
+        ? ApiConfig.baseUrl
+        : '${ApiConfig.baseUrl}/';
+    return Uri.parse(baseUrl).resolve(text).toString();
   }
 
   static List<GolfClubFacilityModel> _parseFacilities(

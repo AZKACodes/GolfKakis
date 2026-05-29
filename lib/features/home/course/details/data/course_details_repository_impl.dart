@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
+import 'package:golf_kakis/features/foundation/network/api_config.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/home/api/weather_api_service.dart';
 
@@ -66,6 +67,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     final kinraraContent = slug.trim().toLowerCase() == 'kinrara-golf-club'
         ? localCourseDisplayContent['kinrara-golf-club']
         : null;
+    final photoUrls = _photoUrls(extraResponse, club);
 
     return CourseExtraDetailsData(
       description:
@@ -74,9 +76,9 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
       facilityLabels: kinraraContent?.facilities.isNotEmpty == true
           ? kinraraContent!.facilities
           : _facilityLabels(extraResponse, club, requestedSlug: slug),
-      photoUrls: kinraraContent?.photoUrls.isNotEmpty == true
-          ? kinraraContent!.photoUrls
-          : _photoUrls(extraResponse),
+      photoUrls: photoUrls.isNotEmpty
+          ? photoUrls
+          : kinraraContent?.photoUrls ?? const <String>[],
     );
   }
 
@@ -112,7 +114,12 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
       );
 
       if (clubCandidate != null) {
-        final club = GolfClubModel.fromJson(clubCandidate);
+        final club = GolfClubModel.fromJson(
+          _withInheritedImageFields(clubCandidate, <Map<String, dynamic>>[
+            nested,
+            map,
+          ]),
+        );
         if (club.slug.isNotEmpty) {
           return club;
         }
@@ -125,6 +132,60 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     }
 
     return null;
+  }
+
+  Map<String, dynamic> _withInheritedImageFields(
+    Map<String, dynamic> club,
+    List<Map<String, dynamic>> parents,
+  ) {
+    final mappedClub = Map<String, dynamic>.of(club);
+    const imageKeys = <String>[
+      'imageUrls',
+      'image_urls',
+      'images',
+      'photos',
+      'gallery',
+      'media',
+      'coverPhotoUrl',
+      'cover_photo_url',
+      'coverPhoto',
+      'cover_photo',
+      'coverImageUrl',
+      'cover_image_url',
+      'coverImage',
+      'cover_image',
+      'imageUrl',
+      'image_url',
+      'image',
+      'photo',
+    ];
+
+    for (final parent in parents) {
+      for (final key in imageKeys) {
+        if (!_hasPayloadValue(mappedClub[key]) &&
+            _hasPayloadValue(parent[key])) {
+          mappedClub[key] = parent[key];
+        }
+      }
+    }
+
+    return mappedClub;
+  }
+
+  bool _hasPayloadValue(dynamic value) {
+    if (value == null) {
+      return false;
+    }
+    if (value is String) {
+      return value.trim().isNotEmpty;
+    }
+    if (value is Iterable) {
+      return value.isNotEmpty;
+    }
+    if (value is Map) {
+      return value.isNotEmpty;
+    }
+    return true;
   }
 
   Map<String, dynamic>? _extractRecommendation(dynamic response) {
@@ -464,6 +525,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
               return item?.toString() ?? '';
             })
             .where((item) => item.trim().isNotEmpty)
+            .map(_normalizeImageUrl)
             .toList();
         if (labels.isNotEmpty) {
           return labels;
@@ -483,7 +545,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     return fallback.isEmpty ? const <String>['Golf Booking'] : fallback;
   }
 
-  List<String> _photoUrls(dynamic detailResponse) {
+  List<String> _photoUrls(dynamic detailResponse, GolfClubModel club) {
     final map = _asMap(detailResponse);
     final candidates = <dynamic>[
       map?['photos'],
@@ -517,7 +579,28 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
       }
     }
 
-    return const <String>[];
+    if (club.imageUrls.isNotEmpty) {
+      return club.imageUrls;
+    }
+    return club.coverPhotoUrl == null
+        ? const <String>[]
+        : <String>[club.coverPhotoUrl!];
+  }
+
+  String _normalizeImageUrl(String url) {
+    final text = url.trim();
+    if (text.startsWith('//')) {
+      return 'https:$text';
+    }
+    final uri = Uri.tryParse(text);
+    if (uri != null && uri.hasScheme) {
+      return text;
+    }
+
+    final baseUrl = ApiConfig.baseUrl.endsWith('/')
+        ? ApiConfig.baseUrl
+        : '${ApiConfig.baseUrl}/';
+    return Uri.parse(baseUrl).resolve(text).toString();
   }
 
   String _dayLabel(String rawDate) {

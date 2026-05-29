@@ -35,6 +35,7 @@ class ProfilePinPage extends StatefulWidget {
 class _ProfilePinPageState extends State<ProfilePinPage> {
   late final ProfilePinViewModel _viewModel;
   StreamSubscription<ProfilePinNavEffect>? _navEffectSubscription;
+  String? _lastErrorSnackbarMessage;
 
   @override
   void initState() {
@@ -122,6 +123,7 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
+        _showErrorSnackbarIfNeeded(_viewModel.viewState);
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -147,6 +149,29 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
         );
       },
     );
+  }
+
+  void _showErrorSnackbarIfNeeded(ProfilePinViewState state) {
+    final message = state.errorMessage;
+    if (message == null) {
+      _lastErrorSnackbarMessage = null;
+      return;
+    }
+
+    if (_lastErrorSnackbarMessage == message) {
+      return;
+    }
+
+    _lastErrorSnackbarMessage = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    });
   }
 }
 

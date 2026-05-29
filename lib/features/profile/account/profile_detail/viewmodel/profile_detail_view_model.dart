@@ -154,6 +154,18 @@ class ProfileDetailViewModel
       return;
     }
 
+    if (!_isValidEmail(_currentDataState.email.trim())) {
+      emitViewState(
+        (_) => _currentDataState.copyWith(
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message: 'Enter a valid email address.',
+          ),
+          clearMessage: true,
+        ),
+      );
+      return;
+    }
+
     emitViewState(
       (_) => _currentDataState.copyWith(
         isSaving: true,
@@ -338,6 +350,10 @@ class ProfileDetailViewModel
       return normalized.substring(2);
     }
     return normalized;
+  }
+
+  bool _isValidEmail(String value) {
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
   }
 
   String _dateOfBirthFromProfile(UserProfileModel profile) {

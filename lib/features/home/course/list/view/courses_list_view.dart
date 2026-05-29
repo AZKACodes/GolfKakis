@@ -24,13 +24,6 @@ class CoursesListView extends StatelessWidget {
     };
     final hasActiveSearch = loadedState.searchQuery.trim().isNotEmpty;
 
-    if (loadedState.isLoading && loadedState.courses.isEmpty) {
-      return const ColoredBox(
-        color: Colors.white,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(46)),
       child: ColoredBox(
@@ -66,6 +59,10 @@ class CoursesListView extends StatelessWidget {
               );
             }
 
+            if (loadedState.isLoading && loadedState.courses.isEmpty) {
+              return const _CoursesListLoadingState();
+            }
+
             if (loadedState.courses.isEmpty) {
               return CourseListEmptyState(
                 title: loadedState.errorMessage != null
@@ -92,6 +89,22 @@ class CoursesListView extends StatelessWidget {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _CoursesListLoadingState extends StatelessWidget {
+  const _CoursesListLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 260,
+      child: Center(
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/enums/session/user_role.dart';
 import 'package:golf_kakis/features/foundation/security/captcha/turnstile_captcha_token_provider.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/profile/authentication/otp/domain/profile_otp_use_case_impl.dart';
@@ -32,6 +33,7 @@ class ProfileOtpPage extends StatefulWidget {
 class _ProfileOtpPageState extends State<ProfileOtpPage> {
   late final ProfileOtpViewModel _viewModel;
   StreamSubscription<ProfileOtpNavEffect>? _navEffectSubscription;
+  String? _lastErrorSnackbarMessage;
 
   @override
   void initState() {
@@ -43,7 +45,9 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       otpUseCase: ProfileOtpUseCaseImpl.create(),
       captchaTokenProvider: TurnstileCaptchaTokenProvider(context: context),
     );
-    _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
+    _navEffectSubscription = _viewModel.navEffects.listen((effect) {
+      unawaited(_handleNavEffect(effect));
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
@@ -72,7 +76,7 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
     super.dispose();
   }
 
-  void _handleNavEffect(ProfileOtpNavEffect effect) {
+  Future<void> _handleNavEffect(ProfileOtpNavEffect effect) async {
     if (!mounted) {
       return;
     }
@@ -81,6 +85,25 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       case ProfileOtpNavigateBack():
         Navigator.of(context).maybePop();
       case ProfileOtpPinSetupRequired():
+        final didSaveSession = _saveVerifiedRegistrationSession(effect);
+        if (didSaveSession) {
+          try {
+            await SessionScope.of(context).refreshSession();
+          } catch (_) {
+            if (!mounted) {
+              return;
+            }
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                const SnackBar(content: Text('Unable to refresh app session.')),
+              );
+            return;
+          }
+          if (!mounted) {
+            return;
+          }
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: 'profile_pin'),
@@ -95,11 +118,56 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
     }
   }
 
+  bool _saveVerifiedRegistrationSession(ProfileOtpPinSetupRequired effect) {
+    final response = effect.response;
+    if (!response.hasSessionDetails) {
+      return false;
+    }
+
+    final user = response.user;
+    final session = response.session;
+    final accessToken = session?.accessToken.isNotEmpty == true
+        ? session!.accessToken
+        : response.accessToken;
+    final refreshToken = session?.refreshToken.isNotEmpty == true
+        ? session!.refreshToken
+        : response.refreshToken;
+    final displayName = user?.name.isNotEmpty == true
+        ? user!.name
+        : effect.username;
+    final phoneNumber = user?.phoneNumber.isNotEmpty == true
+        ? user!.phoneNumber
+        : effect.phoneNumber;
+
+    SessionScope.of(context).login(
+      username: displayName,
+      role: _roleFromName(user?.roleName ?? ''),
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      sessionId: session?.sessionId,
+      sessionExpiresInSeconds: session?.expiresInSeconds,
+      refreshExpiresAt: session?.refreshExpiresAt,
+      authUserId: user?.userId,
+      authId: user?.authId,
+      isPhoneVerified: user?.isPhoneVerified,
+      authCreatedAt: user?.createdAt,
+      authUpdatedAt: user?.updatedAt,
+      profileFullName: displayName,
+      profileNickname: user?.username,
+      profilePhoneNumber: phoneNumber,
+      hasPin: user?.hasPin,
+      hasPasskey: user?.hasPasskey,
+      hasOTPFallback: true,
+    );
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
+        _showErrorSnackbarIfNeeded(_viewModel.viewState);
         return Scaffold(
           appBar: AppBar(
             title: const Text('Verify OTP'),
@@ -134,4 +202,36 @@ class _ProfileOtpPageState extends State<ProfileOtpPage> {
       },
     );
   }
+
+  void _showErrorSnackbarIfNeeded(ProfileOtpViewState state) {
+    final message = state.errorMessage;
+    if (message == null) {
+      _lastErrorSnackbarMessage = null;
+      return;
+    }
+
+    if (_lastErrorSnackbarMessage == message) {
+      return;
+    }
+
+    _lastErrorSnackbarMessage = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    });
+  }
+}
+
+UserRole _roleFromName(String roleName) {
+  for (final role in UserRole.values) {
+    if (role.name == roleName.trim().toLowerCase()) {
+      return role;
+    }
+  }
+  return UserRole.user;
 }

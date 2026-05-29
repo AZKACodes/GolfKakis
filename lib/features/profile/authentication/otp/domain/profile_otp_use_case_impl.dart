@@ -21,25 +21,13 @@ class ProfileOtpUseCaseImpl implements ProfileOtpUseCase {
     required String visitorId,
     required String captchaToken,
   }) async {
-    try {
-      return await _profileApiService.onSendWhatsAppOTP(
-        name: name.trim(),
-        phoneNumber: phoneNumber.trim(),
-        purpose: purpose,
-        visitorId: visitorId,
-        captchaToken: captchaToken,
-      );
-    } catch (_) {
-      return const SendWhatsAppOtpResponse(
-        success: true,
-        code: 'OTP_SENT',
-        message: 'OTP sent through WhatsApp.',
-        requestId: 'mock-register-otp-request',
-        otpExpiresInSeconds: 300,
-        retryAfterSeconds: 60,
-        maskedDestination: '',
-      );
-    }
+    return _profileApiService.onSendWhatsAppOTP(
+      name: name.trim(),
+      phoneNumber: phoneNumber.trim(),
+      purpose: purpose,
+      visitorId: visitorId,
+      captchaToken: captchaToken,
+    );
   }
 
   @override
@@ -51,23 +39,13 @@ class ProfileOtpUseCaseImpl implements ProfileOtpUseCase {
     required String otpCode,
     required String visitorId,
   }) async {
-    try {
-      return await _profileApiService.onVerifyOTP(
-        name: name.trim(),
-        phoneNumber: phoneNumber.trim(),
-        purpose: purpose,
-        includeVisitorId: includeVisitorId,
-        otpCode: otpCode,
-        visitorId: visitorId,
-      );
-    } catch (_) {
-      return const RegisterOtpVerifyResponse(
-        success: true,
-        code: 'PHONE_VERIFIED_PIN_REQUIRED',
-        message: 'Phone verified. Create a 6-digit app PIN.',
-        nextAction: 'PIN_SETUP_REQUIRED',
-        pinSetupToken: 'mock-pin-setup-token',
-      );
-    }
+    return _profileApiService.onVerifyOTP(
+      name: name.trim(),
+      phoneNumber: phoneNumber.trim(),
+      purpose: purpose,
+      includeVisitorId: includeVisitorId,
+      otpCode: otpCode,
+      visitorId: visitorId,
+    );
   }
 }

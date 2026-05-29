@@ -331,7 +331,7 @@ class _SlotGolfClubField extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.golf_course_rounded, color: Color(0xFF0D7A3A)),
+              _SlotGolfClubThumbnail(imageUrl: club?.coverPhotoUrl),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -363,6 +363,44 @@ class _SlotGolfClubField extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SlotGolfClubThumbnail extends StatelessWidget {
+  const _SlotGolfClubThumbnail({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl?.trim() ?? '';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: url.isEmpty
+            ? const ColoredBox(
+                color: Color(0xFFE2F3E8),
+                child: Icon(
+                  Icons.golf_course_rounded,
+                  color: Color(0xFF0D7A3A),
+                ),
+              )
+            : Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const ColoredBox(
+                  color: Color(0xFFE2F3E8),
+                  child: Icon(
+                    Icons.golf_course_rounded,
+                    color: Color(0xFF0D7A3A),
+                  ),
+                ),
+              ),
       ),
     );
   }

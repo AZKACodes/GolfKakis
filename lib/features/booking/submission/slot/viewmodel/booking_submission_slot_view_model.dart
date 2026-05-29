@@ -874,9 +874,7 @@ class BookingSubmissionSlotViewModel
   ) {
     final today = DateUtil.dateOnly(DateTime.now());
     final selectedDate = DateUtil.dateOnly(state.selectedDate);
-    final selectedPeriod = selectedDate == today
-        ? currentTimePeriod()
-        : state.selectedPeriod;
+    final selectedPeriod = state.selectedPeriod;
     final normalizedPlayerCount = state.playerCount.clamp(2, 6);
     final visibleSlots = state.bookingSlots
         .where(
