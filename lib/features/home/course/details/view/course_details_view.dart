@@ -36,9 +36,11 @@ class CourseDetailsView extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           _CourseCoverHero(
-            coverPhotoUrl: detail.photoUrls.isNotEmpty
-                ? detail.photoUrls.first
-                : club.coverPhotoUrl,
+            coverPhotoUrl: _resolveHeaderCoverPhotoUrl(
+              galleryImageUrls: club.galleryImageUrls,
+              photoUrls: detail.photoUrls,
+              coverPhotoUrl: club.coverPhotoUrl,
+            ),
             onBackTap: onBackTap,
           ),
           Transform.translate(
@@ -60,6 +62,20 @@ class CourseDetailsView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String? _resolveHeaderCoverPhotoUrl({
+    required List<String> galleryImageUrls,
+    required List<String> photoUrls,
+    required String? coverPhotoUrl,
+  }) {
+    if (galleryImageUrls.isNotEmpty) {
+      return galleryImageUrls.first;
+    }
+    if (photoUrls.isNotEmpty) {
+      return photoUrls.first;
+    }
+    return coverPhotoUrl;
   }
 }
 

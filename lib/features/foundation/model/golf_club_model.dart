@@ -18,6 +18,7 @@ class GolfClubModel {
     this.paymentMethods = const <String>[],
     this.facilities = const <GolfClubFacilityModel>[],
     this.imageUrls = const <String>[],
+    this.galleryImageUrls = const <String>[],
     this.coverPhotoUrl,
     this.updatedAt = '',
   });
@@ -38,11 +39,13 @@ class GolfClubModel {
   final List<String> paymentMethods;
   final List<GolfClubFacilityModel> facilities;
   final List<String> imageUrls;
+  final List<String> galleryImageUrls;
   final String? coverPhotoUrl;
   final String updatedAt;
 
   factory GolfClubModel.fromJson(Map<String, dynamic> json) {
     final imageUrls = _parseImageUrls(json);
+    final galleryImageUrls = _parseGalleryImageUrls(json);
 
     return GolfClubModel(
       id: json['id']?.toString() ?? '',
@@ -61,6 +64,7 @@ class GolfClubModel {
       paymentMethods: _parsePaymentMethods(json),
       facilities: _parseFacilities(json),
       imageUrls: imageUrls,
+      galleryImageUrls: galleryImageUrls,
       coverPhotoUrl: _parseCoverPhotoUrl(json, imageUrls),
       updatedAt: json['updatedAt']?.toString() ?? '',
     );
@@ -84,6 +88,7 @@ class GolfClubModel {
       'paymentMethods': paymentMethods,
       'facilities': facilities.map((item) => item.toJson()).toList(),
       'imageUrls': imageUrls,
+      'galleryImageUrls': galleryImageUrls,
       'coverPhotoUrl': coverPhotoUrl,
       'updatedAt': updatedAt,
     };
@@ -106,6 +111,7 @@ class GolfClubModel {
     List<String>? paymentMethods,
     List<GolfClubFacilityModel>? facilities,
     List<String>? imageUrls,
+    List<String>? galleryImageUrls,
     String? coverPhotoUrl,
     String? updatedAt,
   }) {
@@ -126,6 +132,7 @@ class GolfClubModel {
       paymentMethods: paymentMethods ?? this.paymentMethods,
       facilities: facilities ?? this.facilities,
       imageUrls: imageUrls ?? this.imageUrls,
+      galleryImageUrls: galleryImageUrls ?? this.galleryImageUrls,
       coverPhotoUrl: coverPhotoUrl ?? this.coverPhotoUrl,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -186,6 +193,23 @@ class GolfClubModel {
     return urls.toSet().toList();
   }
 
+  static List<String> _parseGalleryImageUrls(Map<String, dynamic> json) {
+    final images = json['images'];
+    final candidates = <dynamic>[
+      if (images is Map<String, dynamic>) images['gallery'],
+      if (images is Map)
+        images.map((key, item) => MapEntry(key.toString(), item))['gallery'],
+      json['gallery'],
+    ];
+
+    final urls = <String>[];
+    for (final candidate in candidates) {
+      _appendImageUrls(urls, candidate);
+    }
+
+    return urls.toSet().toList();
+  }
+
   static void _appendImageUrls(List<String> urls, dynamic value) {
     if (value == null) {
       return;
@@ -206,7 +230,22 @@ class GolfClubModel {
           value['src'] ??
           value['path'] ??
           value['location'];
-      _appendImageUrls(urls, nestedValue);
+      if (nestedValue != null) {
+        _appendImageUrls(urls, nestedValue);
+        return;
+      }
+
+      final imageValues = <dynamic>[
+        value['cover'],
+        value['thumbnail'],
+        value['logo'],
+        value['gallery'],
+        value['images'],
+        value['photos'],
+      ];
+      for (final item in imageValues) {
+        _appendImageUrls(urls, item);
+      }
       return;
     }
 
