@@ -8,6 +8,7 @@ import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submi
 import 'package:golf_kakis/features/booking/submission/start/viewmodel/booking_submission_start_view_contract.dart'
     as start;
 import 'package:golf_kakis/features/booking/submission/start/viewmodel/booking_submission_start_view_model.dart';
+import 'package:golf_kakis/features/foundation/navigation/booking_nav_graph.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 
 import 'view/booking_overview_view.dart';
@@ -31,6 +32,7 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
   StreamSubscription<BookingOverviewNavEffect>? _navEffectSubscription;
   StreamSubscription<start.BookingSubmissionStartNavEffect>?
   _startBookingNavEffectSubscription;
+  StreamSubscription<void>? _overviewRefreshRequestSubscription;
   bool _hasSyncedSession = false;
   int _currentTabIndex = 0;
 
@@ -46,6 +48,9 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
     _startBookingNavEffectSubscription = _startBookingViewModel.navEffects
         .listen(_handleStartBookingNavEffect);
+    _overviewRefreshRequestSubscription = BookingNavGraph
+        .overviewRefreshRequests
+        .listen((_) => _refreshUpcomingBookings());
     _startBookingViewModel.onUserIntent(
       const start.OnInitBookingSubmissionStart(),
     );
@@ -61,6 +66,7 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
   void dispose() {
     _navEffectSubscription?.cancel();
     _startBookingNavEffectSubscription?.cancel();
+    _overviewRefreshRequestSubscription?.cancel();
     _tabController
       ..removeListener(_handleTabChanged)
       ..dispose();
@@ -76,7 +82,7 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
 
     switch (effect) {
       case NavigateToBookingDetail():
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingDetailPage(booking: effect.booking),
           ),
@@ -133,6 +139,17 @@ class _BookingOverviewPageState extends State<BookingOverviewPage>
             : BookingOverviewTab.past,
       ),
     );
+  }
+
+  void _refreshUpcomingBookings() {
+    if (!mounted) {
+      return;
+    }
+
+    if (_tabController.index != 0) {
+      _tabController.animateTo(0);
+    }
+    _viewModel.onRefresh(BookingOverviewTab.upcoming);
   }
 
   @override

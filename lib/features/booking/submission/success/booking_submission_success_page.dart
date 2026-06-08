@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_view.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
+import 'package:golf_kakis/features/foundation/navigation/booking_nav_graph.dart';
+import 'package:golf_kakis/features/foundation/root/root_screen.dart';
 import 'package:golf_kakis/features/foundation/util/user_util.dart';
 
 class BookingSubmissionSuccessPage extends StatefulWidget {
@@ -110,6 +112,8 @@ class _BookingSubmissionSuccessPageState
   void _handleNavEffect(BookingSubmissionSuccessNavEffect effect) {
     switch (effect) {
       case NavigateToSubmissionStart():
+        BookingNavGraph.refreshOverview();
+        RootScreen.selectTab(1);
         Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }

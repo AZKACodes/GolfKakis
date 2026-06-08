@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 import '../../booking/overview/booking_overview_page.dart';
 import '../../booking/submission/slot/booking_submission_slot_page.dart';
@@ -8,6 +9,15 @@ class BookingNavGraph extends StatelessWidget {
 
   static const String root = '/';
   static const String submission = '/submission';
+  static final StreamController<void> _overviewRefreshController =
+      StreamController<void>.broadcast();
+
+  static Stream<void> get overviewRefreshRequests =>
+      _overviewRefreshController.stream;
+
+  static void refreshOverview() {
+    _overviewRefreshController.add(null);
+  }
 
   Route<dynamic> _onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {

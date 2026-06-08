@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 import '../viewmodel/stay_play_view_contract.dart';
 import 'widgets/stay_play_empty_state.dart';
@@ -22,13 +23,6 @@ class StayPlayView extends StatelessWidget {
       StayPlayDataLoaded() => state as StayPlayDataLoaded,
     };
 
-    if (loadedState.isLoading && loadedState.items.isEmpty) {
-      return const ColoredBox(
-        color: Colors.white,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(46)),
       child: ColoredBox(
@@ -37,7 +31,7 @@ class StayPlayView extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
             22,
-            MediaQuery.paddingOf(context).top + 36,
+            MediaQuery.paddingOf(context).top + 8,
             22,
             _bottomNavScrollClearance,
           ),
@@ -48,6 +42,17 @@ class StayPlayView extends StatelessWidget {
             if (index == 0) {
               return _StayPlayHeader(
                 onBackTap: () => Navigator.of(context).maybePop(),
+              );
+            }
+
+            if (loadedState.isLoading && loadedState.items.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.only(top: 84),
+                child: Center(
+                  child: GolfKakisLoadingContainer(
+                    message: 'Loading packages...',
+                  ),
+                ),
               );
             }
 

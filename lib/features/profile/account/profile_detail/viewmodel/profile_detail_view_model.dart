@@ -117,6 +117,14 @@ class ProfileDetailViewModel
       return;
     }
 
+    emitViewState(
+      (_) => _currentDataState.copyWith(
+        isLoading: true,
+        clearMessage: true,
+        clearErrorMessage: true,
+      ),
+    );
+
     try {
       final profile = await _useCase.onFetchUserDetails(
         session: session,
@@ -132,6 +140,7 @@ class ProfileDetailViewModel
     } catch (error) {
       emitViewState(
         (_) => _currentDataState.copyWith(
+          isLoading: false,
           errorSnackbarMessageModel: SnackbarMessageModel(
             message: 'Unable to refresh profile details: $error',
           ),

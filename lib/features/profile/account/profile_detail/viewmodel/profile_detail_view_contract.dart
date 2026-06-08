@@ -33,6 +33,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     required this.initialEmail,
     required this.initialAvatarIndex,
     this.initialAvatarImagePath,
+    required this.isLoading,
     required this.isSaving,
     this.snackbarMessageModel = SnackbarMessageModel.emptyValue,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
@@ -62,6 +63,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       initialEmail: email,
       initialAvatarIndex: profile.avatarIndex,
       initialAvatarImagePath: profile.avatarImagePath,
+      isLoading: false,
       isSaving: false,
     );
   }
@@ -81,6 +83,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
   final String initialEmail;
   final int initialAvatarIndex;
   final String? initialAvatarImagePath;
+  final bool isLoading;
   final bool isSaving;
   final SnackbarMessageModel snackbarMessageModel;
   final SnackbarMessageModel errorSnackbarMessageModel;
@@ -97,6 +100,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       username.trim().isNotEmpty &&
       email.trim().isNotEmpty &&
       hasChanges &&
+      !isLoading &&
       !isSaving;
 
   bool get hasChanges =>
@@ -124,6 +128,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     String? initialEmail,
     int? initialAvatarIndex,
     String? initialAvatarImagePath,
+    bool? isLoading,
     bool? isSaving,
     SnackbarMessageModel? snackbarMessageModel,
     SnackbarMessageModel? errorSnackbarMessageModel,
@@ -147,6 +152,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       initialAvatarIndex: initialAvatarIndex ?? this.initialAvatarIndex,
       initialAvatarImagePath:
           initialAvatarImagePath ?? this.initialAvatarImagePath,
+      isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       snackbarMessageModel: clearMessage
           ? SnackbarMessageModel.emptyValue

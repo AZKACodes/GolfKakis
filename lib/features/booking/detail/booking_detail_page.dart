@@ -8,6 +8,7 @@ import 'package:golf_kakis/features/booking/detail/domain/booking_detail_use_cas
 import 'package:golf_kakis/features/booking/edit/booking_edit_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:printing/printing.dart';
 
 import 'view/booking_detail_pdf_service.dart';
@@ -92,7 +93,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         }
         final file = File('${Directory.systemTemp.path}/$fileName');
         await file.writeAsBytes(pdfBytes, flush: true);
-        debugPrint('Booking detail receipt PDF saved to: ${file.path}');
+        logDebug('Booking detail receipt PDF saved to: ${file.path}');
         if (!mounted) {
           return;
         }

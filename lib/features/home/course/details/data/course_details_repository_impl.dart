@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/booking/api/booking_api_service.dart';
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/network/api_config.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
 import 'package:golf_kakis/features/home/api/weather_api_service.dart';
 
@@ -202,7 +202,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     GolfClubModel club,
   ) async {
     if (club.latitude == null || club.longitude == null) {
-      debugPrint(
+      logDebug(
         '[CourseWeather] missing coordinates for ${club.slug} ${club.name}',
       );
       return const CourseWeatherDetailsData(
@@ -212,7 +212,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
     }
 
     try {
-      debugPrint(
+      logDebug(
         '[CourseWeather] fetching ${club.slug} lat=${club.latitude} lon=${club.longitude}',
       );
       final response = await _weatherApiService.getWeather(
@@ -223,7 +223,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
       final daily = _asMap(response['daily']);
       final hourly = _asMap(response['hourly']);
       if (current == null || daily == null) {
-        debugPrint(
+        logDebug(
           '[CourseWeather] missing current/daily payload keys=${response.keys.toList()}',
         );
         return const CourseWeatherDetailsData(
@@ -240,7 +240,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
         daily: daily,
         hourlyForecast: hourlyForecast,
       );
-      debugPrint(
+      logDebug(
         '[CourseWeather] parsed current=${weather != null} forecastDays=${weeklyForecast.length} hourly=${hourlyForecast.length}',
       );
       return CourseWeatherDetailsData(
@@ -248,7 +248,7 @@ class CourseDetailsRepositoryImpl implements CourseDetailsRepository {
         weeklyForecast: weeklyForecast,
       );
     } catch (error) {
-      debugPrint('[CourseWeather] failed: $error');
+      logDebug('[CourseWeather] failed: $error');
       return const CourseWeatherDetailsData(
         weather: null,
         weeklyForecast: <CourseWeatherForecastItem>[],

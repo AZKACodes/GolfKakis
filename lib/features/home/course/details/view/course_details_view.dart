@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/course_details_repository.dart';
 import '../viewmodel/course_details_view_contract.dart';
-import 'widgets/item/course_details_fullscreen_loading_state.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 import 'widgets/section/course_details_map_section.dart';
 import 'widgets/section/course_details_weather_section.dart';
 
@@ -26,7 +26,7 @@ class CourseDetailsView extends StatelessWidget {
     final club = detail.club;
 
     if (state.isLoading) {
-      return const CourseDetailsFullscreenLoadingState();
+      return _CourseDetailsLoadingView(onBackTap: onBackTap);
     }
 
     return RefreshIndicator(
@@ -76,6 +76,55 @@ class CourseDetailsView extends StatelessWidget {
       return photoUrls.first;
     }
     return coverPhotoUrl;
+  }
+}
+
+class _CourseDetailsLoadingView extends StatelessWidget {
+  const _CourseDetailsLoadingView({required this.onBackTap});
+
+  final VoidCallback onBackTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(color: Color(0xFFCDEEFF)),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: onBackTap,
+                      icon: const Icon(Icons.chevron_left_rounded, size: 34),
+                    ),
+                  ),
+                  Text(
+                    'Course Details',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Expanded(
+              child: Center(
+                child: GolfKakisLoadingContainer(
+                  message: 'Loading golf club details...',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

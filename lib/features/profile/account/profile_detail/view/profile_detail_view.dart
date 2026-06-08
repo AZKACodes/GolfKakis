@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -323,6 +324,12 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = _loadedState;
+    if (state.isLoading) {
+      return const Center(
+        child: GolfKakisLoadingContainer(message: 'Loading profile details...'),
+      );
+    }
+
     final phoneParts = PhoneUtil.splitPhoneNumber(state.phoneNumber);
 
     return SingleChildScrollView(

@@ -7,6 +7,7 @@ import '../device/device_id_service.dart';
 import '../enums/session/session_status.dart';
 import '../enums/session/user_role.dart';
 import '../network/network.dart';
+import '../util/debug_log.dart';
 import 'session_state.dart';
 import 'session_storage.dart';
 import 'visitor_api_service.dart';
@@ -191,8 +192,8 @@ class SessionManager extends ChangeNotifier {
       );
       return true;
     } catch (error, stackTrace) {
-      debugPrint('onLogout error: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      logDebug('onLogout error: $error');
+      logDebugStack(stackTrace: stackTrace);
       return false;
     }
   }
@@ -314,14 +315,14 @@ class SessionManager extends ChangeNotifier {
       return true;
     } on ApiException catch (error) {
       if (error.statusCode == 401) {
-        debugPrint('[API] App Session Expired');
+        logDebug('[API] App Session Expired');
         await _expireLocalAuthSession();
       } else {
-        debugPrint('[API] Failed To Refresh App Session - ${error.message}');
+        logDebug('[API] Failed To Refresh App Session - ${error.message}');
       }
       return false;
     } catch (error) {
-      debugPrint('[API] Failed To Refresh App Session - $error');
+      logDebug('[API] Failed To Refresh App Session - $error');
       return false;
     }
   }
@@ -373,8 +374,8 @@ class SessionManager extends ChangeNotifier {
       );
       _state = _state.copyWith(visitor: visitor);
     } catch (error, stackTrace) {
-      debugPrint('Failed to set visitor heartbeat: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      logDebug('Failed to set visitor heartbeat: $error');
+      logDebugStack(stackTrace: stackTrace);
     }
   }
 

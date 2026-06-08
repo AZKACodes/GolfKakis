@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 import '../viewmodel/profile_friends_view_contract.dart';
 
@@ -44,11 +45,18 @@ class ProfileFriendsView extends StatelessWidget {
               ErrorBanner(message: state.errorMessage!),
               const SizedBox(height: 12),
             ],
-            if (state.isLoading) ...[
+            if (state.isLoading && state.hasFriends) ...[
               const LinearProgressIndicator(),
               const SizedBox(height: 12),
             ],
-            if (!state.hasFriends)
+            if (state.isLoading && !state.hasFriends)
+              const Padding(
+                padding: EdgeInsets.only(top: 56),
+                child: Center(
+                  child: GolfKakisLoadingContainer(message: 'Loading kakis...'),
+                ),
+              )
+            else if (!state.hasFriends)
               const _EmptyFriendsCard()
             else
               _FriendsListSection(

@@ -7,6 +7,7 @@ import 'package:golf_kakis/features/booking/submission/success/view/booking_subm
 import 'package:golf_kakis/features/booking/submission/success/view/booking_submission_success_pdf_service.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/success/viewmodel/booking_submission_success_view_model.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:printing/printing.dart';
 
 class BookingSubmissionSuccessView extends StatelessWidget {
@@ -36,7 +37,7 @@ class BookingSubmissionSuccessView extends StatelessWidget {
         }
         final file = File('${Directory.systemTemp.path}/$fileName');
         await file.writeAsBytes(pdfBytes, flush: true);
-        debugPrint('Receipt PDF saved to: ${file.path}');
+        logDebug('Receipt PDF saved to: ${file.path}');
         if (!context.mounted) {
           return;
         }

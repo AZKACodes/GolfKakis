@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 import '../viewmodel/profile_notification_view_contract.dart';
 
@@ -15,7 +16,11 @@ class ProfileNotificationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: GolfKakisLoadingContainer(
+          message: 'Loading notification settings...',
+        ),
+      );
     }
 
     return ListView(
@@ -27,9 +32,8 @@ class ProfileNotificationView extends StatelessWidget {
               title: 'Push Notifications',
               subtitle: 'Receive important updates from GolfKakis.',
               value: state.pushNotificationsEnabled,
-              onChanged: (value) => onUserIntent(
-                OnProfileNotificationPushToggled(value),
-              ),
+              onChanged: (value) =>
+                  onUserIntent(OnProfileNotificationPushToggled(value)),
             ),
             const _InsetDivider(),
             _NotificationToggleTile(
@@ -45,9 +49,8 @@ class ProfileNotificationView extends StatelessWidget {
               title: 'Promotions & Updates',
               subtitle: 'Stay in the loop on offers and new features.',
               value: state.promotionsEnabled,
-              onChanged: (value) => onUserIntent(
-                OnProfileNotificationPromotionsToggled(value),
-              ),
+              onChanged: (value) =>
+                  onUserIntent(OnProfileNotificationPromotionsToggled(value)),
             ),
           ],
         ),
@@ -117,10 +120,7 @@ class _NotificationToggleTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-          ),
+          Switch(value: value, onChanged: onChanged),
         ],
       ),
     );

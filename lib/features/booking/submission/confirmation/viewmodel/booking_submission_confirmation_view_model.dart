@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_confirmation_view_contract.dart';
@@ -112,12 +112,12 @@ class BookingSubmissionConfirmationViewModel
   Future<void> _createBookingSubmission(
     BookingSubmissionConfirmationDataLoaded current,
   ) async {
-    debugPrint(
+    logDebug(
       '[onSubmitBooking] started bookingRef=${current.bookingRef} '
       'accessTokenPresent=${current.accessToken.trim().isNotEmpty}',
     );
     if (_remainingSecondsUntil(current.holdExpiresAt) <= 0) {
-      debugPrint('[onSubmitBooking] blocked because hold expired');
+      logDebug('[onSubmitBooking] blocked because hold expired');
       emitViewState((state) {
         return current.copyWith(
           isHoldExpired: true,
@@ -145,12 +145,12 @@ class BookingSubmissionConfirmationViewModel
     var hasHandledSubmissionResult = false;
     final completer = Completer<void>();
     final request = _buildRequest(current);
-    debugPrint('[onSubmitBooking] request: ${jsonEncode(request.toJson())}');
+    logDebug('[onSubmitBooking] request: ${jsonEncode(request.toJson())}');
     _submissionSubscription = _useCase
         .onCreateBookingSubmission(request: request)
         .listen(
           (result) {
-            debugPrint(
+            logDebug(
               '[onSubmitBooking] stream event status=${result.status.name} '
               'code=${result.rawResponseCode} message=${result.apiMessage}',
             );
@@ -162,7 +162,7 @@ class BookingSubmissionConfirmationViewModel
                   completer.complete();
                 }
               case DataStatus.error:
-                debugPrint(
+                logDebug(
                   '[onSubmitBooking] error response: ${result.apiMessage}',
                 );
                 hasHandledSubmissionResult = true;
@@ -184,7 +184,7 @@ class BookingSubmissionConfirmationViewModel
             }
           },
           onError: (Object error) {
-            debugPrint('[onSubmitBooking] stream error: $error');
+            logDebug('[onSubmitBooking] stream error: $error');
             hasHandledSubmissionResult = true;
             emitViewState((state) {
               return getCurrentAsLoaded().copyWith(
@@ -201,7 +201,7 @@ class BookingSubmissionConfirmationViewModel
             }
           },
           onDone: () {
-            debugPrint(
+            logDebug(
               '[onSubmitBooking] stream done '
               'hasHandledSubmissionResult=$hasHandledSubmissionResult '
               'isSubmitting=${getCurrentAsLoaded().isSubmitting}',
@@ -226,13 +226,13 @@ class BookingSubmissionConfirmationViewModel
     final pricing = _readMap(payload['pricing']);
     final bookingRef = _resolveBookingRef(response) ?? latest.bookingRef;
     final bookingId = _resolveBookingId(response);
-    debugPrint(
+    logDebug(
       '[onSubmitBooking] navigating success '
       'bookingId=$bookingId bookingRef=$bookingRef '
       'payloadKeys=${payload.keys.toList()}',
     );
     if (bookingRef.isEmpty) {
-      debugPrint('[onSubmitBooking] navigation blocked: missing bookingRef');
+      logDebug('[onSubmitBooking] navigation blocked: missing bookingRef');
       emitViewState((state) {
         return latest.copyWith(
           isSubmitting: false,
@@ -320,7 +320,7 @@ class BookingSubmissionConfirmationViewModel
     });
 
     final request = _buildPreviewRequest(current);
-    debugPrint('[PreviewBooking] request: ${jsonEncode(request)}');
+    logDebug('[PreviewBooking] request: ${jsonEncode(request)}');
 
     await _previewSubscription?.cancel();
     _previewSubscription = _useCase
@@ -400,7 +400,7 @@ class BookingSubmissionConfirmationViewModel
                 );
               });
             case DataStatus.error:
-              debugPrint(
+              logDebug(
                 '[PreviewBooking] error: ${result.rawResponseCode} ${result.apiMessage}',
               );
               emitViewState((state) {

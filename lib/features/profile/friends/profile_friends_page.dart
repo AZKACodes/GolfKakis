@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_state.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:golf_kakis/features/profile/friends/domain/profile_friends_use_case_impl.dart';
 import 'package:golf_kakis/features/profile/friends/view/profile_friends_view.dart';
 import 'package:golf_kakis/features/profile/friends/viewmodel/profile_friends_view_contract.dart';
@@ -122,15 +123,15 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
   }
 
   Future<void> _openNativeContactPicker() async {
-    debugPrint('[Friends] Add New Kakis tapped');
+    logDebug('[Friends] Add New Kakis tapped');
     ScaffoldMessenger.maybeOf(
       context,
     )?.showSnackBar(const SnackBar(content: Text('Opening contacts...')));
 
     try {
-      debugPrint('[Friends] Calling FlutterContacts.openExternalPick');
+      logDebug('[Friends] Calling FlutterContacts.openExternalPick');
       final pickedContact = await FlutterContacts.openExternalPick();
-      debugPrint(
+      logDebug(
         '[Friends] Contact picker returned id=${pickedContact?.id ?? 'null'}',
       );
       if (!mounted || pickedContact == null) {
@@ -163,9 +164,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
         OnAddFriendToGolfKakis(session: widget.session, friend: friend),
       );
     } catch (_) {
-      debugPrint(
-        '[Friends] Native contact picker failed; requesting permission',
-      );
+      logDebug('[Friends] Native contact picker failed; requesting permission');
       if (!mounted) {
         return;
       }
@@ -173,7 +172,7 @@ class _ProfileFriendsPageState extends State<ProfileFriendsPage> {
       final hasPermission = await FlutterContacts.requestPermission(
         readonly: true,
       );
-      debugPrint('[Friends] Contact permission result=$hasPermission');
+      logDebug('[Friends] Contact permission result=$hasPermission');
       if (!mounted) {
         return;
       }

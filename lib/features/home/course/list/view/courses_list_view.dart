@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 import '../viewmodel/courses_list_view_contract.dart';
 import 'widgets/course_list_item.dart';
@@ -32,7 +33,7 @@ class CoursesListView extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
             22,
-            MediaQuery.paddingOf(context).top + 36,
+            MediaQuery.paddingOf(context).top + 8,
             22,
             _bottomNavScrollClearance,
           ),
@@ -102,10 +103,8 @@ class _CoursesListLoadingState extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 260,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: Theme.of(context).colorScheme.primary,
-        ),
+      child: const Center(
+        child: GolfKakisLoadingContainer(message: 'Loading courses...'),
       ),
     );
   }

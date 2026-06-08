@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../util/debug_log.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
 
@@ -209,7 +209,7 @@ class ApiClient {
 
     try {
       if (shouldRefreshSession && _shouldRefreshBeforeRequest()) {
-        debugPrint('[API] Refreshing App Session Before $method $uri');
+        logDebug('[API] Refreshing App Session Before $method $uri');
         final refreshed = await _sessionRefreshProvider!.call();
         if (!refreshed) {
           throw ApiException(
@@ -222,7 +222,7 @@ class ApiClient {
       return _handleJsonResponse(method: method, uri: uri, response: response);
     } on ApiException catch (error) {
       if (shouldRefreshSession && await _shouldRetryAfterRefresh(error)) {
-        debugPrint('[API] Refreshing App Session Before Retrying $method $uri');
+        logDebug('[API] Refreshing App Session Before Retrying $method $uri');
         final refreshed = await _sessionRefreshProvider!.call();
         if (refreshed) {
           final response = await request();
@@ -307,21 +307,21 @@ class ApiClient {
   }
 
   void _logRequest(String method, Uri uri) {
-    debugPrint('[API] $method $uri');
+    logDebug('[API] $method $uri');
   }
 
   void _logSuccess(String method, Uri uri, int statusCode) {
-    debugPrint('[API] OK $statusCode $method $uri');
+    logDebug('[API] OK $statusCode $method $uri');
   }
 
   void _logApiError(String method, Uri uri, ApiException error) {
-    debugPrint(
+    logDebug(
       '[API] FAILED ${error.statusCode} $method $uri - ${error.message}',
     );
   }
 
   void _logTransportError(String method, Uri uri, Object error) {
-    debugPrint('[API] ERROR $method $uri - $error');
+    logDebug('[API] ERROR $method $uri - $error');
   }
 
   dynamic _decodeJsonResponse(http.Response response) {

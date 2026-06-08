@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 import '../../overview/view/widgets/item/home_deals_item.dart';
 import '../viewmodel/deals_view_contract.dart';
@@ -18,13 +19,6 @@ class DealsView extends StatelessWidget {
       DealsDataLoaded() => state as DealsDataLoaded,
     };
 
-    if (loadedState.isLoading && loadedState.deals.isEmpty) {
-      return const ColoredBox(
-        color: Colors.white,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(46)),
       child: ColoredBox(
@@ -33,7 +27,7 @@ class DealsView extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
             22,
-            MediaQuery.paddingOf(context).top + 36,
+            MediaQuery.paddingOf(context).top + 8,
             22,
             _bottomNavScrollClearance,
           ),
@@ -44,6 +38,15 @@ class DealsView extends StatelessWidget {
             if (index == 0) {
               return _DealsHeader(
                 onBackTap: () => Navigator.of(context).maybePop(),
+              );
+            }
+
+            if (loadedState.isLoading && loadedState.deals.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.only(top: 84),
+                child: Center(
+                  child: GolfKakisLoadingContainer(message: 'Loading deals...'),
+                ),
               );
             }
 

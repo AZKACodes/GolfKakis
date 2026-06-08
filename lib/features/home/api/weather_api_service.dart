@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../foundation/network/api_exception.dart';
+import '../../foundation/util/debug_log.dart';
 
 class WeatherApiService {
   WeatherApiService({http.Client? client}) : _client = client ?? http.Client();
@@ -25,7 +25,7 @@ class WeatherApiService {
           'timezone': 'auto',
         });
 
-    debugPrint('[API] GET $forecastUri');
+    logDebug('[API] GET $forecastUri');
     final response = await _client
         .get(
           forecastUri,
@@ -34,14 +34,14 @@ class WeatherApiService {
         .timeout(const Duration(seconds: 12));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      debugPrint('[API] FAILED ${response.statusCode} GET $forecastUri');
+      logDebug('[API] FAILED ${response.statusCode} GET $forecastUri');
       throw ApiException(
         statusCode: response.statusCode,
         message: 'Unable to load weather right now.',
       );
     }
 
-    debugPrint('[API] OK ${response.statusCode} GET $forecastUri');
+    logDebug('[API] OK ${response.statusCode} GET $forecastUri');
 
     try {
       final decoded = jsonDecode(response.body);
@@ -49,7 +49,7 @@ class WeatherApiService {
         return decoded;
       }
     } catch (error) {
-      debugPrint('[WeatherApi] decode error: $error');
+      logDebug('[WeatherApi] decode error: $error');
     }
 
     throw ApiException(

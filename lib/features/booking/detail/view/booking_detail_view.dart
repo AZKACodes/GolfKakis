@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
@@ -367,26 +368,8 @@ class _FullscreenLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(strokeWidth: 3),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Loading booking details...',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+    return const Center(
+      child: GolfKakisLoadingContainer(message: 'Loading booking details...'),
     );
   }
 }

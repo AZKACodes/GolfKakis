@@ -5,6 +5,7 @@ import 'package:golf_kakis/features/booking/submission/start/viewmodel/booking_s
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/app_nav_bar.dart';
 import 'package:golf_kakis/features/foundation/widgets/card/golf_kakis_count_selection_card.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 
 class BookingSubmissionStartView extends StatelessWidget {
   const BookingSubmissionStartView({required this.viewModel, super.key});
@@ -24,10 +25,16 @@ class BookingSubmissionStartView extends StatelessWidget {
               title: 'New Booking',
               onBackPressed: () => viewModel.onUserIntent(const OnBackClick()),
             ),
-            body: _BookingSubmissionStartContent(
-              state: state,
-              viewModel: viewModel,
-            ),
+            body: state.isLoadingGolfClubs && state.golfClubList.isEmpty
+                ? const Center(
+                    child: GolfKakisLoadingContainer(
+                      message: 'Loading golf clubs...',
+                    ),
+                  )
+                : _BookingSubmissionStartContent(
+                    state: state,
+                    viewModel: viewModel,
+                  ),
           ),
         };
       },

@@ -6,6 +6,7 @@ import 'package:golf_kakis/features/booking/submission/start/viewmodel/booking_s
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/widgets/card/golf_kakis_count_selection_card.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_shimmer_container.dart';
 
 const double _bottomNavScrollClearance = 136;
 
@@ -437,7 +438,7 @@ class _BookingCalendarContentState extends State<_BookingCalendarContent> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && !widget.hasLoaded) {
-      return const Center(child: CircularProgressIndicator());
+      return const _BookingCalendarLoadingShimmer();
     }
 
     final groupedBookings = _groupBookingsByDate(widget.bookings);
@@ -746,7 +747,7 @@ class _BookingOverviewTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading && !hasLoaded) {
-      return const Center(child: CircularProgressIndicator());
+      return const _BookingListLoadingShimmer();
     }
 
     return RefreshIndicator(
@@ -788,6 +789,114 @@ class _BookingOverviewTabContent extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingListLoadingShimmer extends StatelessWidget {
+  const _BookingListLoadingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            _bottomNavScrollClearance,
+          ),
+          sliver: SliverList.separated(
+            itemCount: 4,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (_, _) => const _BookingCardLoadingShimmer(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BookingCalendarLoadingShimmer extends StatelessWidget {
+  const _BookingCalendarLoadingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: GolfKakisShimmerContainer(height: 318, borderRadius: 18),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            _bottomNavScrollClearance,
+          ),
+          sliver: SliverList.separated(
+            itemCount: 2,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (_, _) => const _BookingCardLoadingShimmer(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BookingCardLoadingShimmer extends StatelessWidget {
+  const _BookingCardLoadingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: GolfKakisShimmerContainer(height: 20, borderRadius: 8),
+              ),
+              SizedBox(width: 12),
+              GolfKakisShimmerContainer(
+                width: 76,
+                height: 24,
+                borderRadius: 999,
+              ),
+            ],
+          ),
+          SizedBox(height: 14),
+          GolfKakisShimmerContainer(height: 14, borderRadius: 7),
+          SizedBox(height: 10),
+          GolfKakisShimmerContainer(width: 220, height: 14, borderRadius: 7),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: GolfKakisShimmerContainer(height: 36, borderRadius: 10),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: GolfKakisShimmerContainer(height: 36, borderRadius: 10),
+              ),
+            ],
+          ),
         ],
       ),
     );
