@@ -8,11 +8,9 @@ abstract class ProfileFriendsRepository {
 
   Future<bool> hasContactsPermission();
 
-  Future<List<ProfileFriendModel>> onFetchAvailableContacts({
-    required List<ProfileFriendModel> savedFriends,
-  });
-
   Future<bool> requestContactsPermission();
+
+  Future<ProfileFriendModel?> onPickDeviceContact();
 
   Future<ProfileFriendModel> onAddFriend({
     required SessionState session,

@@ -4,6 +4,7 @@ import 'package:golf_kakis/features/booking/submission/confirmation/booking_subm
 import 'package:golf_kakis/features/booking/submission/detail/view/booking_submission_detail_view.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/detail/viewmodel/booking_submission_detail_view_model.dart';
+import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/submission/slot/booking_submission_slot_page.dart';
 import 'package:golf_kakis/features/foundation/model/profile_friend_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
@@ -68,12 +69,15 @@ class _BookingSubmissionDetailPageState
   bool _isLoadingFriends = false;
   SessionState? _friendsSession;
   bool _didLoadFriends = false;
+  bool _isExpiredDialogOpen = false;
 
   @override
   void initState() {
     super.initState();
 
-    _viewModel = BookingSubmissionDetailViewModel();
+    _viewModel = BookingSubmissionDetailViewModel(
+      BookingSubmissionSlotUseCaseImpl.create(),
+    );
     _friendsUseCase = ProfileFriendsUseCaseImpl.create();
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
@@ -157,30 +161,12 @@ class _BookingSubmissionDetailPageState
           ),
         );
       case ShowBookingSessionExpired():
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('Booking Session Expired'),
-              content: const Text('Your booking session has been expired.'),
-              actions: [
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const BookingSubmissionSlotPage(),
-                      ),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
+        _showBookingSessionExpiredDialog();
+      case DismissBookingSessionExpired():
+        if (_isExpiredDialogOpen) {
+          _isExpiredDialogOpen = false;
+          Navigator.of(context, rootNavigator: true).maybePop();
+        }
       case ShowErrorMessage():
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -191,6 +177,89 @@ class _BookingSubmissionDetailPageState
             ),
           );
     }
+  }
+
+  void _showBookingSessionExpiredDialog() {
+    if (_isExpiredDialogOpen) {
+      return;
+    }
+    _isExpiredDialogOpen = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            final state = _viewModel.viewState;
+            final isExtending =
+                state is BookingSubmissionDetailDataLoaded &&
+                state.isExtendingHold;
+
+            return AlertDialog(
+              title: const Text('Do you need more time?'),
+              content: const Text(
+                'Your booking session is almost expired. Extend the hold to continue this booking.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isExtending
+                      ? null
+                      : () {
+                          _isExpiredDialogOpen = false;
+                          Navigator.of(dialogContext).pop();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const BookingSubmissionSlotPage(),
+                            ),
+                            (route) => route.isFirst,
+                          );
+                        },
+                  child: const Text('No'),
+                ),
+                FilledButton(
+                  onPressed: isExtending
+                      ? null
+                      : () {
+                          final accessToken = SessionScope.of(
+                            context,
+                          ).state.accessToken;
+                          if (accessToken == null || accessToken.isEmpty) {
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please sign in again to extend this hold.',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            return;
+                          }
+                          _viewModel.onUserIntent(
+                            OnExtendBookingHoldClick(accessToken: accessToken),
+                          );
+                        },
+                  child: isExtending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Yes'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      _isExpiredDialogOpen = false;
+    });
   }
 
   @override

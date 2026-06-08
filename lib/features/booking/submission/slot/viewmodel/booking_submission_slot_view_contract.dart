@@ -15,6 +15,12 @@ abstract class BookingSubmissionSlotViewContract {
   void onUserIntent(BookingSubmissionSlotUserIntent intent);
 }
 
+const String currentReleaseEnabledGolfClubSlug = 'kinrara-golf-club';
+
+bool isGolfClubEnabledForCurrentRelease(GolfClubModel club) {
+  return club.slug.trim().toLowerCase() == currentReleaseEnabledGolfClubSlug;
+}
+
 // =========================
 // ViewState
 // =========================
@@ -35,7 +41,7 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
     DateTime? selectedDate,
     this.selectedSlot,
     this.selectedSlotDetails,
-    this.selectedPeriod = TimePeriod.am,
+    TimePeriod? selectedPeriod,
     DateTime? pickerInitialDate,
     List<BookingSlotModel>? visibleSlots,
     Set<int>? visibleUnavailableIndices,
@@ -49,16 +55,23 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
        pickerInitialDate = DateUtil.dateOnly(
          pickerInitialDate ?? selectedDate ?? DateTime.now(),
        ),
+       selectedPeriod = selectedPeriod ?? currentTimePeriod(),
        visibleSlots = visibleSlots ?? const <BookingSlotModel>[],
        visibleUnavailableIndices = visibleUnavailableIndices ?? const <int>{},
        super();
 
   factory BookingSubmissionSlotDataLoaded.initial({
     String selectedClubSlug = emptyString,
+    GolfClubModel? selectedClub,
+    int playerCount = 2,
   }) {
     return BookingSubmissionSlotDataLoaded(
+      golfClubList: selectedClub == null
+          ? const <GolfClubModel>[]
+          : <GolfClubModel>[selectedClub],
       selectedDate: DateTime.now(),
-      selectedClubSlug: selectedClubSlug,
+      selectedClubSlug: selectedClub?.slug ?? selectedClubSlug,
+      playerCount: playerCount,
     );
   }
 
@@ -85,7 +98,8 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
 
   GolfClubModel? get selectedGolfClub {
     for (final club in golfClubList) {
-      if (club.slug == selectedClubSlug) {
+      if (club.slug == selectedClubSlug &&
+          isGolfClubEnabledForCurrentRelease(club)) {
         return club;
       }
     }
@@ -94,6 +108,9 @@ class BookingSubmissionSlotDataLoaded extends BookingSubmissionSlotViewState {
   }
 
   String get selectedClubName => selectedGolfClub?.name ?? emptyString;
+
+  bool get hasSelectableGolfClubs =>
+      golfClubList.any(isGolfClubEnabledForCurrentRelease);
 
   List<String> get availableSupportedNines =>
       selectedGolfClub?.supportedNines ?? const <String>[];
@@ -242,6 +259,10 @@ class OnConfirmSlotClick extends BookingSubmissionSlotUserIntent {
   final BookingSlotDetailsModel details;
 }
 
+class OnSlotDetailsDismissed extends BookingSubmissionSlotUserIntent {
+  const OnSlotDetailsDismissed();
+}
+
 class OnCreateBookingHoldRequested extends BookingSubmissionSlotUserIntent {
   const OnCreateBookingHoldRequested({
     required this.selectedSlotDetails,
@@ -293,9 +314,7 @@ class RequestBookingHoldPrefill extends BookingSubmissionSlotNavEffect {
 }
 
 class ShowSlotDetailsBottomSheet extends BookingSubmissionSlotNavEffect {
-  const ShowSlotDetailsBottomSheet({required this.details});
-
-  final BookingSlotDetailsModel details;
+  const ShowSlotDetailsBottomSheet();
 }
 
 class NavigateToBookingSubmissionDetail extends BookingSubmissionSlotNavEffect {
@@ -346,4 +365,8 @@ class ShowErrorMessage extends BookingSubmissionSlotNavEffect {
   const ShowErrorMessage(this.message);
 
   final String message;
+}
+
+TimePeriod currentTimePeriod() {
+  return DateTime.now().hour < 12 ? TimePeriod.am : TimePeriod.pm;
 }

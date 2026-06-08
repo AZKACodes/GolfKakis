@@ -35,6 +35,7 @@ class ProfilePinPage extends StatefulWidget {
 class _ProfilePinPageState extends State<ProfilePinPage> {
   late final ProfilePinViewModel _viewModel;
   StreamSubscription<ProfilePinNavEffect>? _navEffectSubscription;
+  String? _lastErrorSnackbarMessage;
 
   @override
   void initState() {
@@ -81,14 +82,17 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
 
         SessionScope.of(context).login(
           username: displayName,
-          role: UserRole.user,
+          role: _roleFromName(response.user.roleName),
           accessToken: accessToken,
           refreshToken: refreshToken,
           sessionId: response.session.sessionId,
           sessionExpiresInSeconds: response.session.expiresInSeconds,
           refreshExpiresAt: response.session.refreshExpiresAt,
           authUserId: response.user.userId,
+          authId: response.user.authId,
           isPhoneVerified: response.user.isPhoneVerified,
+          authCreatedAt: response.user.createdAt,
+          authUpdatedAt: response.user.updatedAt,
           profileFullName: displayName,
           profilePhoneNumber: phoneNumber,
           hasPin: response.user.hasPin,
@@ -119,6 +123,7 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
+        _showErrorSnackbarIfNeeded(_viewModel.viewState);
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -145,4 +150,36 @@ class _ProfilePinPageState extends State<ProfilePinPage> {
       },
     );
   }
+
+  void _showErrorSnackbarIfNeeded(ProfilePinViewState state) {
+    final message = state.errorMessage;
+    if (message == null) {
+      _lastErrorSnackbarMessage = null;
+      return;
+    }
+
+    if (_lastErrorSnackbarMessage == message) {
+      return;
+    }
+
+    _lastErrorSnackbarMessage = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    });
+  }
+}
+
+UserRole _roleFromName(String roleName) {
+  for (final role in UserRole.values) {
+    if (role.name == roleName.trim().toLowerCase()) {
+      return role;
+    }
+  }
+  return UserRole.user;
 }

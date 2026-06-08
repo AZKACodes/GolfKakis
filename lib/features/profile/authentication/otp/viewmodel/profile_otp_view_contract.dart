@@ -1,4 +1,5 @@
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
+import 'package:golf_kakis/features/foundation/model/response/register_otp_verify_response.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_contract.dart';
 
 enum ProfileOtpPurpose { register, pinReset }
@@ -136,9 +137,11 @@ class ProfileOtpPinSetupRequired extends ProfileOtpNavEffect {
     required this.pinSetupToken,
     required this.username,
     required this.phoneNumber,
+    required this.response,
   });
 
   final String pinSetupToken;
   final String username;
   final String phoneNumber;
+  final RegisterOtpVerifyResponse response;
 }

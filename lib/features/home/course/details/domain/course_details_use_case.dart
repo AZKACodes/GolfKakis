@@ -6,4 +6,8 @@ abstract class CourseDetailsUseCase {
     required String slug,
     GolfClubModel? initialClub,
   });
+
+  Future<CourseWeatherDetailsData> onFetchGolfCourseWeather({
+    required GolfClubModel club,
+  });
 }

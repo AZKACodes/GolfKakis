@@ -23,9 +23,7 @@ class _CoursesListPageState extends State<CoursesListPage> {
   void initState() {
     super.initState();
 
-    _viewModel = CoursesListViewModel(
-      useCase: CoursesListUseCaseImpl.create(),
-    );
+    _viewModel = CoursesListViewModel(useCase: CoursesListUseCaseImpl.create());
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,7 +69,7 @@ class _CoursesListPageState extends State<CoursesListPage> {
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Courses')),
+          backgroundColor: const Color(0xFFCDEEFF),
           body: RefreshIndicator(
             onRefresh: _handleRefresh,
             child: CoursesListView(

@@ -91,6 +91,7 @@ class CourseWeatherForecastItem {
     required this.lowCelsius,
     required this.weatherLabel,
     required this.weatherIcon,
+    this.hourlyForecast = const <CourseWeatherHourlyForecastItem>[],
   });
 
   final String dayLabel;
@@ -98,6 +99,23 @@ class CourseWeatherForecastItem {
   final int lowCelsius;
   final String weatherLabel;
   final String weatherIcon;
+  final List<CourseWeatherHourlyForecastItem> hourlyForecast;
+}
+
+class CourseWeatherHourlyForecastItem {
+  const CourseWeatherHourlyForecastItem({
+    required this.time,
+    required this.temperatureCelsius,
+    required this.weatherLabel,
+    required this.weatherIcon,
+    required this.precipitationProbability,
+  });
+
+  final DateTime time;
+  final int temperatureCelsius;
+  final String weatherLabel;
+  final String weatherIcon;
+  final int precipitationProbability;
 }
 
 class CourseWeatherDetailsData {

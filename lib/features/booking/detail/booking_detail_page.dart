@@ -1,11 +1,17 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:golf_kakis/features/booking/detail/domain/booking_detail_use_case_impl.dart';
 import 'package:golf_kakis/features/booking/edit/booking_edit_page.dart';
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
+import 'package:printing/printing.dart';
 
+import 'view/booking_detail_pdf_service.dart';
 import 'view/booking_detail_view.dart';
 import 'viewmodel/booking_detail_view_contract.dart';
 import 'viewmodel/booking_detail_view_model.dart';
@@ -69,6 +75,53 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     super.dispose();
   }
 
+  Future<void> _handlePrintBookingReceipt(BookingModel booking) async {
+    try {
+      final pdfBytes = await BookingDetailPdfService.buildReceiptPdf(
+        booking: booking,
+      );
+      final fileName = 'booking-receipt-${booking.bookingReference}.pdf';
+
+      try {
+        await Printing.layoutPdf(
+          name: fileName,
+          onLayout: (_) async => pdfBytes,
+        );
+      } on MissingPluginException {
+        if (kIsWeb) {
+          rethrow;
+        }
+        final file = File('${Directory.systemTemp.path}/$fileName');
+        await file.writeAsBytes(pdfBytes, flush: true);
+        logDebug('Booking detail receipt PDF saved to: ${file.path}');
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text('Receipt PDF saved to ${file.path}'),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('Unable to print receipt: $error'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = _viewModel;
@@ -86,6 +139,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
               onPressed: () => viewModel.onUserIntent(const OnBackClick()),
               icon: const Icon(Icons.arrow_back),
             ),
+            actions: [
+              IconButton(
+                tooltip: 'Print receipt',
+                onPressed: viewModel.viewState.isLoading
+                    ? null
+                    : () => _handlePrintBookingReceipt(
+                        viewModel.viewState.booking,
+                      ),
+                icon: const Icon(Icons.print_outlined),
+              ),
+            ],
           ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),

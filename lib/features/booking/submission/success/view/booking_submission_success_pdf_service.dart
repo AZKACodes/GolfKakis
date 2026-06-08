@@ -94,10 +94,48 @@ class BookingSubmissionSuccessPdfService {
                         label: 'Payment Method',
                         value: state.paymentMethodLabel,
                       ),
-                      _buildInfoCard(
-                        label: 'Price Per Pax',
-                        value: state.pricePerPersonLabel,
-                      ),
+                      if (state.greenFeeTotal > 0)
+                        _buildPriceRow(
+                          label: 'Green Fee',
+                          value: _formatPrice(
+                            state.greenFeeTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.buggyEstimatedTotal > 0)
+                        _buildPriceRow(
+                          label: 'Buggy',
+                          value: _formatPrice(
+                            state.buggyEstimatedTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.caddieTotal > 0)
+                        _buildPriceRow(
+                          label: 'Caddie',
+                          value: _formatPrice(
+                            state.caddieTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.insuranceTotal > 0)
+                        _buildPriceRow(
+                          label: 'Insurance',
+                          value: _formatPrice(
+                            state.insuranceTotal,
+                            state.currency,
+                          ),
+                        ),
+                      if (state.sstTotal > 0)
+                        _buildPriceRow(
+                          label: 'SST',
+                          value: _formatPrice(state.sstTotal, state.currency),
+                        ),
+                      if (state.discountAmount > 0)
+                        _buildPriceRow(
+                          label: 'Discount',
+                          value: '- ${state.discountAmountLabel}',
+                        ),
                       _buildInfoCard(
                         label: 'Total',
                         value: state.totalCostLabel,
@@ -209,6 +247,37 @@ class BookingSubmissionSuccessPdfService {
         ],
       ),
     );
+  }
+
+  static pw.Widget _buildPriceRow({
+    required String label,
+    required String value,
+  }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        children: [
+          pw.Expanded(
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                color: PdfColors.grey700,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.Text(
+            _safeText(value),
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatPrice(double amount, String currency) {
+    return '$currency ${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
   }
 
   static pw.Widget _buildSummaryText((String, String) item) {

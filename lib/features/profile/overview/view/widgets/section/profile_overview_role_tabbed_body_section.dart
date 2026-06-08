@@ -129,8 +129,9 @@ class ProfileOverviewRoleTabbedBodySection extends StatelessWidget {
                           ),
                           labelStyle: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
-                          unselectedLabelStyle:
-                              Theme.of(context).textTheme.labelLarge,
+                          unselectedLabelStyle: Theme.of(
+                            context,
+                          ).textTheme.labelLarge,
                           labelColor: Colors.black87,
                           unselectedLabelColor: Colors.black54,
                           splashBorderRadius: BorderRadius.circular(8),

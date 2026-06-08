@@ -24,13 +24,16 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
             ),
             body: state.isSubmitting
                 ? const _BookingConfirmationLoadingView()
-                : BookingSubmissionConfirmationContent(state: state),
+                : BookingSubmissionConfirmationContent(
+                    state: state,
+                    viewModel: viewModel,
+                  ),
             bottomNavigationBar: state.isSubmitting
                 ? null
                 : SafeArea(
                     minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                     child: ElevatedButton(
-                      onPressed: state.isHoldExpired
+                      onPressed: state.isHoldExpired || state.isPreviewPending
                           ? null
                           : () async {
                               final confirmed = await showDialog<bool>(
@@ -73,11 +76,20 @@ class BookingSubmissionConfirmationView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: Text(
-                        state.isHoldExpired
-                            ? 'Booking Session Expired'
-                            : 'Confirm Booking • ${state.totalCostLabel}',
-                      ),
+                      child: state.isPreviewPending
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              state.isHoldExpired
+                                  ? 'Booking Session Expired'
+                                  : 'Confirm Booking • ${state.totalCostLabel}',
+                            ),
                     ),
                   ),
           ),

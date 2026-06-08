@@ -7,6 +7,7 @@ class CoursesListItemViewData {
     required this.facilities,
     required this.isEnabled,
     this.distanceLabel,
+    this.coverPhotoUrl,
   });
 
   final String slug;
@@ -16,6 +17,7 @@ class CoursesListItemViewData {
   final List<CoursesListFacilityItemViewData> facilities;
   final bool isEnabled;
   final String? distanceLabel;
+  final String? coverPhotoUrl;
 }
 
 class CoursesListFacilityItemViewData {

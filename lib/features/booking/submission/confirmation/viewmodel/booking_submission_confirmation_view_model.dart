@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:golf_kakis/features/booking/submission/slot/domain/booking_submission_slot_use_case.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
@@ -6,6 +7,7 @@ import 'package:golf_kakis/features/foundation/model/data_status_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/model/snackbar_message_model.dart';
 import 'package:golf_kakis/features/foundation/util/date_util.dart';
+import 'package:golf_kakis/features/foundation/util/debug_log.dart';
 import 'package:golf_kakis/features/foundation/viewmodel/mvi_view_model.dart';
 
 import 'booking_submission_confirmation_view_contract.dart';
@@ -22,6 +24,8 @@ class BookingSubmissionConfirmationViewModel
 
   final BookingSubmissionSlotUseCase _useCase;
   StreamSubscription<DataStatusModel<dynamic>>? _submissionSubscription;
+  StreamSubscription<DataStatusModel<dynamic>>? _extendHoldSubscription;
+  StreamSubscription<DataStatusModel<dynamic>>? _previewSubscription;
   Timer? _holdCountdownTimer;
   bool _hasShownExpiryDialog = false;
 
@@ -55,6 +59,7 @@ class BookingSubmissionConfirmationViewModel
             caddieCount: intent.caddieCount,
             golfCartCount: intent.golfCartCount,
             playerDetails: intent.playerDetails,
+            accessToken: intent.accessToken,
             remainingHoldSeconds: _remainingSecondsUntil(intent.holdExpiresAt),
             isHoldExpired: _remainingSecondsUntil(intent.holdExpiresAt) <= 0,
             clearErrorMessage: true,
@@ -62,14 +67,36 @@ class BookingSubmissionConfirmationViewModel
         });
         _hasShownExpiryDialog = false;
         _startHoldCountdown();
+        await _previewBooking();
       case OnBackClick():
         sendNavEffect(() => const NavigateBack());
       case OnConfirmClick():
         final current = getCurrentAsLoaded();
-        if (current.isSubmitting || current.isHoldExpired) {
+        if (current.isSubmitting ||
+            current.isHoldExpired ||
+            current.isPreviewPending) {
           return;
         }
         await _createBookingSubmission(current);
+      case OnExtendBookingHoldClick():
+        await _extendBookingHold(intent.accessToken);
+      case OnAccessTokenAvailable():
+        emitViewState((state) {
+          return getCurrentAsLoaded().copyWith(accessToken: intent.value);
+        });
+        await _previewBooking();
+      case OnVoucherCodeApplied():
+        emitViewState((state) {
+          return getCurrentAsLoaded().copyWith(
+            voucherCode: intent.value.trim(),
+          );
+        });
+        await _previewBooking();
+      case OnVoucherRemoved():
+        emitViewState((state) {
+          return getCurrentAsLoaded().copyWith(clearVoucher: true);
+        });
+        await _previewBooking();
     }
   }
 
@@ -85,7 +112,12 @@ class BookingSubmissionConfirmationViewModel
   Future<void> _createBookingSubmission(
     BookingSubmissionConfirmationDataLoaded current,
   ) async {
+    logDebug(
+      '[onSubmitBooking] started bookingRef=${current.bookingRef} '
+      'accessTokenPresent=${current.accessToken.trim().isNotEmpty}',
+    );
     if (_remainingSecondsUntil(current.holdExpiresAt) <= 0) {
+      logDebug('[onSubmitBooking] blocked because hold expired');
       emitViewState((state) {
         return current.copyWith(
           isHoldExpired: true,
@@ -110,56 +142,273 @@ class BookingSubmissionConfirmationViewModel
     });
 
     await _submissionSubscription?.cancel();
+    var hasHandledSubmissionResult = false;
+    final completer = Completer<void>();
+    final request = _buildRequest(current);
+    logDebug('[onSubmitBooking] request: ${jsonEncode(request.toJson())}');
     _submissionSubscription = _useCase
-        .onCreateBookingSubmission(request: _buildRequest(current))
+        .onCreateBookingSubmission(request: request)
+        .listen(
+          (result) {
+            logDebug(
+              '[onSubmitBooking] stream event status=${result.status.name} '
+              'code=${result.rawResponseCode} message=${result.apiMessage}',
+            );
+            switch (result.status) {
+              case DataStatus.success:
+                hasHandledSubmissionResult = true;
+                _navigateToSubmissionSuccess(result.data);
+                if (!completer.isCompleted) {
+                  completer.complete();
+                }
+              case DataStatus.error:
+                logDebug(
+                  '[onSubmitBooking] error response: ${result.apiMessage}',
+                );
+                hasHandledSubmissionResult = true;
+                emitViewState((state) {
+                  return getCurrentAsLoaded().copyWith(
+                    isSubmitting: false,
+                    errorSnackbarMessageModel: SnackbarMessageModel(
+                      message: result.apiMessage.isEmpty
+                          ? 'Failed to submit booking. Please try again.'
+                          : result.apiMessage,
+                    ),
+                  );
+                });
+                if (!completer.isCompleted) {
+                  completer.complete();
+                }
+              default:
+                break;
+            }
+          },
+          onError: (Object error) {
+            logDebug('[onSubmitBooking] stream error: $error');
+            hasHandledSubmissionResult = true;
+            emitViewState((state) {
+              return getCurrentAsLoaded().copyWith(
+                isSubmitting: false,
+                errorSnackbarMessageModel: SnackbarMessageModel(
+                  message: error.toString().isEmpty
+                      ? 'Failed to submit booking. Please try again.'
+                      : error.toString(),
+                ),
+              );
+            });
+            if (!completer.isCompleted) {
+              completer.complete();
+            }
+          },
+          onDone: () {
+            logDebug(
+              '[onSubmitBooking] stream done '
+              'hasHandledSubmissionResult=$hasHandledSubmissionResult '
+              'isSubmitting=${getCurrentAsLoaded().isSubmitting}',
+            );
+            if (!hasHandledSubmissionResult &&
+                getCurrentAsLoaded().isSubmitting) {
+              _navigateToSubmissionSuccess(null);
+            }
+            if (!completer.isCompleted) {
+              completer.complete();
+            }
+          },
+        );
+
+    return completer.future;
+  }
+
+  void _navigateToSubmissionSuccess(dynamic response) {
+    final latest = getCurrentAsLoaded();
+    final payload = _readMap(response);
+    final summary = _readMap(payload['bookingSummary']);
+    final pricing = _readMap(payload['pricing']);
+    final bookingRef = _resolveBookingRef(response) ?? latest.bookingRef;
+    final bookingId = _resolveBookingId(response);
+    logDebug(
+      '[onSubmitBooking] navigating success '
+      'bookingId=$bookingId bookingRef=$bookingRef '
+      'payloadKeys=${payload.keys.toList()}',
+    );
+    if (bookingRef.isEmpty) {
+      logDebug('[onSubmitBooking] navigation blocked: missing bookingRef');
+      emitViewState((state) {
+        return latest.copyWith(
+          isSubmitting: false,
+          errorSnackbarMessageModel: const SnackbarMessageModel(
+            message:
+                'Booking submission succeeded without a booking reference.',
+          ),
+        );
+      });
+      return;
+    }
+
+    _holdCountdownTimer?.cancel();
+    emitViewState((state) {
+      return latest.copyWith(isSubmitting: false, clearErrorMessage: true);
+    });
+    sendNavEffect(
+      () => NavigateToBookingSubmissionSuccess(
+        bookingId: bookingId,
+        bookingRef: bookingRef,
+        bookingStatus: payload['status']?.toString() ?? 'confirmed',
+        bookingDate:
+            summary['bookingDate']?.toString() ??
+            DateUtil.formatApiDate(latest.selectedDate),
+        golfClubName:
+            summary['golfClubName']?.toString() ?? latest.golfClubName,
+        golfClubSlug: latest.golfClubSlug,
+        teeTimeSlot: summary['teeTimeSlot']?.toString() ?? latest.teeTimeSlot,
+        pricePerPerson: latest.pricePerPerson,
+        currency: pricing['currency']?.toString() ?? latest.currency,
+        paymentMethod:
+            summary['paymentMethod']?.toString() ?? latest.paymentMethodLabel,
+        greenFeeTotal:
+            _readDouble(pricing['greenFeeTotal']) ?? latest.greenFeeTotal,
+        buggyEstimatedTotal:
+            _readDouble(pricing['buggyEstimatedTotal']) ??
+            latest.buggyEstimatedTotal,
+        caddieTotal: _readDouble(pricing['caddieTotal']) ?? latest.caddieTotal,
+        insuranceTotal:
+            _readDouble(pricing['insuranceTotal']) ?? latest.insuranceTotal,
+        sstTotal: _readDouble(pricing['sstTotal']) ?? latest.sstTotal,
+        discountAmount:
+            _readDouble(pricing['discountAmount']) ?? latest.discountAmount,
+        finalAmount:
+            _readDouble(pricing['finalAmount']) ??
+            _readDouble(pricing['grandTotal']) ??
+            latest.totalCost,
+        hostName: latest.hostName,
+        hostPhoneNumber: latest.hostPhoneNumber,
+        playerCount: _readInt(summary['playerCount']) ?? latest.playerCount,
+        caddieCount: latest.caddieCount,
+        golfCartCount:
+            _readInt(summary['buggyQuantity']) ?? latest.golfCartCount,
+      ),
+    );
+  }
+
+  BookingSubmissionRequestModel _buildRequest(
+    BookingSubmissionConfirmationDataLoaded current,
+  ) {
+    return BookingSubmissionRequestModel(
+      bookingRef: current.bookingRef,
+      caddieArrangement: current.caddieCount > 0 ? 'requested' : 'none',
+      buggyQuantity: current.golfCartCount,
+      playerDetails: _buildPlayerDetails(current),
+      accessToken: current.accessToken,
+      voucherCode: current.voucherCode,
+      acknowledgedTerms: true,
+    );
+  }
+
+  Future<void> _previewBooking() async {
+    final current = getCurrentAsLoaded();
+    if (current.accessToken.trim().isEmpty ||
+        current.bookingRef.trim().isEmpty ||
+        current.isHoldExpired) {
+      return;
+    }
+
+    emitViewState((state) {
+      return getCurrentAsLoaded().copyWith(
+        isPreviewLoading: true,
+        clearErrorMessage: true,
+      );
+    });
+
+    final request = _buildPreviewRequest(current);
+    logDebug('[PreviewBooking] request: ${jsonEncode(request)}');
+
+    await _previewSubscription?.cancel();
+    _previewSubscription = _useCase
+        .onPreviewBooking(accessToken: current.accessToken, request: request)
         .listen((result) {
           switch (result.status) {
             case DataStatus.success:
               final latest = getCurrentAsLoaded();
-              final bookingId = _resolveBookingId(result.data);
-              if (bookingId.isEmpty) {
-                emitViewState((state) {
-                  return latest.copyWith(
-                    isSubmitting: false,
-                    errorSnackbarMessageModel: const SnackbarMessageModel(
-                      message:
-                          'Booking submission succeeded without a booking ID.',
-                    ),
-                  );
-                });
-                return;
-              }
+              final payload = _readMap(result.data);
+              final summary = _readMap(payload['bookingSummary']);
+              final pricing = _readMap(payload['pricing']);
+              final voucher = _readMap(pricing['voucher']);
+              final hasResponseVoucher = voucher.isNotEmpty;
+
               emitViewState((state) {
                 return latest.copyWith(
-                  isSubmitting: false,
+                  bookingRef:
+                      payload['bookingRef']?.toString() ?? latest.bookingRef,
+                  golfClubName:
+                      summary['golfClubName']?.toString() ??
+                      latest.golfClubName,
+                  teeTimeSlot:
+                      summary['teeTimeSlot']?.toString() ?? latest.teeTimeSlot,
+                  playerCount:
+                      _readInt(summary['playerCount']) ?? latest.playerCount,
+                  caddieCount: _caddieCountFromArrangement(
+                    summary['caddieArrangement']?.toString(),
+                    latest.caddieCount,
+                  ),
+                  golfCartCount:
+                      _readInt(summary['buggyQuantity']) ??
+                      latest.golfCartCount,
+                  currency: pricing['currency']?.toString() ?? latest.currency,
+                  greenFeeTotal:
+                      _readDouble(pricing['greenFeeTotal']) ??
+                      latest.greenFeeTotal,
+                  buggyEstimatedTotal:
+                      _readDouble(pricing['buggyEstimatedTotal']) ??
+                      latest.buggyEstimatedTotal,
+                  caddieTotal:
+                      _readDouble(pricing['caddieTotal']) ?? latest.caddieTotal,
+                  insuranceTotal:
+                      _readDouble(pricing['insuranceTotal']) ??
+                      latest.insuranceTotal,
+                  sstTotal: _readDouble(pricing['sstTotal']) ?? latest.sstTotal,
+                  subtotalAmount:
+                      _readDouble(pricing['subtotalAmount']) ??
+                      latest.subtotalAmount,
+                  discountAmount:
+                      _readDouble(pricing['discountAmount']) ??
+                      latest.discountAmount,
+                  finalAmount:
+                      _readDouble(pricing['finalAmount']) ??
+                      _readDouble(pricing['grandTotal']) ??
+                      latest.finalAmount,
+                  voucherCode: hasResponseVoucher
+                      ? (voucher['code']?.toString() ?? latest.voucherCode)
+                      : '',
+                  voucherName: hasResponseVoucher
+                      ? (voucher['name']?.toString() ?? latest.voucherName)
+                      : '',
+                  voucherDiscountType: hasResponseVoucher
+                      ? (voucher['discountType']?.toString() ??
+                            latest.voucherDiscountType)
+                      : '',
+                  voucherDiscountValue: hasResponseVoucher
+                      ? (_readDouble(voucher['discountValue']) ??
+                            latest.voucherDiscountValue)
+                      : 0,
+                  voucherAutoApplied: hasResponseVoucher
+                      ? (_readBool(voucher['autoApplied']) ??
+                            latest.voucherAutoApplied)
+                      : false,
+                  hasPreviewPricing: true,
+                  isPreviewLoading: false,
                   clearErrorMessage: true,
                 );
               });
-              sendNavEffect(
-                () => NavigateToBookingSubmissionSuccess(
-                  bookingId: bookingId,
-                  bookingRef:
-                      _resolveBookingRef(result.data) ?? latest.bookingRef,
-                  bookingDate: DateUtil.formatApiDate(latest.selectedDate),
-                  golfClubName: latest.golfClubName,
-                  golfClubSlug: latest.golfClubSlug,
-                  teeTimeSlot: latest.teeTimeSlot,
-                  pricePerPerson: latest.pricePerPerson,
-                  currency: latest.currency,
-                  hostName: latest.hostName,
-                  hostPhoneNumber: latest.hostPhoneNumber,
-                  playerCount: latest.playerCount,
-                  caddieCount: latest.caddieCount,
-                  golfCartCount: latest.golfCartCount,
-                ),
-              );
             case DataStatus.error:
+              logDebug(
+                '[PreviewBooking] error: ${result.rawResponseCode} ${result.apiMessage}',
+              );
               emitViewState((state) {
                 return getCurrentAsLoaded().copyWith(
-                  isSubmitting: false,
+                  isPreviewLoading: false,
                   errorSnackbarMessageModel: SnackbarMessageModel(
                     message: result.apiMessage.isEmpty
-                        ? 'Failed to submit booking. Please try again.'
+                        ? 'Failed to preview booking. Please try again.'
                         : result.apiMessage,
                   ),
                 );
@@ -170,16 +419,19 @@ class BookingSubmissionConfirmationViewModel
         });
   }
 
-  BookingSubmissionRequestModel _buildRequest(
+  Map<String, dynamic> _buildPreviewRequest(
     BookingSubmissionConfirmationDataLoaded current,
   ) {
-    return BookingSubmissionRequestModel(
-      bookingRef: current.bookingRef,
-      caddieCount: current.caddieCount,
-      golfCartCount: current.golfCartCount,
-      playerDetails: _buildPlayerDetails(current),
-      acknowledgedTerms: true,
-    );
+    return <String, dynamic>{
+      'bookingRef': current.bookingRef,
+      'caddieArrangement': current.caddieCount > 0 ? 'requested' : 'none',
+      'buggyQuantity': current.golfCartCount,
+      'playerDetails': current.playerDetails.indexed.map((entry) {
+        return entry.$2.copyWith(isHost: entry.$1 == 0).toJson();
+      }).toList(),
+      if (current.voucherCode.trim().isNotEmpty)
+        'voucherCode': current.voucherCode.trim(),
+    };
   }
 
   List<BookingSubmissionPlayerModel> _buildPlayerDetails(
@@ -246,13 +498,98 @@ class BookingSubmissionConfirmationViewModel
       );
     });
 
+    if (remainingHoldSeconds <= 60 && !_hasShownExpiryDialog) {
+      _hasShownExpiryDialog = true;
+      sendNavEffect(() => const ShowBookingSessionExpired());
+    }
+
     if (isHoldExpired) {
       _holdCountdownTimer?.cancel();
-      if (!_hasShownExpiryDialog) {
-        _hasShownExpiryDialog = true;
-        sendNavEffect(() => const ShowBookingSessionExpired());
-      }
     }
+  }
+
+  Future<void> _extendBookingHold(String accessToken) async {
+    final current = getCurrentAsLoaded();
+    if (current.bookingRef.trim().isEmpty || accessToken.trim().isEmpty) {
+      sendNavEffect(
+        () => const ShowErrorMessage(
+          'Unable to extend this booking hold. Please try again.',
+        ),
+      );
+      return;
+    }
+
+    emitViewState((state) {
+      return current.copyWith(isExtendingHold: true, clearErrorMessage: true);
+    });
+
+    await _extendHoldSubscription?.cancel();
+    _extendHoldSubscription = _useCase
+        .onExtendBookingHold(
+          bookingRef: current.bookingRef,
+          accessToken: accessToken,
+        )
+        .listen((result) {
+          switch (result.status) {
+            case DataStatus.success:
+              final latest = getCurrentAsLoaded();
+              final payload = _readMap(result.data);
+              final holdDurationSeconds =
+                  _readInt(
+                    payload['holdDurationSeconds'] ??
+                        payload['hold_duration_seconds'],
+                  ) ??
+                  latest.holdDurationSeconds;
+              final holdExpiresAt =
+                  DateTime.tryParse(
+                    payload['holdExpiresAt']?.toString() ??
+                        payload['hold_expires_at']?.toString() ??
+                        '',
+                  ) ??
+                  DateTime.now().add(Duration(seconds: holdDurationSeconds));
+              final remainingHoldSeconds = _remainingSecondsUntil(
+                holdExpiresAt,
+              );
+
+              emitViewState((state) {
+                return latest.copyWith(
+                  bookingRef:
+                      payload['bookingRef']?.toString() ??
+                      payload['booking_ref']?.toString() ??
+                      latest.bookingRef,
+                  holdDurationSeconds: holdDurationSeconds,
+                  holdExpiresAt: holdExpiresAt,
+                  remainingHoldSeconds: remainingHoldSeconds,
+                  isHoldExpired: false,
+                  isExtendingHold: false,
+                  clearErrorMessage: true,
+                );
+              });
+              _hasShownExpiryDialog = false;
+              _startHoldCountdown();
+              sendNavEffect(() => const DismissBookingSessionExpired());
+            case DataStatus.error:
+              emitViewState((state) {
+                return getCurrentAsLoaded().copyWith(
+                  isExtendingHold: false,
+                  errorSnackbarMessageModel: SnackbarMessageModel(
+                    message: result.apiMessage.isEmpty
+                        ? 'Failed to extend booking hold. Please try again.'
+                        : result.apiMessage,
+                  ),
+                );
+              });
+              sendNavEffect(
+                () => ShowErrorMessage(
+                  result.apiMessage.isEmpty
+                      ? 'Failed to extend booking hold. Please try again.'
+                      : result.apiMessage,
+                ),
+              );
+            default:
+              break;
+          }
+        });
   }
 
   int _remainingSecondsUntil(DateTime expiresAt) {
@@ -260,10 +597,61 @@ class BookingSubmissionConfirmationViewModel
     return difference < 0 ? 0 : difference;
   }
 
+  Map<String, dynamic> _readMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return <String, dynamic>{};
+  }
+
+  int? _readInt(dynamic value) {
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  double? _readDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value?.toString() ?? '');
+  }
+
+  bool? _readBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    final text = value?.toString().toLowerCase();
+    if (text == 'true') {
+      return true;
+    }
+    if (text == 'false') {
+      return false;
+    }
+    return null;
+  }
+
+  int _caddieCountFromArrangement(String? value, int fallback) {
+    final normalized = value?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return fallback;
+    }
+    if (normalized == 'none') {
+      return 0;
+    }
+    return fallback == 0 ? 1 : fallback;
+  }
+
   @override
   void dispose() {
     _holdCountdownTimer?.cancel();
     _submissionSubscription?.cancel();
+    _extendHoldSubscription?.cancel();
+    _previewSubscription?.cancel();
     super.dispose();
   }
 }

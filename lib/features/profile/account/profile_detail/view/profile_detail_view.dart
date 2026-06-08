@@ -3,11 +3,15 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/util/phone_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../viewmodel/profile_detail_view_contract.dart';
+
+const String _defaultProfileImageAsset =
+    'assets/images/default_profile_pic.png';
 
 class ProfileDetailView extends StatefulWidget {
   const ProfileDetailView({
@@ -24,15 +28,8 @@ class ProfileDetailView extends StatefulWidget {
 }
 
 class _ProfileDetailViewState extends State<ProfileDetailView> {
-  static const _genderOptions = <String>[
-    'Male',
-    'Female',
-    'Prefer not to say',
-  ];
-
   late final TextEditingController _realNameController;
   late final TextEditingController _usernameController;
-  late final TextEditingController _genderController;
   late final TextEditingController _dateOfBirthController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
@@ -49,7 +46,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     super.initState();
     _realNameController = TextEditingController(text: _loadedState.realName);
     _usernameController = TextEditingController(text: _loadedState.username);
-    _genderController = TextEditingController(text: _loadedState.gender);
     _dateOfBirthController = TextEditingController(
       text: _loadedState.dateOfBirth,
     );
@@ -66,9 +62,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     if (_usernameController.text != _loadedState.username) {
       _usernameController.text = _loadedState.username;
     }
-    if (_genderController.text != _loadedState.gender) {
-      _genderController.text = _loadedState.gender;
-    }
     if (_dateOfBirthController.text != _loadedState.dateOfBirth) {
       _dateOfBirthController.text = _loadedState.dateOfBirth;
     }
@@ -84,7 +77,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   void dispose() {
     _realNameController.dispose();
     _usernameController.dispose();
-    _genderController.dispose();
     _dateOfBirthController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -106,9 +98,9 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             const SizedBox(height: 8),
             Text(
               'Change Profile Picture',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             ListTile(
@@ -119,7 +111,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('Choose from Gallery'),
-              onTap: () => Navigator.of(context).pop(_ProfileImageSource.gallery),
+              onTap: () =>
+                  Navigator.of(context).pop(_ProfileImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.attach_file_outlined),
@@ -155,7 +148,9 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
       return;
     }
 
-    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+    );
     if (!mounted || pickedFile == null) {
       return;
     }
@@ -189,11 +184,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
                 ),
               ),
               const SizedBox(height: 8),
-              _ProfileImagePreview(
-                imagePath: state.avatarImagePath,
-                initials: _buildInitials(state.realName),
-                avatarIndex: state.avatarIndex,
-              ),
+              _ProfileImagePreview(imagePath: state.avatarImagePath),
               const SizedBox(height: 16),
               const Text(
                 'Profile Picture',
@@ -282,9 +273,9 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   }
 
   void _showAvatarPermissionMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<String> _persistProfileImage(String sourcePath) async {
@@ -300,55 +291,14 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     return savedFile.path;
   }
 
-  Future<void> _showGenderPicker() async {
-    final selectedGender = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Text(
-              'Select Gender',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ..._genderOptions.map(
-              (gender) => ListTile(
-                title: Text(gender),
-                trailing: _genderController.text == gender
-                    ? const Icon(Icons.check, color: Color(0xFF173B7A))
-                    : null,
-                onTap: () => Navigator.of(context).pop(gender),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-
-    if (!mounted || selectedGender == null) {
-      return;
-    }
-
-    widget.onUserIntent(OnProfileDetailGenderChanged(selectedGender));
-  }
-
   Future<void> _showDateOfBirthPicker() async {
     final now = DateTime.now();
     final lastAllowedDate = DateTime(now.year, now.month, now.day);
-    final fallbackInitialDate = DateTime(
-      now.year - 5,
-      now.month,
-      now.day,
-    );
+    final fallbackInitialDate = DateTime(now.year - 5, now.month, now.day);
     final currentText = _dateOfBirthController.text.trim();
     final parsedCurrentDate = DateTime.tryParse(currentText);
-    final initialDate = parsedCurrentDate != null &&
-            !parsedCurrentDate.isAfter(lastAllowedDate)
+    final initialDate =
+        parsedCurrentDate != null && !parsedCurrentDate.isAfter(lastAllowedDate)
         ? parsedCurrentDate
         : fallbackInitialDate;
 
@@ -370,160 +320,16 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     widget.onUserIntent(OnProfileDetailDateOfBirthChanged(normalizedDate));
   }
 
-  Future<void> _startDeactivateFlow() async {
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Deactivate Account?',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'This will log you out and remove your current session from this device.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFD92D20),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: const Text('Yes, Continue'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (!mounted || confirmed != true) {
-      return;
-    }
-
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    await _showDeactivatePhoneConfirmationSheet();
-  }
-
-  Future<void> _showDeactivatePhoneConfirmationSheet() async {
-    final phoneParts = PhoneUtil.splitPhoneNumber(_loadedState.phoneNumber);
-    final controller = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final phoneNumber = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 20),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Confirm Your Phone Number',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Type your phone number to confirm account deactivation.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller,
-                  keyboardType: TextInputType.phone,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    hintText:
-                        '${phoneParts.countryCode.dialCode}${phoneParts.localNumber}',
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter your phone number to continue.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      if (formKey.currentState?.validate() != true) {
-                        return;
-                      }
-                      Navigator.of(context).pop(controller.text.trim());
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFD92D20),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(52),
-                    ),
-                    child: const Text('Deactivate Account'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    controller.dispose();
-
-    if (!mounted || phoneNumber == null || phoneNumber.isEmpty) {
-      return;
-    }
-
-    widget.onUserIntent(
-      OnProfileDetailDeactivateAccountConfirmed(phoneNumber),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = _loadedState;
+    if (state.isLoading) {
+      return const Center(
+        child: GolfKakisLoadingContainer(message: 'Loading profile details...'),
+      );
+    }
+
     final phoneParts = PhoneUtil.splitPhoneNumber(state.phoneNumber);
 
     return SingleChildScrollView(
@@ -536,8 +342,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               children: [
                 _EditableProfileAvatar(
                   imagePath: state.avatarImagePath,
-                  initials: _buildInitials(state.realName),
-                  avatarIndex: state.avatarIndex,
                   onTap: _showProfileImageSourcePicker,
                 ),
                 const SizedBox(height: 12),
@@ -585,7 +389,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             controller: _realNameController,
             label: 'Name',
             icon: Icons.person_outline,
-            readOnly: true,
+            onChanged: (value) =>
+                widget.onUserIntent(OnProfileDetailRealNameChanged(value)),
           ),
           const SizedBox(height: 14),
           _ProfileField(
@@ -594,15 +399,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             icon: Icons.alternate_email,
             onChanged: (value) =>
                 widget.onUserIntent(OnProfileDetailUsernameChanged(value)),
-          ),
-          const SizedBox(height: 14),
-          _ProfileField(
-            controller: _genderController,
-            label: 'Gender',
-            icon: Icons.wc_outlined,
-            readOnly: true,
-            trailingIcon: Icons.keyboard_arrow_down_rounded,
-            onTap: _showGenderPicker,
           ),
           const SizedBox(height: 14),
           _ProfileField(
@@ -642,18 +438,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             ),
           ),
           const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-                child: FilledButton(
-                  onPressed: state.isSaving ? null : _startDeactivateFlow,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    backgroundColor: const Color(0xFFD92D20),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Deactivate Account'),
-            ),
-          ),
           if (state.isSaving) ...[
             const SizedBox(height: 14),
             const LinearProgressIndicator(),
@@ -662,42 +446,19 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
       ),
     );
   }
-
-  String _buildInitials(String value) {
-    final parts = value
-        .split(' ')
-        .where((part) => part.trim().isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'U';
-    }
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-        .toUpperCase();
-  }
 }
 
 enum _ProfileImageSource { view, gallery, file }
 
 class _EditableProfileAvatar extends StatelessWidget {
-  const _EditableProfileAvatar({
-    required this.imagePath,
-    required this.initials,
-    required this.avatarIndex,
-    required this.onTap,
-  });
+  const _EditableProfileAvatar({required this.imagePath, required this.onTap});
 
   final String? imagePath;
-  final String initials;
-  final int avatarIndex;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final localImagePath = imagePath?.trim();
-    final palette = _avatarPalettes[avatarIndex % _avatarPalettes.length];
+    final imageProvider = _profileImageProvider(imagePath);
 
     return Material(
       color: Colors.transparent,
@@ -708,33 +469,11 @@ class _EditableProfileAvatar extends StatelessWidget {
           width: 110,
           height: 110,
           decoration: BoxDecoration(
-            gradient: localImagePath == null || localImagePath.isEmpty
-                ? LinearGradient(
-                    colors: palette,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            image: localImagePath == null || localImagePath.isEmpty
-                ? null
-                : DecorationImage(
-                    image: FileImage(File(localImagePath)),
-                    fit: BoxFit.cover,
-                  ),
+            image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
             shape: BoxShape.circle,
           ),
           child: Stack(
             children: [
-              if (localImagePath == null || localImagePath.isEmpty)
-                Center(
-                  child: Text(
-                    initials,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
               Positioned(
                 right: 6,
                 bottom: 6,
@@ -762,61 +501,36 @@ class _EditableProfileAvatar extends StatelessWidget {
 }
 
 class _ProfileImagePreview extends StatelessWidget {
-  const _ProfileImagePreview({
-    required this.imagePath,
-    required this.initials,
-    required this.avatarIndex,
-  });
+  const _ProfileImagePreview({required this.imagePath});
 
   final String? imagePath;
-  final String initials;
-  final int avatarIndex;
 
   @override
   Widget build(BuildContext context) {
-    final localImagePath = imagePath?.trim();
-    final palette = _avatarPalettes[avatarIndex % _avatarPalettes.length];
+    final imageProvider = _profileImageProvider(imagePath);
 
     return Container(
       width: 260,
       height: 260,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: localImagePath == null || localImagePath.isEmpty
-            ? LinearGradient(
-                colors: palette,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        image: localImagePath == null || localImagePath.isEmpty
-            ? null
-            : DecorationImage(
-                image: FileImage(File(localImagePath)),
-                fit: BoxFit.cover,
-              ),
+        image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
       ),
-      child: localImagePath == null || localImagePath.isEmpty
-          ? Center(
-              child: Text(
-                initials,
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            )
-          : null,
     );
   }
 }
 
-const List<List<Color>> _avatarPalettes = [
-  [Color(0xFF2F7BFF), Color(0xFF35C7A5)],
-  [Color(0xFFFF9F1C), Color(0xFFFFD166)],
-  [Color(0xFF9C4DFF), Color(0xFF5E60CE)],
-  [Color(0xFF00A76F), Color(0xFF52B788)],
-];
+ImageProvider _profileImageProvider(String? imagePath) {
+  final resolvedPath = imagePath?.trim();
+  if (resolvedPath == null || resolvedPath.isEmpty) {
+    return const AssetImage(_defaultProfileImageAsset);
+  }
+  if (resolvedPath.startsWith('http://') ||
+      resolvedPath.startsWith('https://')) {
+    return NetworkImage(resolvedPath);
+  }
+  return FileImage(File(resolvedPath));
+}
 
 class _ProfileField extends StatelessWidget {
   const _ProfileField({
@@ -856,9 +570,9 @@ class _ProfileField extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
       ),
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: const Color(0xFF111827),
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF111827)),
     );
   }
 }
@@ -893,9 +607,9 @@ class _ProfileFieldDisplay extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
       ),
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: const Color(0xFF111827),
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF111827)),
     );
   }
 }

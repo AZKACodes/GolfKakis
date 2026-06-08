@@ -28,13 +28,11 @@ class ProfileFriendsViewModel
   Future<void> handleIntent(ProfileFriendsUserIntent intent) async {
     switch (intent) {
       case OnInitFriends():
-        await _grantPermissionAndLoad(intent.session);
+        await _loadFriends(intent.session);
       case OnRefreshFriends():
         await _loadFriends(intent.session);
-      case OnRetryContactsPermission():
-        await _grantPermissionAndLoad(intent.session);
-      case OnGrantContactsPermission():
-        await _grantPermissionAndLoad(intent.session);
+      case OnOpenAddressBook():
+        await _openAddressBook(intent.session);
       case OnAddFriendToGolfKakis():
         await _addFriend(session: intent.session, friend: intent.friend);
       case OnRemoveFriendFromGolfKakis():
@@ -51,33 +49,52 @@ class ProfileFriendsViewModel
     }
   }
 
-  Future<void> _grantPermissionAndLoad(SessionState session) async {
+  Future<void> _openAddressBook(SessionState session) async {
     emitViewState(
       (state) => state.copyWith(isLoading: true, clearErrorMessage: true),
     );
 
     try {
       final hasPermission = await _useCase.requestContactsPermission();
-      await _loadFriends(session);
-
       if (!hasPermission) {
         emitViewState(
           (state) => state.copyWith(
+            isLoading: false,
             hasPermission: false,
             errorSnackbarMessageModel: const SnackbarMessageModel(
-              message: 'Enable permission to add your fellow kakis.',
+              message: 'Enable contacts permission to add a Golf Kaki.',
             ),
           ),
         );
+        sendNavEffect(
+          () => const ShowFriendsFeedback(
+            'Contacts permission is needed to add a Golf Kaki.',
+          ),
+        );
+        return;
       }
+
+      emitViewState(
+        (state) => state.copyWith(hasPermission: true, isLoading: false),
+      );
+
+      final pickedFriend = await _useCase.onPickDeviceContact();
+      if (pickedFriend == null) {
+        sendNavEffect(
+          () => const ShowFriendsFeedback(
+            'No contact with a phone number was selected.',
+          ),
+        );
+        return;
+      }
+
+      await _addFriend(session: session, friend: pickedFriend);
     } catch (_) {
       emitViewState(
         (state) => state.copyWith(
           isLoading: false,
-          hasPermission: false,
-          clearSavingContactKey: true,
           errorSnackbarMessageModel: const SnackbarMessageModel(
-            message: 'Unable to request contacts access right now.',
+            message: 'Unable to open your contacts right now.',
           ),
         ),
       );
@@ -96,7 +113,6 @@ class ProfileFriendsViewModel
           isLoading: false,
           hasPermission: result.hasPermission,
           friends: result.friends,
-          availableContacts: result.availableContacts,
           clearSavingContactKey: true,
           clearErrorMessage: true,
         ),

@@ -61,31 +61,25 @@ class BookingSubmissionSlotRepositoryImpl
     List<BookingSlotModel> parseAvailableSlots(dynamic rawResponse) {
       if (rawResponse is List) {
         return rawResponse
+            .map(_asStringMap)
             .whereType<Map<String, dynamic>>()
-            .map(BookingSlotModel.fromJson)
+            .map(
+              (slot) => BookingSlotModel.fromJson(<String, dynamic>{
+                ...slot,
+                'noOfHoles': slot['noOfHoles'] ?? 18,
+              }),
+            )
             .where((slot) => slot.time.isNotEmpty)
             .toList();
       }
 
-      if (rawResponse is Map<String, dynamic>) {
+      final map = _asStringMap(rawResponse);
+      if (map != null) {
         final dynamic nestedList =
-            rawResponse['data'] ??
-            rawResponse['items'] ??
-            rawResponse['slots'] ??
-            rawResponse['availableSlots'];
-        if (nestedList is List) {
-          return nestedList
-              .whereType<Map<String, dynamic>>()
-              .map(
-                (slot) => BookingSlotModel.fromJson(<String, dynamic>{
-                  ...slot,
-                  'noOfHoles': slot['noOfHoles'] ?? 18,
-                }),
-              )
-              .where((slot) => slot.time.isNotEmpty)
-              .toList();
-        }
-
+            map['data'] ??
+            map['items'] ??
+            map['slots'] ??
+            map['availableSlots'];
         return parseAvailableSlots(nestedList);
       }
 
@@ -93,6 +87,16 @@ class BookingSubmissionSlotRepositoryImpl
     }
 
     return parseAvailableSlots(response);
+  }
+
+  Map<String, dynamic>? _asStringMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return null;
   }
 
   @override
@@ -129,6 +133,34 @@ class BookingSubmissionSlotRepositoryImpl
   }
 
   @override
+  Future<dynamic> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  }) async {
+    final response = await _apiService.onExtendBookingHold(
+      bookingRef: bookingRef,
+      accessToken: accessToken,
+    );
+    return _normalizeBookingHoldResponse(response);
+  }
+
+  @override
+  Future<dynamic> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  }) async {
+    final response = await _apiService.onPreviewBooking(
+      accessToken: accessToken,
+      request: request,
+    );
+    final payload = _extractPayload(response);
+    if (payload == null) {
+      throw ApiException(message: 'Invalid booking preview response.');
+    }
+    return payload;
+  }
+
+  @override
   Future<dynamic> onCreateBookingSubmission({
     required BookingSubmissionRequestModel request,
   }) async {
@@ -149,11 +181,15 @@ class BookingSubmissionSlotRepositoryImpl
       throw ApiException(message: 'Invalid booking submission response.');
     }
 
-    final bookingId =
-        payload['bookingId'] ?? payload['booking_id'] ?? payload['id'];
-    if ((bookingId?.toString() ?? '').trim().isEmpty) {
+    final bookingReference =
+        payload['bookingId'] ??
+        payload['booking_id'] ??
+        payload['id'] ??
+        payload['bookingRef'] ??
+        payload['booking_ref'];
+    if ((bookingReference?.toString() ?? '').trim().isEmpty) {
       throw ApiException(
-        message: 'Booking submission response is missing bookingId.',
+        message: 'Booking submission response is missing booking reference.',
       );
     }
 
@@ -166,10 +202,19 @@ class BookingSubmissionSlotRepositoryImpl
       throw ApiException(message: 'Invalid booking hold response.');
     }
 
-    final bookingId = payload['bookingId']?.toString() ?? '';
+    final bookingId =
+        payload['bookingId']?.toString() ??
+        payload['booking_id']?.toString() ??
+        payload['holdId']?.toString() ??
+        payload['hold_id']?.toString() ??
+        payload['id']?.toString() ??
+        payload['bookingRef']?.toString() ??
+        payload['booking_ref']?.toString() ??
+        '';
     final status = payload['status']?.toString().toLowerCase() ?? '';
 
-    if (bookingId.trim().isEmpty || status != 'held') {
+    if (bookingId.trim().isEmpty ||
+        (status.isNotEmpty && status != 'held' && status != 'hold')) {
       throw ApiException(message: 'Booking hold was not completed.');
     }
 
@@ -177,20 +222,25 @@ class BookingSubmissionSlotRepositoryImpl
   }
 
   Map<String, dynamic>? _extractPayload(dynamic response) {
-    if (response is! Map<String, dynamic>) {
+    final responseMap = _asStringMap(response);
+    if (responseMap == null) {
       return null;
     }
 
     final nested =
-        response['data'] ??
-        response['details'] ??
-        response['quote'] ??
-        response['booking'] ??
-        response['item'];
-    if (nested is Map<String, dynamic>) {
-      return nested;
+        responseMap['data'] ??
+        responseMap['details'] ??
+        responseMap['hold'] ??
+        responseMap['bookingHold'] ??
+        responseMap['booking_hold'] ??
+        responseMap['quote'] ??
+        responseMap['booking'] ??
+        responseMap['item'];
+    final nestedMap = _asStringMap(nested);
+    if (nestedMap != null) {
+      return nestedMap;
     }
 
-    return response;
+    return responseMap;
   }
 }

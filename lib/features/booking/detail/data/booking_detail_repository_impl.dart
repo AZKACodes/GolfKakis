@@ -220,6 +220,30 @@ class BookingDetailRepositoryImpl implements BookingDetailRepository {
         'payment_method',
       ]),
       currency: currency,
+      greenFeeTotal: _readNum(pricing, const <String>[
+        'greenFeeTotal',
+        'green_fee_total',
+      ])?.toDouble(),
+      buggyEstimatedTotal: _readNum(pricing, const <String>[
+        'buggyEstimatedTotal',
+        'buggy_estimated_total',
+      ])?.toDouble(),
+      caddieTotal: _readNum(pricing, const <String>[
+        'caddieTotal',
+        'caddie_total',
+      ])?.toDouble(),
+      insuranceTotal: _readNum(pricing, const <String>[
+        'insuranceTotal',
+        'insurance_total',
+      ])?.toDouble(),
+      sstTotal: _readNum(pricing, const <String>[
+        'sstTotal',
+        'sst_total',
+      ])?.toDouble(),
+      discountAmount: _readNum(pricing, const <String>[
+        'discountAmount',
+        'discount_amount',
+      ])?.toDouble(),
       grandTotal: grandTotal?.toDouble(),
       pendingCounterConfirmation: pendingCounterConfirmation,
       isPhoneVerified: payload['isPhoneVerified'] as bool?,

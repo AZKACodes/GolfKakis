@@ -41,12 +41,16 @@ class HomeView extends StatelessWidget {
               greeting: greeting,
               showAvatar: session.isLoggedIn,
               avatarIndex: loadedState.headerAvatarIndex,
-              avatarUrl: loadedState.headerAvatarUrl,
+              avatarUrl:
+                  loadedState.headerAvatarUrl ?? session.profileAvatarImagePath,
             ),
           ),
 
           const SizedBox(height: 24),
-          HomeAnnouncementSection(items: loadedState.announcements),
+          HomeAnnouncementSection(
+            items: loadedState.announcements,
+            isLoading: loadedState.isLoading,
+          ),
 
           const SizedBox(height: 24),
           Padding(
@@ -57,7 +61,10 @@ class HomeView extends StatelessWidget {
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: HomeDealsSection(items: loadedState.deals),
+            child: HomeDealsSection(
+              items: loadedState.deals,
+              isLoading: loadedState.isLoading,
+            ),
           ),
         ],
       ),

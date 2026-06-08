@@ -20,7 +20,6 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
 
   BookingSubmissionSlotUseCaseImpl(this._repository);
 
-  // ignore: unused_field
   final BookingSubmissionSlotRepository _repository;
   Map<String, dynamic>? _lastMockHeldBooking;
   Map<String, dynamic>? _lastMockSubmittedBooking;
@@ -28,8 +27,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
   @override
   Stream<DataStatusModel<List<GolfClubModel>>> onFetchGolfClubList() async* {
     try {
-      // final clubs = await _repository.onFetchGolfClubList();
-      final clubs = _mockGolfClubList();
+      final clubs = await _repository.onFetchGolfClubList();
 
       yield DataStatusModel<List<GolfClubModel>>(
         data: clubs,
@@ -60,17 +58,12 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     String? selectedNine,
   }) async* {
     try {
-      // final slotModels = await _repository.onFetchAvailableSlots(
-      //   clubSlug: clubSlug,
-      //   date: date,
-      //   playType: playType,
-      //   playerCount: playerCount,
-      //   selectedNine: selectedNine,
-      // );
-      final slotModels = _mockAvailableSlots(
+      final slotModels = await _repository.onFetchAvailableSlots(
         clubSlug: clubSlug,
         date: date,
         playType: playType,
+        playerCount: playerCount,
+        selectedNine: selectedNine,
       );
 
       yield DataStatusModel<List<BookingSlotModel>>(
@@ -103,15 +96,7 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     String? selectedNine,
   }) async* {
     try {
-      // final response = await _repository.onFetchSlotDetails(
-      //   slotId: slotId,
-      //   clubSlug: clubSlug,
-      //   date: date,
-      //   playType: playType,
-      //   playerCount: playerCount,
-      //   selectedNine: selectedNine,
-      // );
-      final response = _mockSlotDetails(
+      final response = await _repository.onFetchSlotDetails(
         slotId: slotId,
         clubSlug: clubSlug,
         date: date,
@@ -145,8 +130,69 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     required BookingHoldRequestModel request,
   }) async* {
     try {
-      // final response = await _repository.onCreateBookingHold(request: request);
-      final response = _mockBookingHoldResponse(request);
+      final response = await _repository.onCreateBookingHold(request: request);
+
+      yield DataStatusModel<dynamic>(
+        data: response,
+        status: DataStatus.success,
+      );
+    } on ApiException catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: error.message,
+        rawResponseCode: error.statusCode ?? 0,
+      );
+    } catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: _messageFromError(error),
+      );
+    }
+  }
+
+  @override
+  Stream<DataStatusModel<dynamic>> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  }) async* {
+    try {
+      final response = await _repository.onExtendBookingHold(
+        bookingRef: bookingRef,
+        accessToken: accessToken,
+      );
+
+      yield DataStatusModel<dynamic>(
+        data: response,
+        status: DataStatus.success,
+      );
+    } on ApiException catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: error.message,
+        rawResponseCode: error.statusCode ?? 0,
+      );
+    } catch (error) {
+      yield DataStatusModel<dynamic>(
+        data: const EmptyType(),
+        status: DataStatus.error,
+        apiMessage: _messageFromError(error),
+      );
+    }
+  }
+
+  @override
+  Stream<DataStatusModel<dynamic>> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  }) async* {
+    try {
+      final response = await _repository.onPreviewBooking(
+        accessToken: accessToken,
+        request: request,
+      );
 
       yield DataStatusModel<dynamic>(
         data: response,
@@ -173,10 +219,9 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     required BookingSubmissionRequestModel request,
   }) async* {
     try {
-      // final response = await _repository.onCreateBookingSubmission(
-      //   request: request,
-      // );
-      final response = _mockBookingSubmissionResponse(request);
+      final response = await _repository.onCreateBookingSubmission(
+        request: request,
+      );
 
       yield DataStatusModel<dynamic>(
         data: response,
@@ -239,225 +284,6 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
     return cleaned.isEmpty ? 'Request failed.' : cleaned;
   }
 
-  List<GolfClubModel> _mockGolfClubList() {
-    return const <GolfClubModel>[
-      GolfClubModel(
-        id: 'mock-club-kinrara',
-        slug: 'kinrara-golf-club',
-        name: 'Kinrara Golf Club',
-        address: 'Puchong, Selangor',
-        noOfHoles: 18,
-        isEnabled: true,
-      ),
-    ];
-  }
-
-  List<BookingSlotModel> _mockAvailableSlots({
-    required String clubSlug,
-    required String date,
-    required String playType,
-  }) {
-    final baseDate = DateTime.tryParse(date) ?? DateTime.now();
-    const rawSlots =
-        <
-          ({
-            String id,
-            String time,
-            double price,
-            int holes,
-            int capacity,
-            bool isAvailable,
-          })
-        >[
-          (
-            id: 'slot-0730',
-            time: '07:30 AM',
-            price: 180,
-            holes: 18,
-            capacity: 4,
-            isAvailable: true,
-          ),
-          (
-            id: 'slot-0815',
-            time: '08:15 AM',
-            price: 168,
-            holes: 18,
-            capacity: 4,
-            isAvailable: true,
-          ),
-          (
-            id: 'slot-0930',
-            time: '09:30 AM',
-            price: 155,
-            holes: 18,
-            capacity: 2,
-            isAvailable: true,
-          ),
-          (
-            id: 'slot-1200',
-            time: '12:00 PM',
-            price: 149,
-            holes: 18,
-            capacity: 4,
-            isAvailable: false,
-          ),
-          (
-            id: 'slot-1315',
-            time: '01:15 PM',
-            price: 142,
-            holes: 18,
-            capacity: 4,
-            isAvailable: true,
-          ),
-          (
-            id: 'slot-1400',
-            time: '02:00 PM',
-            price: 135,
-            holes: 18,
-            capacity: 6,
-            isAvailable: true,
-          ),
-          (
-            id: 'slot-1430',
-            time: '02:30 PM',
-            price: 130,
-            holes: 18,
-            capacity: 6,
-            isAvailable: true,
-          ),
-        ];
-
-    return rawSlots.map((slot) {
-      final startAt = _dateTimeForSlot(baseDate, slot.time);
-      return BookingSlotModel(
-        slotId: '${clubSlug}_${slot.id}',
-        time: slot.time,
-        price: slot.price,
-        noOfHoles: slot.holes,
-        currency: DefaultConstantUtil.defaultCurrency,
-        startAt: startAt,
-        endAt: startAt?.add(const Duration(minutes: 15)),
-        remainingPlayerCapacity: slot.capacity,
-        remainingCaddieCapacity: slot.capacity,
-        remainingGolfCartCapacity: slot.capacity <= 2 ? 1 : 2,
-        isAvailable: slot.isAvailable,
-      );
-    }).toList();
-  }
-
-  Map<String, dynamic> _mockBookingHoldResponse(
-    BookingHoldRequestModel request,
-  ) {
-    final bookingRef =
-        'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-    final bookingId = 'mock-booking-${DateTime.now().millisecondsSinceEpoch}';
-    final holdExpiresAt = DateTime.now().add(const Duration(minutes: 5));
-    final response = <String, dynamic>{
-      'bookingId': bookingId,
-      'bookingRef': bookingRef,
-      'holdDurationSeconds': 300,
-      'holdExpiresAt': holdExpiresAt.toIso8601String(),
-      'status': 'held',
-      'bookingSummary': <String, dynamic>{
-        'bookingId': bookingId,
-        'bookingRef': bookingRef,
-        'bookingDate': request.bookingDate,
-        'golfClubName': request.golfClubName,
-        'golfClubSlug': request.golfClubSlug,
-        'teeTimeSlot': request.teeTimeSlot,
-        'quoteId': request.quoteId,
-        'playType': request.playType ?? '18_holes',
-        'playerCount': request.playerCount ?? 2,
-        'normalPlayerCount':
-            request.normalPlayerCount ?? request.playerCount ?? 2,
-        'seniorPlayerCount': request.seniorPlayerCount,
-        'selectedNine': request.selectedNine,
-        'caddieCount': request.caddieCount,
-        'golfCartCount': request.golfCartCount,
-        'pricing': <String, dynamic>{
-          'currency': DefaultConstantUtil.defaultCurrency,
-        },
-      },
-      'hostUser': <String, dynamic>{
-        'name': request.hostName,
-        'phoneNumber': request.hostPhoneNumber,
-      },
-    };
-    _lastMockHeldBooking = response;
-    return response;
-  }
-
-  BookingSlotDetailsModel _mockSlotDetails({
-    required String slotId,
-    required String clubSlug,
-    required String date,
-    required String playType,
-    required int playerCount,
-    String? selectedNine,
-  }) {
-    final slot =
-        _mockAvailableSlots(
-          clubSlug: clubSlug,
-          date: date,
-          playType: playType,
-        ).firstWhere(
-          (slot) => slot.slotId == slotId,
-          orElse: () => BookingSlotModel(
-            slotId: slotId,
-            time: '',
-            price: 0,
-            noOfHoles: 18,
-            isAvailable: false,
-          ),
-        );
-
-    if (!slot.isAvailable || slot.time.isEmpty) {
-      throw ApiException(message: 'This slot is no longer available.');
-    }
-
-    final bookingDate = DateTime.tryParse(date) ?? DateTime.now();
-    final playerTotal = slot.price * playerCount;
-    final golfCartCount = _defaultGolfCartCount(playerCount);
-    final cartFee = golfCartCount * 45.0;
-
-    return BookingSlotDetailsModel(
-      quoteId: 'quote-${slot.slotId}-${bookingDate.millisecondsSinceEpoch}',
-      slotId: slot.slotId,
-      golfClubSlug: clubSlug,
-      golfClubName: 'Kinrara Golf Club',
-      bookingDate: bookingDate,
-      teeTimeSlot: slot.time,
-      noOfHoles: slot.noOfHoles,
-      playerCount: playerCount,
-      playType: playType,
-      selectedNine: selectedNine,
-      currency: slot.currency,
-      pricePerPerson: slot.price,
-      totalEstimate: playerTotal + cartFee,
-      categoryPricing: <BookingSlotCategoryPriceModel>[
-        BookingSlotCategoryPriceModel(
-          label: 'Normal',
-          description: 'Standard adult green fee',
-          amount: slot.price,
-        ),
-        BookingSlotCategoryPriceModel(
-          label: 'Senior',
-          description: 'Reduced rate for senior players',
-          amount: slot.price * 0.88,
-        ),
-        BookingSlotCategoryPriceModel(
-          label: 'Junior',
-          description: 'Reduced rate for junior players',
-          amount: slot.price * 0.72,
-        ),
-      ],
-      pricingBreakdown: BookingSlotPricingBreakdownModel(
-        golfCartSurcharge: cartFee,
-        caddySurcharge: 0,
-      ),
-    );
-  }
-
   BookingSlotDetailsModel _emptySlotDetails() {
     return BookingSlotDetailsModel(
       quoteId: emptyString,
@@ -473,29 +299,6 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
       pricePerPerson: 0,
       totalEstimate: 0,
     );
-  }
-
-  Map<String, dynamic> _mockBookingSubmissionResponse(
-    BookingSubmissionRequestModel request,
-  ) {
-    final held = _lastMockHeldBooking;
-    final bookingId =
-        held?['bookingId']?.toString() ??
-        'mock-booking-${DateTime.now().millisecondsSinceEpoch}';
-    final response = <String, dynamic>{
-      'bookingId': bookingId,
-      'bookingRef': request.bookingRef,
-      'status': 'confirmed',
-      'data': <String, dynamic>{
-        'bookingId': bookingId,
-        'bookingRef': request.bookingRef,
-        'playerDetails': request.playerDetails
-            .map((player) => player.toJson())
-            .toList(),
-      },
-    };
-    _lastMockSubmittedBooking = response;
-    return response;
   }
 
   Map<String, dynamic> _mockBookingDetailsResponse(String bookingRef) {
@@ -546,39 +349,5 @@ class BookingSubmissionSlotUseCaseImpl implements BookingSubmissionSlotUseCase {
             ],
       },
     };
-  }
-
-  DateTime? _dateTimeForSlot(DateTime date, String timeLabel) {
-    final parts = timeLabel.split(' ');
-    if (parts.length != 2) {
-      return null;
-    }
-    final timeParts = parts.first.split(':');
-    if (timeParts.length != 2) {
-      return null;
-    }
-
-    final hour = int.tryParse(timeParts.first);
-    final minute = int.tryParse(timeParts.last);
-    if (hour == null || minute == null) {
-      return null;
-    }
-
-    var hour24 = hour % 12;
-    if (parts.last.toUpperCase() == 'PM') {
-      hour24 += 12;
-    }
-
-    return DateTime(date.year, date.month, date.day, hour24, minute);
-  }
-
-  int _defaultGolfCartCount(int playerCount) {
-    if (playerCount <= 2) {
-      return 1;
-    }
-    if (playerCount <= 4) {
-      return 2;
-    }
-    return 3;
   }
 }

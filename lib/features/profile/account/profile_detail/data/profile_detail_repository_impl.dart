@@ -25,7 +25,9 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
     final user = await _apiService.onFetchUserDetails(accessToken: accessToken);
     return fallbackProfile.copyWith(
       userId: user.userId,
-      userSlug: user.userId,
+      userSlug: user.dateOfBirth.isNotEmpty
+          ? 'dob:${user.dateOfBirth}'
+          : user.userId,
       displayName: user.name,
       nickname: user.username.isNotEmpty
           ? user.username
@@ -33,13 +35,13 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
       occupation: user.gender.isNotEmpty
           ? user.gender
           : (session.profileOccupation ?? fallbackProfile.occupation),
-      email: user.email.isNotEmpty
-          ? user.email
-          : (session.profileEmail ?? fallbackProfile.email),
+      email: user.email,
       phoneNumber: user.phoneNumber,
       avatarIndex: session.profileAvatarIndex ?? fallbackProfile.avatarIndex,
       avatarImagePath:
-          session.profileAvatarImagePath ?? fallbackProfile.avatarImagePath,
+          user.avatarUrl ??
+          session.profileAvatarImagePath ??
+          fallbackProfile.avatarImagePath,
       isLoggedIn: true,
     );
   }
@@ -58,7 +60,6 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
       accessToken: accessToken,
       name: profile.displayName,
       username: profile.nickname,
-      gender: profile.occupation == '-' ? '' : profile.occupation,
       dateOfBirth: profile.userSlug.startsWith('dob:')
           ? profile.userSlug.substring(4)
           : '',
@@ -77,8 +78,9 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
       occupation: updatedUser.gender.isNotEmpty
           ? updatedUser.gender
           : profile.occupation,
-      email: updatedUser.email.isNotEmpty ? updatedUser.email : profile.email,
+      email: updatedUser.email,
       phoneNumber: updatedUser.phoneNumber,
+      avatarImagePath: updatedUser.avatarUrl ?? profile.avatarImagePath,
     );
   }
 
@@ -98,12 +100,19 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
     if (imagePath == null || imagePath.isEmpty) {
       return profile;
     }
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return profile;
+    }
 
-    await _apiService.onUpdateProfilePicture(
+    final uploadedImageUrl = await _apiService.onUpdateProfilePicture(
       accessToken: accessToken,
       imagePath: imagePath,
     );
-    return profile;
+    return profile.copyWith(
+      avatarImagePath: uploadedImageUrl.isNotEmpty
+          ? uploadedImageUrl
+          : imagePath,
+    );
   }
 
   @override
@@ -113,7 +122,9 @@ class ProfileDetailRepositoryImpl implements ProfileDetailRepository {
   }) async {
     final accessToken = session.accessToken?.trim();
     if (accessToken == null || accessToken.isEmpty) {
-      throw ApiException(message: 'Missing access token for deactivate account.');
+      throw ApiException(
+        message: 'Missing access token for deactivate account.',
+      );
     }
 
     return _apiService.onDeactivateAccount(

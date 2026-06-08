@@ -23,7 +23,8 @@ class CoursesListViewModel
     : _useCase = useCase;
 
   final CoursesListUseCase _useCase;
-  Map<String, GolfClubModel> _clubLookupBySlug = const <String, GolfClubModel>{};
+  Map<String, GolfClubModel> _clubLookupBySlug =
+      const <String, GolfClubModel>{};
   List<CoursesListItemViewData> _allCourses = const <CoursesListItemViewData>[];
   Position? _currentPosition;
 
@@ -144,7 +145,8 @@ class CoursesListViewModel
 
     final sortable = filtered.map((course) {
       final club = _clubLookupBySlug[course.slug];
-      final distanceMeters = club == null || club.latitude == null || club.longitude == null
+      final distanceMeters =
+          club == null || club.latitude == null || club.longitude == null
           ? null
           : Geolocator.distanceBetween(
               _currentPosition!.latitude,
@@ -180,6 +182,7 @@ class CoursesListViewModel
             facilities: entry.course.facilities,
             isEnabled: entry.course.isEnabled,
             distanceLabel: _formatDistance(entry.distanceMeters),
+            coverPhotoUrl: entry.course.coverPhotoUrl,
           ),
         )
         .toList();
@@ -210,9 +213,10 @@ class CoursesListViewModel
       slug: club.slug,
       name: club.name,
       address: club.address,
-      holesLabel: '${club.noOfHoles} holes',
+      holesLabel: '${club.noOfHoles == 0 ? 18 : club.noOfHoles} holes',
       facilities: _mapFacilities(club),
       isEnabled: club.isEnabled,
+      coverPhotoUrl: club.coverPhotoUrl,
     );
   }
 
@@ -271,15 +275,11 @@ class CoursesListViewModel
     }
 
     final fallback = <CoursesListFacilityItemViewData>[
-      CoursesListFacilityItemViewData(
-        facilityType:
-            club.supportsNineHoles || club.supportedNines.isNotEmpty
-            ? 'supports_nine_holes'
-            : 'routing_18_holes',
-        title: club.supportsNineHoles || club.supportedNines.isNotEmpty
-            ? 'Supports 9 holes'
-            : '18-hole routing',
-      ),
+      if (club.supportsNineHoles || club.supportedNines.isNotEmpty)
+        const CoursesListFacilityItemViewData(
+          facilityType: 'supports_nine_holes',
+          title: 'Supports 9 holes',
+        ),
       CoursesListFacilityItemViewData(
         facilityType: club.paymentMethods.isEmpty
             ? 'payment_at_club'

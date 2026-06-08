@@ -20,8 +20,15 @@ class AuthSession {
       sessionId: (json['sessionId'] as String?).getValueOrEmpty(),
       accessToken: (json['accessToken'] as String?).getValueOrEmpty(),
       refreshToken: (json['refreshToken'] as String?).getValueOrEmpty(),
-      expiresInSeconds: json['expiresInSeconds'] as int? ?? 0,
+      expiresInSeconds: _readInt(json['expiresInSeconds']) ?? 0,
       refreshExpiresAt: (json['refreshExpiresAt'] as String?).getValueOrEmpty(),
     );
+  }
+
+  static int? _readInt(dynamic value) {
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
   }
 }

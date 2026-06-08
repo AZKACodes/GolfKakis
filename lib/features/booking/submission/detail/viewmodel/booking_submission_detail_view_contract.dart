@@ -1,5 +1,6 @@
 import 'package:golf_kakis/features/foundation/default_values.dart';
 import 'package:golf_kakis/features/foundation/enums/booking/tee_time_slot.dart';
+import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking_submission_player_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 import 'package:golf_kakis/features/foundation/util/default_constant_util.dart';
@@ -45,10 +46,16 @@ class BookingSubmissionDetailDataLoaded
     this.caddieCount = 0,
     this.golfCartCount = 0,
     this.playerDetails = const <BookingSubmissionPlayerModel>[],
+    this.categoryPricing = const <BookingSlotCategoryPriceModel>[],
+    this.caddyFee = 0,
+    this.buggyFeePerPlayer = 0,
+    this.singleRiderSurcharge = 0,
     this.remainingHoldSeconds = 0,
     this.isHoldExpired = false,
     this.canContinue = false,
     this.isSubmitting = false,
+    this.isExtendingHold = false,
+    this.isLoadingSlotDetails = false,
   }) : holdExpiresAt = holdExpiresAt ?? DateTime.now(),
        selectedDate = selectedDate ?? DateTime.now(),
        super();
@@ -78,10 +85,16 @@ class BookingSubmissionDetailDataLoaded
   final int caddieCount;
   final int golfCartCount;
   final List<BookingSubmissionPlayerModel> playerDetails;
+  final List<BookingSlotCategoryPriceModel> categoryPricing;
+  final double caddyFee;
+  final double buggyFeePerPlayer;
+  final double singleRiderSurcharge;
   final int remainingHoldSeconds;
   final bool isHoldExpired;
   final bool canContinue;
   final bool isSubmitting;
+  final bool isExtendingHold;
+  final bool isLoadingSlotDetails;
 
   String get pricePerPersonLabel =>
       CurrencyUtil.formatPrice(pricePerPerson, currency);
@@ -89,39 +102,73 @@ class BookingSubmissionDetailDataLoaded
   String get totalCostLabel => CurrencyUtil.formatPrice(totalCost, currency);
 
   String get buggySurchargeLabel =>
-      CurrencyUtil.formatPrice(buggySurcharge, currency);
+      CurrencyUtil.formatPrice(singleRiderSurchargeTotal, currency);
 
-  double get normalPricePerPerson => pricePerPerson;
+  String get buggyFeeTotalLabel =>
+      CurrencyUtil.formatPrice(buggyFeeTotal, currency);
 
-  double get seniorPricePerPerson => pricePerPerson * 0.88;
+  String get caddyFeeTotalLabel =>
+      CurrencyUtil.formatPrice(caddyFeeTotal, currency);
 
-  double get juniorPricePerPerson => pricePerPerson * 0.72;
+  double get normalPricePerPerson =>
+      _priceForCategory(category: 'normal', fallback: pricePerPerson);
+
+  double get seniorPricePerPerson =>
+      _priceForCategory(category: 'senior', fallback: pricePerPerson);
+
+  double get juniorPricePerPerson =>
+      _priceForCategory(category: 'junior', fallback: pricePerPerson);
 
   double get playerSubtotal =>
       (normalPlayerCount * normalPricePerPerson) +
       (seniorPlayerCount * seniorPricePerPerson) +
       (juniorPlayerCount * juniorPricePerPerson);
 
-  int get buggySurchargeUnitCount {
-    if (golfCartCount <= 0) {
+  int get singleRiderSurchargeUnitCount {
+    if (golfCartCount <= 0 || playerCount <= 0) {
       return 0;
     }
 
-    final totalIncludedBuggyCoverage = playerCount * 40;
-    final totalBuggyCost = golfCartCount * 80;
-    final surcharge = totalBuggyCost - totalIncludedBuggyCoverage;
-    return surcharge <= 0 ? 0 : (surcharge / 40).round();
+    final singleRiders = (golfCartCount * 2) - playerCount;
+    return singleRiders <= 0 ? 0 : singleRiders;
   }
 
-  double get buggySurcharge {
-    if (golfCartCount <= 0) {
+  double get buggyFeeTotal {
+    if (buggyAddOnRiderCount <= 0 || buggyFeePerPlayer <= 0) {
       return 0;
     }
 
-    final totalIncludedBuggyCoverage = playerCount * 40;
-    final totalBuggyCost = golfCartCount * 80;
-    final surcharge = totalBuggyCost - totalIncludedBuggyCoverage;
-    return surcharge <= 0 ? 0 : surcharge.toDouble();
+    return buggyAddOnRiderCount * buggyFeePerPlayer;
+  }
+
+  int get buggyAddOnCount {
+    final addOnCount = golfCartCount - minGolfCartCount;
+    return addOnCount <= 0 ? 0 : addOnCount;
+  }
+
+  int get buggyAddOnRiderCount {
+    if (buggyAddOnCount <= 0) {
+      return 0;
+    }
+
+    final addOnCapacity = buggyAddOnCount * 2;
+    return addOnCapacity > playerCount ? playerCount : addOnCapacity;
+  }
+
+  double get caddyFeeTotal {
+    if (caddieCount <= 0 || caddyFee <= 0) {
+      return 0;
+    }
+
+    return caddieCount * caddyFee;
+  }
+
+  double get singleRiderSurchargeTotal {
+    if (singleRiderSurcharge <= 0) {
+      return 0;
+    }
+
+    return singleRiderSurchargeUnitCount * singleRiderSurcharge;
   }
 
   int get minGolfCartCount =>
@@ -141,7 +188,11 @@ class BookingSubmissionDetailDataLoaded
       .where((player) => _normalizePlayerCategory(player.category) == 'junior')
       .length;
 
-  double get totalCost => playerSubtotal + buggySurcharge;
+  double get totalCost =>
+      playerSubtotal +
+      buggyFeeTotal +
+      caddyFeeTotal +
+      singleRiderSurchargeTotal;
 
   String get holdCountdownLabel {
     final safeSeconds = remainingHoldSeconds < 0 ? 0 : remainingHoldSeconds;
@@ -177,10 +228,16 @@ class BookingSubmissionDetailDataLoaded
     int? caddieCount,
     int? golfCartCount,
     List<BookingSubmissionPlayerModel>? playerDetails,
+    List<BookingSlotCategoryPriceModel>? categoryPricing,
+    double? caddyFee,
+    double? buggyFeePerPlayer,
+    double? singleRiderSurcharge,
     int? remainingHoldSeconds,
     bool? isHoldExpired,
     bool? canContinue,
     bool? isSubmitting,
+    bool? isExtendingHold,
+    bool? isLoadingSlotDetails,
   }) {
     return BookingSubmissionDetailDataLoaded(
       slotId: slotId ?? this.slotId,
@@ -204,11 +261,30 @@ class BookingSubmissionDetailDataLoaded
       caddieCount: caddieCount ?? this.caddieCount,
       golfCartCount: golfCartCount ?? this.golfCartCount,
       playerDetails: playerDetails ?? this.playerDetails,
+      categoryPricing: categoryPricing ?? this.categoryPricing,
+      caddyFee: caddyFee ?? this.caddyFee,
+      buggyFeePerPlayer: buggyFeePerPlayer ?? this.buggyFeePerPlayer,
+      singleRiderSurcharge: singleRiderSurcharge ?? this.singleRiderSurcharge,
       remainingHoldSeconds: remainingHoldSeconds ?? this.remainingHoldSeconds,
       isHoldExpired: isHoldExpired ?? this.isHoldExpired,
       canContinue: canContinue ?? this.canContinue,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isExtendingHold: isExtendingHold ?? this.isExtendingHold,
+      isLoadingSlotDetails: isLoadingSlotDetails ?? this.isLoadingSlotDetails,
     );
+  }
+
+  double _priceForCategory({
+    required String category,
+    required double fallback,
+  }) {
+    final normalizedCategory = _normalizePlayerCategory(category);
+    for (final item in categoryPricing) {
+      if (_normalizePlayerCategory(item.label) == normalizedCategory) {
+        return item.amount;
+      }
+    }
+    return fallback;
   }
 }
 
@@ -352,6 +428,12 @@ class OnContinueClick extends BookingSubmissionDetailUserIntent {
   const OnContinueClick();
 }
 
+class OnExtendBookingHoldClick extends BookingSubmissionDetailUserIntent {
+  const OnExtendBookingHoldClick({required this.accessToken});
+
+  final String accessToken;
+}
+
 // =========================
 // NavEffect
 // =========================
@@ -409,6 +491,10 @@ class NavigateToBookingSubmissionConfirmation
 
 class ShowBookingSessionExpired extends BookingSubmissionDetailNavEffect {
   const ShowBookingSessionExpired();
+}
+
+class DismissBookingSessionExpired extends BookingSubmissionDetailNavEffect {
+  const DismissBookingSessionExpired();
 }
 
 class ShowErrorMessage extends BookingSubmissionDetailNavEffect {

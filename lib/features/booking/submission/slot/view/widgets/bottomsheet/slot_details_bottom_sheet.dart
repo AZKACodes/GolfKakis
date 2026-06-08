@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
+import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
 import 'package:golf_kakis/features/foundation/model/booking_slot_details_model.dart';
 import 'package:golf_kakis/features/foundation/util/currency_util.dart';
 
 class SlotDetailsBottomSheet extends StatefulWidget {
   const SlotDetailsBottomSheet({
-    required this.details,
-    required this.isSubmittingHold,
+    required this.viewModel,
     required this.onConfirmSlot,
+    this.onDismissed,
     super.key,
   });
 
-  final BookingSlotDetailsModel details;
-  final bool isSubmittingHold;
+  final BookingSubmissionSlotViewModel viewModel;
   final ValueChanged<BookingSlotDetailsModel> onConfirmSlot;
+  final VoidCallback? onDismissed;
 
   static Future<void> show({
     required BuildContext context,
-    required BookingSlotDetailsModel details,
-    required bool isSubmittingHold,
+    required BookingSubmissionSlotViewModel viewModel,
     required ValueChanged<BookingSlotDetailsModel> onConfirmSlot,
+    VoidCallback? onDismissed,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -27,11 +29,11 @@ class SlotDetailsBottomSheet extends StatefulWidget {
       isScrollControlled: true,
       useRootNavigator: true,
       builder: (_) => SlotDetailsBottomSheet(
-        details: details,
-        isSubmittingHold: isSubmittingHold,
+        viewModel: viewModel,
         onConfirmSlot: onConfirmSlot,
+        onDismissed: onDismissed,
       ),
-    );
+    ).whenComplete(() => onDismissed?.call());
   }
 
   @override
@@ -44,9 +46,6 @@ class _SlotDetailsBottomSheetState extends State<SlotDetailsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final details = widget.details;
-    final prices = details.categoryPricing;
-    final pricingBreakdown = details.pricingBreakdown;
 
     return FractionallySizedBox(
       heightFactor: 0.9,
@@ -55,161 +54,256 @@ class _SlotDetailsBottomSheetState extends State<SlotDetailsBottomSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
         child: SafeArea(
           top: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Slot Details',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    tooltip: 'Close',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Review the tee time and category pricing before confirming this slot.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SlotImportantDetailsPanel(
-                        bookingDate: details.bookingDate,
-                        teeTimeSlot: details.teeTimeSlot,
-                        holeCount: '${details.noOfHoles}',
-                        playerCount: '${details.playerCount}',
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Category Pricing',
-                        style: theme.textTheme.titleMedium?.copyWith(
+              SizedBox(
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Slot Details',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      if (prices.isEmpty)
-                        Text(
-                          CurrencyUtil.formatPrice(
-                            details.pricePerPerson,
-                            details.currency,
-                            suffix: '/ pax',
-                          ),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF0D7A3A),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        )
-                      else
-                        ...prices.map(
-                          (price) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _CategoryPriceRow(
-                              label: price.label,
-                              description: price.description,
-                              priceLabel: CurrencyUtil.formatPrice(
-                                price.amount,
-                                details.currency,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (pricingBreakdown.hasAnySurcharge) ...[
-                        const SizedBox(height: 8),
-                        _SlotSurchargeCard(
-                          pricingBreakdown: pricingBreakdown,
-                          currency: details.currency,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FC),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0x14000000)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _hasAgreedToTerms,
-                      onChanged: (value) {
-                        setState(() {
-                          _hasAgreedToTerms = value ?? false;
-                        });
-                      },
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 11),
-                        child: Text(
-                          'I have agreed to the terms and conditions for this booking.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 8),
+
+              const Divider(height: 1),
+
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: widget.isSubmittingHold || !_hasAgreedToTerms
-                      ? null
-                      : () {
-                          Navigator.of(context).pop();
-                          widget.onConfirmSlot(widget.details);
-                        },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D7A3A),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: widget.isSubmittingHold
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Confirm Slot'),
+
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: widget.viewModel,
+                  builder: (context, _) {
+                    final state = widget.viewModel.viewState;
+                    if (state is! BookingSubmissionSlotDataLoaded) {
+                      return const _SlotDetailsLoadingContent();
+                    }
+
+                    final details = state.selectedSlotDetails;
+                    if (state.isLoadingSlotDetails) {
+                      return const _SlotDetailsLoadingContent();
+                    }
+
+                    if (details == null) {
+                      return const _SlotDetailsLoadingContent();
+                    }
+
+                    return _SlotDetailsContent(
+                      details: details,
+                      isSubmittingHold: state.isSubmittingHold,
+                      hasAgreedToTerms: _hasAgreedToTerms,
+                      onTermsChanged: (value) {
+                        setState(() {
+                          _hasAgreedToTerms = value;
+                        });
+                      },
+                      onConfirmSlot: widget.onConfirmSlot,
+                    );
+                  },
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SlotDetailsLoadingContent extends StatelessWidget {
+  const _SlotDetailsLoadingContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: theme.colorScheme.primary),
+          const SizedBox(height: 16),
+          Text(
+            'Loading slot details...',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.black54,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotDetailsContent extends StatelessWidget {
+  const _SlotDetailsContent({
+    required this.details,
+    required this.isSubmittingHold,
+    required this.hasAgreedToTerms,
+    required this.onTermsChanged,
+    required this.onConfirmSlot,
+  });
+
+  final BookingSlotDetailsModel details;
+  final bool isSubmittingHold;
+  final bool hasAgreedToTerms;
+  final ValueChanged<bool> onTermsChanged;
+  final ValueChanged<BookingSlotDetailsModel> onConfirmSlot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final prices = details.categoryPricing;
+    final pricingBreakdown = details.pricingBreakdown;
+    final addOns = details.addOns;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SlotImportantDetailsPanel(
+                  bookingDate: details.bookingDate,
+                  teeTimeSlot: details.teeTimeSlot,
+                  holeCount: '${details.noOfHoles}',
+                  playerCount: '${details.minPlayers}-${details.maxPlayers}',
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Category Pricing',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (prices.isEmpty)
+                  Text(
+                    CurrencyUtil.formatPrice(
+                      details.pricePerPerson,
+                      details.currency,
+                      suffix: '/ pax',
+                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF0D7A3A),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  )
+                else
+                  ...prices.map(
+                    (price) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _CategoryPriceRow(
+                        label: price.label,
+                        description: price.description,
+                        priceLabel: CurrencyUtil.formatPrice(
+                          price.amount,
+                          details.currency,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (pricingBreakdown.hasAnySurcharge) ...[
+                  const SizedBox(height: 8),
+                  _SlotSurchargeCard(
+                    pricingBreakdown: pricingBreakdown,
+                    currency: details.currency,
+                  ),
+                ],
+                if (addOns.hasAny) ...[
+                  const SizedBox(height: 8),
+                  _SlotAddOnsCard(addOns: addOns, currency: details.currency),
+                ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (details.isAvailable) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F9FC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0x14000000)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: hasAgreedToTerms,
+                  onChanged: (value) => onTermsChanged(value ?? false),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 11),
+                    child: Text(
+                      'I have agreed to the terms and conditions for this booking.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed:
+                !details.isAvailable || isSubmittingHold || !hasAgreedToTerms
+                ? null
+                : () {
+                    onConfirmSlot(details);
+                  },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0D7A3A),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(52),
+            ),
+            child: isSubmittingHold
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    details.isAvailable ? 'Confirm Slot' : 'Slot Unavailable',
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -424,6 +518,80 @@ class _SlotSurchargeCard extends StatelessWidget {
               label: 'Caddy',
               value: CurrencyUtil.formatPrice(
                 pricingBreakdown.caddySurcharge,
+                currency,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotAddOnsCard extends StatelessWidget {
+  const _SlotAddOnsCard({required this.addOns, required this.currency});
+
+  final BookingSlotAddOnsModel addOns;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x14000000)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.add_circle_outline_rounded,
+                size: 18,
+                color: Color(0xFF17397C),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Add-ons',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF17397C),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (addOns.caddyFee > 0)
+            _SlotSheetInfoRow(
+              label: 'Caddy fee',
+              value: CurrencyUtil.formatPrice(addOns.caddyFee, currency),
+            ),
+          if (addOns.buggyFeePerPlayer > 0)
+            _SlotSheetInfoRow(
+              label: 'Buggy / player',
+              value: CurrencyUtil.formatPrice(
+                addOns.buggyFeePerPlayer,
+                currency,
+              ),
+            ),
+          if (addOns.insuranceFeePerPlayer > 0)
+            _SlotSheetInfoRow(
+              label: 'Insurance / player',
+              value: CurrencyUtil.formatPrice(
+                addOns.insuranceFeePerPlayer,
+                currency,
+              ),
+            ),
+          if (addOns.singleRiderSurcharge > 0)
+            _SlotSheetInfoRow(
+              label: 'Single rider surcharge',
+              value: CurrencyUtil.formatPrice(
+                addOns.singleRiderSurcharge,
                 currency,
               ),
             ),

@@ -184,6 +184,7 @@ class ProfileOtpViewModel
               pinSetupToken: response.pinSetupToken,
               username: _username.trim(),
               phoneNumber: currentState.phoneNumber.trim(),
+              response: response,
             ),
           );
         case ProfileOtpPurpose.pinReset:
@@ -201,6 +202,7 @@ class ProfileOtpViewModel
               pinSetupToken: response.pinSetupToken,
               username: _username.trim(),
               phoneNumber: currentState.phoneNumber.trim(),
+              response: response,
             ),
           );
       }

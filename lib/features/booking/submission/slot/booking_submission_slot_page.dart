@@ -9,14 +9,22 @@ import 'package:golf_kakis/features/booking/submission/slot/view/widgets/bottoms
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_contract.dart';
 import 'package:golf_kakis/features/booking/submission/slot/viewmodel/booking_submission_slot_view_model.dart';
 import 'package:golf_kakis/features/foundation/enums/session/session_status.dart';
+import 'package:golf_kakis/features/foundation/model/golf_club_model.dart';
 import 'package:golf_kakis/features/foundation/session/session_scope.dart';
 import 'package:golf_kakis/features/foundation/util/user_util.dart';
 import 'package:golf_kakis/features/profile/authentication/register/profile_register_page.dart';
 
 class BookingSubmissionSlotPage extends StatefulWidget {
-  const BookingSubmissionSlotPage({this.initialClubSlug, super.key});
+  const BookingSubmissionSlotPage({
+    this.initialClubSlug,
+    this.initialClub,
+    this.initialPlayerCount,
+    super.key,
+  });
 
   final String? initialClubSlug;
+  final GolfClubModel? initialClub;
+  final int? initialPlayerCount;
 
   @override
   State<BookingSubmissionSlotPage> createState() =>
@@ -26,6 +34,7 @@ class BookingSubmissionSlotPage extends StatefulWidget {
 class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
   late final BookingSubmissionSlotViewModel _viewModel;
   StreamSubscription<BookingSubmissionSlotNavEffect>? _navEffectSubscription;
+  bool _isSlotDetailsSheetOpen = false;
 
   @override
   void initState() {
@@ -34,6 +43,8 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
     _viewModel = BookingSubmissionSlotViewModel(
       BookingSubmissionSlotUseCaseImpl.create(),
       initialClubSlug: widget.initialClubSlug,
+      initialClub: widget.initialClub,
+      initialPlayerCount: widget.initialPlayerCount,
     );
 
     _navEffectSubscription = _viewModel.navEffects.listen(_handleNavEffect);
@@ -54,15 +65,29 @@ class _BookingSubmissionSlotPageState extends State<BookingSubmissionSlotPage> {
       case RequestBookingHoldPrefill():
         await _handleBookingHoldPrefillRequest(effect);
       case ShowSlotDetailsBottomSheet():
-        await SlotDetailsBottomSheet.show(
-          context: context,
-          details: effect.details,
-          isSubmittingHold: _viewModel.getCurrentAsLoaded().isSubmittingHold,
-          onConfirmSlot: (details) {
-            _viewModel.onUserIntent(OnConfirmSlotClick(details));
-          },
-        );
+        _isSlotDetailsSheetOpen = true;
+        try {
+          await SlotDetailsBottomSheet.show(
+            context: context,
+            viewModel: _viewModel,
+            onConfirmSlot: (details) {
+              _viewModel.onUserIntent(OnConfirmSlotClick(details));
+            },
+            onDismissed: () {
+              _viewModel.onUserIntent(const OnSlotDetailsDismissed());
+            },
+          );
+        } finally {
+          _isSlotDetailsSheetOpen = false;
+        }
       case NavigateToBookingSubmissionDetail():
+        if (_isSlotDetailsSheetOpen) {
+          _isSlotDetailsSheetOpen = false;
+          await Navigator.of(context, rootNavigator: true).maybePop();
+        }
+        if (!mounted) {
+          return;
+        }
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => BookingSubmissionDetailPage(

@@ -18,21 +18,32 @@ class ProfileFriendsUseCaseImpl implements ProfileFriendsUseCase {
   Future<ProfileFriendsResult> onFetchFriendList({
     required SessionState session,
   }) async {
-    final friends = await _repository.onFetchFriendList(session: session);
-    final availableContacts = await _repository.onFetchAvailableContacts(
-      savedFriends: friends,
-    );
+    final friends = await _fetchSavedFriends(session);
 
     return ProfileFriendsResult(
       hasPermission: await _repository.hasContactsPermission(),
       friends: friends,
-      availableContacts: availableContacts,
     );
+  }
+
+  Future<List<ProfileFriendModel>> _fetchSavedFriends(
+    SessionState session,
+  ) async {
+    try {
+      return await _repository.onFetchFriendList(session: session);
+    } catch (_) {
+      return const <ProfileFriendModel>[];
+    }
   }
 
   @override
   Future<bool> requestContactsPermission() {
     return _repository.requestContactsPermission();
+  }
+
+  @override
+  Future<ProfileFriendModel?> onPickDeviceContact() {
+    return _repository.onPickDeviceContact();
   }
 
   @override

@@ -44,6 +44,10 @@ class HomeViewModel
         sendNavEffect(() => const NavigateToGolfClubList());
       case OnBookingListClick():
         sendNavEffect(() => const NavigateToBookingOverview());
+      case OnDealsClick():
+        sendNavEffect(() => const NavigateToDeals());
+      case OnStayPlayClick():
+        sendNavEffect(() => const NavigateToStayPlay());
     }
   }
 

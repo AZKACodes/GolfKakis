@@ -12,6 +12,7 @@ class SessionState {
     this.refreshToken,
     this.sessionId,
     this.sessionExpiresInSeconds,
+    this.accessTokenExpiresAt,
     this.refreshExpiresAt,
     this.authUserId,
     this.authId,
@@ -40,6 +41,7 @@ class SessionState {
   final String? refreshToken;
   final String? sessionId;
   final int? sessionExpiresInSeconds;
+  final String? accessTokenExpiresAt;
   final String? refreshExpiresAt;
   final String? authUserId;
   final String? authId;
@@ -87,6 +89,7 @@ class SessionState {
     String? refreshToken,
     String? sessionId,
     int? sessionExpiresInSeconds,
+    String? accessTokenExpiresAt,
     String? refreshExpiresAt,
     String? authUserId,
     String? authId,
@@ -124,6 +127,9 @@ class SessionState {
       sessionExpiresInSeconds: clearAuthSession
           ? null
           : (sessionExpiresInSeconds ?? this.sessionExpiresInSeconds),
+      accessTokenExpiresAt: clearAuthSession
+          ? null
+          : (accessTokenExpiresAt ?? this.accessTokenExpiresAt),
       refreshExpiresAt: clearAuthSession
           ? null
           : (refreshExpiresAt ?? this.refreshExpiresAt),
@@ -183,6 +189,7 @@ class SessionState {
       'refreshToken': refreshToken,
       'sessionId': sessionId,
       'sessionExpiresInSeconds': sessionExpiresInSeconds,
+      'accessTokenExpiresAt': accessTokenExpiresAt,
       'refreshExpiresAt': refreshExpiresAt,
       'authUserId': authUserId,
       'authId': authId,
@@ -214,6 +221,7 @@ class SessionState {
       refreshToken: json['refreshToken'] as String?,
       sessionId: json['sessionId'] as String?,
       sessionExpiresInSeconds: json['sessionExpiresInSeconds'] as int?,
+      accessTokenExpiresAt: json['accessTokenExpiresAt'] as String?,
       refreshExpiresAt: json['refreshExpiresAt'] as String?,
       authUserId: json['authUserId'] as String?,
       authId: json['authId'] as String?,

@@ -32,6 +32,12 @@ class BookingModel {
     this.buggySharingPreference,
     this.paymentMethod,
     this.currency,
+    this.greenFeeTotal,
+    this.buggyEstimatedTotal,
+    this.caddieTotal,
+    this.insuranceTotal,
+    this.sstTotal,
+    this.discountAmount,
     this.grandTotal,
     this.pendingCounterConfirmation = const <String>[],
     this.isPhoneVerified,
@@ -68,6 +74,12 @@ class BookingModel {
   final String? buggySharingPreference;
   final String? paymentMethod;
   final String? currency;
+  final double? greenFeeTotal;
+  final double? buggyEstimatedTotal;
+  final double? caddieTotal;
+  final double? insuranceTotal;
+  final double? sstTotal;
+  final double? discountAmount;
   final double? grandTotal;
   final List<String> pendingCounterConfirmation;
   final bool? isPhoneVerified;
@@ -111,6 +123,12 @@ class BookingModel {
     String? buggySharingPreference,
     String? paymentMethod,
     String? currency,
+    double? greenFeeTotal,
+    double? buggyEstimatedTotal,
+    double? caddieTotal,
+    double? insuranceTotal,
+    double? sstTotal,
+    double? discountAmount,
     double? grandTotal,
     List<String>? pendingCounterConfirmation,
     bool? isPhoneVerified,
@@ -148,6 +166,12 @@ class BookingModel {
           buggySharingPreference ?? this.buggySharingPreference,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       currency: currency ?? this.currency,
+      greenFeeTotal: greenFeeTotal ?? this.greenFeeTotal,
+      buggyEstimatedTotal: buggyEstimatedTotal ?? this.buggyEstimatedTotal,
+      caddieTotal: caddieTotal ?? this.caddieTotal,
+      insuranceTotal: insuranceTotal ?? this.insuranceTotal,
+      sstTotal: sstTotal ?? this.sstTotal,
+      discountAmount: discountAmount ?? this.discountAmount,
       grandTotal: grandTotal ?? this.grandTotal,
       pendingCounterConfirmation:
           pendingCounterConfirmation ?? this.pendingCounterConfirmation,

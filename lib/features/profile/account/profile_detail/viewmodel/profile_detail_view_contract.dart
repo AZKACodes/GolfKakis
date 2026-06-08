@@ -26,12 +26,14 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     required this.phoneNumber,
     required this.avatarIndex,
     this.avatarImagePath,
+    required this.initialRealName,
     required this.initialUsername,
     required this.initialGender,
     required this.initialDateOfBirth,
     required this.initialEmail,
     required this.initialAvatarIndex,
     this.initialAvatarImagePath,
+    required this.isLoading,
     required this.isSaving,
     this.snackbarMessageModel = SnackbarMessageModel.emptyValue,
     this.errorSnackbarMessageModel = SnackbarMessageModel.emptyValue,
@@ -41,22 +43,27 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     UserProfileModel profile, {
     String dateOfBirth = emptyString,
   }) {
+    final email = _profileTextValue(profile.email);
+
     return ProfileDetailDataLoaded(
-      realName: profile.displayName,
-      username: profile.nickname,
+      realName: _profileTextValue(profile.displayName),
+      username: _profileTextValue(profile.nickname),
       gender: profile.occupation == '-' ? emptyString : profile.occupation,
       dateOfBirth: dateOfBirth,
-      email: profile.email,
-      phoneNumber: profile.phoneNumber,
+      email: email,
+      phoneNumber: _profileTextValue(profile.phoneNumber),
       avatarIndex: profile.avatarIndex,
       avatarImagePath: profile.avatarImagePath,
-      initialUsername: profile.nickname,
-      initialGender:
-          profile.occupation == '-' ? emptyString : profile.occupation,
+      initialRealName: _profileTextValue(profile.displayName),
+      initialUsername: _profileTextValue(profile.nickname),
+      initialGender: profile.occupation == '-'
+          ? emptyString
+          : profile.occupation,
       initialDateOfBirth: dateOfBirth,
-      initialEmail: profile.email,
+      initialEmail: email,
       initialAvatarIndex: profile.avatarIndex,
       initialAvatarImagePath: profile.avatarImagePath,
+      isLoading: false,
       isSaving: false,
     );
   }
@@ -69,12 +76,14 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
   final String phoneNumber;
   final int avatarIndex;
   final String? avatarImagePath;
+  final String initialRealName;
   final String initialUsername;
   final String initialGender;
   final String initialDateOfBirth;
   final String initialEmail;
   final int initialAvatarIndex;
   final String? initialAvatarImagePath;
+  final bool isLoading;
   final bool isSaving;
   final SnackbarMessageModel snackbarMessageModel;
   final SnackbarMessageModel errorSnackbarMessageModel;
@@ -87,12 +96,15 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       : null;
 
   bool get canSave =>
+      realName.trim().isNotEmpty &&
       username.trim().isNotEmpty &&
       email.trim().isNotEmpty &&
       hasChanges &&
+      !isLoading &&
       !isSaving;
 
   bool get hasChanges =>
+      realName.trim() != initialRealName.trim() ||
       username.trim() != initialUsername.trim() ||
       gender.trim() != initialGender.trim() ||
       dateOfBirth.trim() != initialDateOfBirth.trim() ||
@@ -109,12 +121,14 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
     String? phoneNumber,
     int? avatarIndex,
     String? avatarImagePath,
+    String? initialRealName,
     String? initialUsername,
     String? initialGender,
     String? initialDateOfBirth,
     String? initialEmail,
     int? initialAvatarIndex,
     String? initialAvatarImagePath,
+    bool? isLoading,
     bool? isSaving,
     SnackbarMessageModel? snackbarMessageModel,
     SnackbarMessageModel? errorSnackbarMessageModel,
@@ -130,6 +144,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       avatarIndex: avatarIndex ?? this.avatarIndex,
       avatarImagePath: avatarImagePath ?? this.avatarImagePath,
+      initialRealName: initialRealName ?? this.initialRealName,
       initialUsername: initialUsername ?? this.initialUsername,
       initialGender: initialGender ?? this.initialGender,
       initialDateOfBirth: initialDateOfBirth ?? this.initialDateOfBirth,
@@ -137,6 +152,7 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
       initialAvatarIndex: initialAvatarIndex ?? this.initialAvatarIndex,
       initialAvatarImagePath:
           initialAvatarImagePath ?? this.initialAvatarImagePath,
+      isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       snackbarMessageModel: clearMessage
           ? SnackbarMessageModel.emptyValue
@@ -148,10 +164,20 @@ class ProfileDetailDataLoaded extends ProfileDetailViewState {
   }
 }
 
+String _profileTextValue(String value) {
+  return value == '-' ? emptyString : value;
+}
+
 // ------ UserIntent ------
 
 sealed class ProfileDetailUserIntent extends UserIntent {
   const ProfileDetailUserIntent() : super();
+}
+
+class OnProfileDetailRealNameChanged extends ProfileDetailUserIntent {
+  const OnProfileDetailRealNameChanged(this.value);
+
+  final String value;
 }
 
 class OnProfileDetailUsernameChanged extends ProfileDetailUserIntent {
@@ -229,6 +255,10 @@ class ProfileDetailNavigateBack extends ProfileDetailNavEffect {
 
 class ProfileDetailSaved extends ProfileDetailNavEffect {
   const ProfileDetailSaved();
+}
+
+class ProfileDetailProfilePictureUpdated extends ProfileDetailNavEffect {
+  const ProfileDetailProfilePictureUpdated();
 }
 
 class ProfileDetailDeactivated extends ProfileDetailNavEffect {

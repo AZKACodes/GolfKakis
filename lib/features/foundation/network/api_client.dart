@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../util/debug_log.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
 
 typedef HeaderProvider = Map<String, String> Function();
 typedef SessionRefreshProvider = Future<bool> Function();
+typedef SessionRefreshCheckProvider = bool Function();
 
 class ApiClient {
   ApiClient({http.Client? client, String? baseUrl})
@@ -17,6 +18,7 @@ class ApiClient {
 
   static HeaderProvider? _sharedHeaderProvider;
   static SessionRefreshProvider? _sessionRefreshProvider;
+  static SessionRefreshCheckProvider? _sessionRefreshCheckProvider;
 
   final http.Client _client;
   final String _baseUrl;
@@ -34,6 +36,12 @@ class ApiClient {
     _sessionRefreshProvider = provider;
   }
 
+  static void configureSessionRefreshCheck(
+    SessionRefreshCheckProvider? provider,
+  ) {
+    _sessionRefreshCheckProvider = provider;
+  }
+
   Future<dynamic> getJson(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -44,6 +52,23 @@ class ApiClient {
       method: 'GET',
       uri: uri,
       request: () => _client.get(uri, headers: _mergeHeaders(headers)),
+    );
+  }
+
+  Future<dynamic> getJsonWithoutSharedHeaders(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    return _sendJsonRequest(
+      method: 'GET',
+      uri: uri,
+      shouldRefreshSession: false,
+      request: () => _client.get(
+        uri,
+        headers: _mergeHeaders(headers, includeSharedHeaders: false),
+      ),
     );
   }
 
@@ -64,7 +89,7 @@ class ApiClient {
       request: () => _client.post(
         uri,
         headers: _mergeHeaders(headers),
-        body: jsonEncode(body),
+        body: body == null ? null : jsonEncode(body),
       ),
     );
   }
@@ -83,7 +108,7 @@ class ApiClient {
       request: () => _client.post(
         uri,
         headers: _mergeHeaders(headers, includeSharedHeaders: false),
-        body: jsonEncode(body),
+        body: body == null ? null : jsonEncode(body),
       ),
     );
   }
@@ -183,11 +208,21 @@ class ApiClient {
     _logRequest(method, uri);
 
     try {
+      if (shouldRefreshSession && _shouldRefreshBeforeRequest()) {
+        logDebug('[API] Refreshing App Session Before $method $uri');
+        final refreshed = await _sessionRefreshProvider!.call();
+        if (!refreshed) {
+          throw ApiException(
+            statusCode: 401,
+            message: 'Session expired. Please sign in again.',
+          );
+        }
+      }
       final response = await request();
       return _handleJsonResponse(method: method, uri: uri, response: response);
     } on ApiException catch (error) {
       if (shouldRefreshSession && await _shouldRetryAfterRefresh(error)) {
-        debugPrint('[API] refreshing app session before retrying $method $uri');
+        logDebug('[API] Refreshing App Session Before Retrying $method $uri');
         final refreshed = await _sessionRefreshProvider!.call();
         if (refreshed) {
           final response = await request();
@@ -244,7 +279,23 @@ class ApiClient {
     final sharedHeaders = includeSharedHeaders
         ? (_sharedHeaderProvider?.call() ?? const <String, String>{})
         : const <String, String>{};
-    return <String, String>{..._defaultHeaders, ...sharedHeaders, ...?headers};
+    final resolved = <String, String>{
+      ..._defaultHeaders,
+      ...?headers,
+      ...sharedHeaders,
+    };
+    if (headers != null && !sharedHeaders.containsKey('Authorization')) {
+      final explicitAuthorization = headers['Authorization'];
+      if (explicitAuthorization != null) {
+        resolved['Authorization'] = explicitAuthorization;
+      }
+    }
+    return resolved;
+  }
+
+  bool _shouldRefreshBeforeRequest() {
+    return _sessionRefreshProvider != null &&
+        (_sessionRefreshCheckProvider?.call() ?? false);
   }
 
   Future<bool> _shouldRetryAfterRefresh(ApiException error) async {
@@ -256,21 +307,21 @@ class ApiClient {
   }
 
   void _logRequest(String method, Uri uri) {
-    debugPrint('[API] $method $uri');
+    logDebug('[API] $method $uri');
   }
 
   void _logSuccess(String method, Uri uri, int statusCode) {
-    debugPrint('[API] OK $statusCode $method $uri');
+    logDebug('[API] OK $statusCode $method $uri');
   }
 
   void _logApiError(String method, Uri uri, ApiException error) {
-    debugPrint(
+    logDebug(
       '[API] FAILED ${error.statusCode} $method $uri - ${error.message}',
     );
   }
 
   void _logTransportError(String method, Uri uri, Object error) {
-    debugPrint('[API] ERROR $method $uri - $error');
+    logDebug('[API] ERROR $method $uri - $error');
   }
 
   dynamic _decodeJsonResponse(http.Response response) {

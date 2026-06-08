@@ -18,6 +18,8 @@ class ProfileOverviewUseCaseImpl implements ProfileOverviewUseCase {
   Future<ProfileOverviewResult> onBuildGuestProfile({
     required SessionState session,
   }) {
-    return ProfileOverviewRepositoryImpl().onBuildGuestProfile(session: session);
+    return ProfileOverviewRepositoryImpl().onBuildGuestProfile(
+      session: session,
+    );
   }
 }

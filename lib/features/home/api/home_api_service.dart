@@ -33,6 +33,10 @@ class HomeApiService {
     return _apiClient.getJson('/home/overview/deals');
   }
 
+  Future<dynamic> getStayPlay() {
+    return _apiClient.getJson('/home/stay-play');
+  }
+
   Future<dynamic> getKinraraWeather() {
     return _weatherApiService.getKinraraWeather();
   }

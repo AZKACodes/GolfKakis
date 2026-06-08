@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../foundation/network/api_exception.dart';
+import '../../foundation/util/debug_log.dart';
 
 class WeatherApiService {
   WeatherApiService({http.Client? client}) : _client = client ?? http.Client();
@@ -18,30 +19,37 @@ class WeatherApiService {
           'latitude': latitude.toString(),
           'longitude': longitude.toString(),
           'current': 'temperature_2m,weather_code,wind_speed_10m',
+          'hourly': 'temperature_2m,weather_code,precipitation_probability',
           'daily': 'weather_code,temperature_2m_max,temperature_2m_min',
           'forecast_days': '7',
           'timezone': 'auto',
         });
 
-    final response = await _client.get(
-      forecastUri,
-      headers: const <String, String>{'Accept': 'application/json'},
-    );
+    logDebug('[API] GET $forecastUri');
+    final response = await _client
+        .get(
+          forecastUri,
+          headers: const <String, String>{'Accept': 'application/json'},
+        )
+        .timeout(const Duration(seconds: 12));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      logDebug('[API] FAILED ${response.statusCode} GET $forecastUri');
       throw ApiException(
         statusCode: response.statusCode,
         message: 'Unable to load weather right now.',
       );
     }
 
+    logDebug('[API] OK ${response.statusCode} GET $forecastUri');
+
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
-    } catch (_) {
-      // Keep fallback below.
+    } catch (error) {
+      logDebug('[WeatherApi] decode error: $error');
     }
 
     throw ApiException(
@@ -51,6 +59,6 @@ class WeatherApiService {
   }
 
   Future<Map<String, dynamic>> getKinraraWeather() async {
-    return getWeather(latitude: 3.0434, longitude: 101.6914);
+    return getWeather(latitude: 3.04703, longitude: 101.64744);
   }
 }

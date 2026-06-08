@@ -35,7 +35,7 @@ localCourseDisplayContent = <String, LocalGolfClubDisplayContent>{
       'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1592919505780-303950717480?auto=format&fit=crop&w=1200&q=80',
     ],
-    latitude: 3.0446,
-    longitude: 101.6426,
+    latitude: 3.04703,
+    longitude: 101.64744,
   ),
 };

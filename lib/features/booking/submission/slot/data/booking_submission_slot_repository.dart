@@ -28,6 +28,16 @@ abstract class BookingSubmissionSlotRepository {
     required BookingHoldRequestModel request,
   });
 
+  Future<dynamic> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  });
+
+  Future<dynamic> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  });
+
   Future<dynamic> onCreateBookingSubmission({
     required BookingSubmissionRequestModel request,
   });

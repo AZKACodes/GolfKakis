@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:golf_kakis/features/foundation/model/booking_model.dart';
 import 'package:golf_kakis/features/foundation/util/string_util.dart';
+import 'package:golf_kakis/features/foundation/widgets/container/golf_kakis_loading_container.dart';
 import 'package:golf_kakis/features/foundation/widgets/error_banner.dart';
 import 'package:golf_kakis/features/foundation/widgets/status_pill.dart';
 
@@ -248,6 +249,49 @@ class _PaymentSummaryTab extends StatelessWidget {
           icon: Icons.point_of_sale_outlined,
         ),
         const SizedBox(height: 12),
+        if ((booking.greenFeeTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Green Fee',
+            value: _formatPrice(
+              booking.greenFeeTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.buggyEstimatedTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Buggy',
+            value: _formatPrice(
+              booking.buggyEstimatedTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.caddieTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Caddie',
+            value: _formatPrice(
+              booking.caddieTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.insuranceTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'Insurance',
+            value: _formatPrice(
+              booking.insuranceTotal!,
+              booking.currency ?? 'MYR',
+            ),
+          ),
+        if ((booking.sstTotal ?? 0) > 0)
+          _PriceRow(
+            label: 'SST',
+            value: _formatPrice(booking.sstTotal!, booking.currency ?? 'MYR'),
+          ),
+        if ((booking.discountAmount ?? 0) > 0)
+          _PriceRow(
+            label: 'Discount',
+            value:
+                '- ${_formatPrice(booking.discountAmount!, booking.currency ?? 'MYR')}',
+          ),
         _PriceRow(label: 'Grand Total', value: booking.feeLabel),
       ],
     );
@@ -280,6 +324,10 @@ String _formatPaymentMethod(String? value) {
     default:
       return _formatEnumLabel(value);
   }
+}
+
+String _formatPrice(double amount, String currency) {
+  return '$currency ${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
 }
 
 String _formatTimelineDateTime(String? value) {
@@ -320,26 +368,8 @@ class _FullscreenLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(strokeWidth: 3),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Loading booking details...',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+    return const Center(
+      child: GolfKakisLoadingContainer(message: 'Loading booking details...'),
     );
   }
 }

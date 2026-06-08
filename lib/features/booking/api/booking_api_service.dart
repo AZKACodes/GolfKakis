@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
-import '../../foundation/network/network.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_hold_request_model.dart';
 import 'package:golf_kakis/features/foundation/model/request/booking_submission_request_model.dart';
+
+import '../../foundation/network/network.dart';
 
 class BookingApiService {
   BookingApiService({ApiClient? apiClient})
@@ -19,7 +19,10 @@ class BookingApiService {
   }
 
   Future<dynamic> onFetchGolfClubList() {
-    return onFetchGolfClubs();
+    return _apiClient.getJsonWithoutSharedHeaders(
+      '/booking/golf-clubs',
+      headers: const <String, String>{'Content-Type': 'application/json'},
+    );
   }
 
   Future<dynamic> onFetchGolfClubDetail({required String slug}) {
@@ -76,9 +79,14 @@ class BookingApiService {
     required int playerCount,
     String? selectedNine,
   }) {
-    return _apiClient.postJson(
+    return _apiClient.postJsonWithoutSharedHeaders(
       '/booking/available-slots',
-      body: <String, dynamic>{'golfClubSlug': clubSlug, 'bookingDate': date},
+      body: <String, dynamic>{
+        'golfClubSlug': clubSlug,
+        'bookingDate': date,
+        'playType': playType,
+      },
+      headers: const <String, String>{'Content-Type': 'application/json'},
     );
   }
 
@@ -90,9 +98,10 @@ class BookingApiService {
     required String playType,
     String? selectedNine,
   }) {
-    return _apiClient.postJson(
+    return _apiClient.postJsonWithoutSharedHeaders(
       '/booking/slots/$slotId/details',
       body: <String, dynamic>{'slotId': slotId},
+      headers: const <String, String>{'Content-Type': 'application/json'},
     );
   }
 
@@ -103,9 +112,11 @@ class BookingApiService {
       if (request.accessToken != null && request.accessToken!.isNotEmpty)
         'Authorization': 'Bearer ${request.accessToken!}',
     };
+    final body = request.toJson();
+
     return _apiClient.postJson(
       '/booking/submit',
-      body: request.toJson(),
+      body: body,
       headers: additionalHeaders.isEmpty ? null : additionalHeaders,
     );
   }
@@ -116,24 +127,36 @@ class BookingApiService {
     final additionalHeaders = <String, String>{
       'Authorization': 'Bearer ${request.accessToken}',
       if (request.idempotencyKey != null && request.idempotencyKey!.isNotEmpty)
-        'Idempotency-Key': request.idempotencyKey!,
+        'idempotency-key': request.idempotencyKey!,
     };
-    final resolvedHeaders = _apiClient.resolveHeaders(additionalHeaders);
     final body = request.toJson();
 
-    debugPrint('onCreateBookingHold headers: $resolvedHeaders');
-    debugPrint('onCreateBookingHold body: $body');
+    return _apiClient.postJson(
+      '/booking/hold',
+      body: body,
+      headers: additionalHeaders,
+    );
+  }
 
-    return _apiClient
-        .postJson('/booking/holds', body: body, headers: additionalHeaders)
-        .then((response) {
-          debugPrint('onCreateBookingHold response: $response');
-          return response;
-        })
-        .catchError((error) {
-          debugPrint('onCreateBookingHold error: $error');
-          throw error;
-        });
+  Future<dynamic> onExtendBookingHold({
+    required String bookingRef,
+    required String accessToken,
+  }) {
+    return _apiClient.postJson(
+      '/booking/$bookingRef/extend-hold',
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
+  }
+
+  Future<dynamic> onPreviewBooking({
+    required String accessToken,
+    required Map<String, dynamic> request,
+  }) {
+    return _apiClient.postJson(
+      '/booking/preview',
+      body: request,
+      headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+    );
   }
 
   Future<dynamic> onFetchBookingDetails({

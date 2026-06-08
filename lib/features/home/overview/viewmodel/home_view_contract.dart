@@ -93,6 +93,14 @@ class OnBookingListClick extends HomeUserIntent {
   const OnBookingListClick();
 }
 
+class OnDealsClick extends HomeUserIntent {
+  const OnDealsClick();
+}
+
+class OnStayPlayClick extends HomeUserIntent {
+  const OnStayPlayClick();
+}
+
 // ------ NavEffect ------
 
 sealed class HomeNavEffect implements NavEffect {
@@ -109,4 +117,12 @@ class NavigateToGolfClubList extends HomeNavEffect {
 
 class NavigateToBookingOverview extends HomeNavEffect {
   const NavigateToBookingOverview();
+}
+
+class NavigateToDeals extends HomeNavEffect {
+  const NavigateToDeals();
+}
+
+class NavigateToStayPlay extends HomeNavEffect {
+  const NavigateToStayPlay();
 }
